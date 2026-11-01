@@ -1,13 +1,123 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Anti Stress Game | S Loop</title><style>
-*{box-sizing:border-box}body{margin:0;padding:18px;background:#e8e8e8;color:#171717;font-family:system-ui,sans-serif;text-align:center}
-main{max-width:650px;margin:auto;background:white;border-radius:18px;padding:16px;box-shadow:0 8px 28px #0002}
-h1{font-size:1.4rem}button{cursor:pointer;font:inherit}#info{min-height:32px;margin:12px;color:#444}
-.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px}
-.actions button{border:0;border-radius:10px;padding:10px 16px;background:#171717;color:white}
-</style></head><body><main><h1>Anti Stress Game</h1>
-<style>.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.bubble{aspect-ratio:1;border:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#8bded3 45%,#159c90 80%);box-shadow:inset -5px -6px 10px #006b6255,0 3px 5px #0003}.bubble.popped{visibility:hidden}</style>
-<div id="info"></div><div class="grid" id="grid"></div><div class="actions"><button onclick="reset()">شروع دوباره</button></div>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0f766e">
+<title>Anti Stress | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:linear-gradient(160deg,#cdeee9,#9fd6ee);color:#0b3b3a;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 6px 54px}
+h1{margin:0;font-size:1.15rem}
+#info{font-size:.9rem;opacity:.8;min-height:1.3em}
+#wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:6px 12px}
+#sheet{display:grid;gap:clamp(4px,1.4vmin,10px);padding:clamp(8px,2vmin,16px);border-radius:22px;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 2px rgba(255,255,255,.6),0 12px 30px rgba(10,80,90,.25);touch-action:none}
+.b{position:relative;border-radius:50%;aspect-ratio:1;cursor:pointer;transition:transform .12s;
+ background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,.25) 10% 22%,transparent 23%),radial-gradient(circle at 50% 55%,rgba(150,225,235,.55),rgba(60,170,190,.75) 70%,rgba(20,120,140,.85));
+ box-shadow:inset -4px -6px 10px rgba(0,90,100,.35),inset 3px 3px 8px rgba(255,255,255,.55),0 4px 6px rgba(0,60,80,.3)}
+.b:active{transform:scale(.94)}
+.b.p{cursor:default;transform:scale(.9);background:radial-gradient(circle at 50% 50%,rgba(120,190,205,.55),rgba(90,160,180,.6));box-shadow:inset 0 2px 5px rgba(0,70,90,.4),0 1px 0 rgba(255,255,255,.5);animation:pp .22s ease-out}
+.b.p::after{content:"";position:absolute;inset:22%;border-radius:50%;border:2px solid rgba(255,255,255,.35);transform:rotate(25deg);clip-path:polygon(0 0,100% 0,100% 55%,0 40%)}
+@keyframes pp{0%{transform:scale(1.18)}60%{transform:scale(.8)}100%{transform:scale(.9)}}
+footer{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:6px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+button.act{font:inherit;border:0;border-radius:12px;padding:10px 16px;background:#0f766e;color:#fff;cursor:pointer}
+button.act.alt{background:rgba(255,255,255,.7);color:#0b3b3a}
+a.back{font:inherit;border-radius:12px;padding:10px 16px;background:rgba(255,255,255,.7);color:#0b3b3a;text-decoration:none}
+.framed a.back{display:none}
+</style>
+</head>
+<body>
+<header><h1>🫧 Anti Stress</h1><div id="info"></div></header>
+<div id="wrap"><div id="sheet" aria-label="ورق حباب"></div></div>
+<footer>
+  <button class="act" id="again">ورق تازه</button>
+  <button class="act alt" id="snd">🫧 صدا: ترکیدن</button>
+  <a class="back" href="index.html">بازگشت</a>
+</footer>
 <script>
-let count=30,popped=0;function reset(){popped=0;draw()}function draw(){let g=document.getElementById('grid');g.innerHTML='';for(let i=0;i<count;i++){let b=document.createElement('button');b.className='bubble';b.setAttribute('aria-label','حباب');b.onclick=()=>{if(b.classList.contains('popped'))return;b.classList.add('popped');popped++;document.getElementById('info').textContent=popped===count?'همه حباب‌ها ترکیدند! عالی بود.':`${popped} از ${count} حباب`;};g.append(b)}document.getElementById('info').textContent=`حباب‌ها را لمس کن: ${popped}/${count}`}
-reset();
-</script><div class="actions"><button onclick="location.href='../index.html'">بازگشت به S Loop</button></div></main></body></html>
+(function(){
+'use strict';
+if(window.top!==window) document.body.classList.add('framed');
+var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
+var COLS=6,ROWS=9,total=COLS*ROWS,popped=0,mode=0; // 0=pop 1=bloop
+var sheet=document.getElementById('sheet'),info=document.getElementById('info');
+var ac=null;
+function A(){if(!ac){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ac=new C()}if(ac.state==='suspended')ac.resume();return ac}
+function popSound(){
+  var c=A();if(!c)return;var t=c.currentTime,sr=c.sampleRate;
+  var len=Math.floor(sr*.09),buf=c.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  for(var i=0;i<len;i++){var k=1-i/len;d[i]=(Math.random()*2-1)*k*k*k}
+  var n=c.createBufferSource();n.buffer=buf;
+  var bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1500+Math.random()*2600;bp.Q.value=.8;
+  var g=c.createGain();g.gain.value=GV*1.1;
+  n.connect(bp);bp.connect(g);g.connect(c.destination);n.start(t);
+  var o=c.createOscillator(),og=c.createGain();o.type='sine';
+  o.frequency.setValueAtTime(380+Math.random()*220,t);o.frequency.exponentialRampToValueAtTime(70,t+.08);
+  og.gain.setValueAtTime(GV*.55,t);og.gain.exponentialRampToValueAtTime(.001,t+.1);
+  o.connect(og);og.connect(c.destination);o.start(t);o.stop(t+.12);
+}
+function bloopSound(){
+  var c=A();if(!c)return;var t=c.currentTime,f=260+Math.random()*420;
+  var o=c.createOscillator(),g=c.createGain();o.type='sine';
+  o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*2.6,t+.09);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(GV*.6,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+.16);
+  o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.18);
+  var o2=c.createOscillator(),g2=c.createGain();o2.type='triangle';
+  o2.frequency.setValueAtTime(f*1.5,t+.03);o2.frequency.exponentialRampToValueAtTime(f*3.4,t+.11);
+  g2.gain.setValueAtTime(.0001,t+.03);g2.gain.exponentialRampToValueAtTime(GV*.25,t+.045);g2.gain.exponentialRampToValueAtTime(.0001,t+.14);
+  o2.connect(g2);g2.connect(c.destination);o2.start(t+.03);o2.stop(t+.16);
+}
+function say(){
+  info.textContent=popped>=total?'همه‌ی حباب‌ها ترکید! 🎉 ورق تازه بگیر':'ترکیده: '+popped+' از '+total;
+}
+function pop(el){
+  if(!el||!el.classList||!el.classList.contains('b')||el.classList.contains('p'))return;
+  el.classList.add('p');popped++;
+  if(mode===0)popSound();else bloopSound();
+  if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}
+  say();
+}
+function fit(){
+  var wrap=document.getElementById('wrap'),W=wrap.clientWidth-24,H=wrap.clientHeight-12;
+  var pad=20,gap=Math.max(4,Math.min(10,Math.min(W,H)*.014));
+  var s=Math.min((W-pad*2-gap*(COLS-1))/COLS,(H-pad*2-gap*(ROWS-1))/ROWS);
+  s=Math.max(26,Math.floor(s));
+  sheet.style.gridTemplateColumns='repeat('+COLS+','+s+'px)';
+  sheet.style.gap=gap+'px';
+}
+function build(){
+  sheet.innerHTML='';popped=0;
+  for(var i=0;i<total;i++){var d=document.createElement('div');d.className='b';d.setAttribute('role','button');d.setAttribute('aria-label','حباب');sheet.appendChild(d)}
+  fit();say();
+}
+var down=false;
+sheet.addEventListener('pointerdown',function(e){down=true;try{sheet.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault();pop(document.elementFromPoint(e.clientX,e.clientY))});
+sheet.addEventListener('pointermove',function(e){if(!down)return;pop(document.elementFromPoint(e.clientX,e.clientY))});
+['pointerup','pointercancel','lostpointercapture'].forEach(function(t){sheet.addEventListener(t,function(){down=false})});
+document.getElementById('again').onclick=build;
+document.getElementById('snd').onclick=function(){mode=1-mode;this.textContent=mode?'🫧 صدا: حباب آب':'🫧 صدا: ترکیدن';(mode?bloopSound:popSound)()};
+addEventListener('resize',fit);
+build();
+})();
+</script>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

@@ -1,73 +1,451 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111"><title>Hanafuda Koi-Koi | S Loop</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0f2a1c">
+<title>Hanafuda Koi-Koi | S Loop</title>
 <style>
-:root{--bg:#101612;--panel:#1b261f;--gold:#d9b66d;--cream:#f6edda;--muted:#b8c2b8;--red:#a93d36}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#26372b,#0d120f 70%);color:var(--cream);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;padding:14px}button{font:inherit;cursor:pointer}main{max-width:980px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.top h1{font-size:clamp(1.25rem,4vw,2rem);margin:8px 0;color:var(--gold)}.sub{color:var(--muted);font-size:.88rem}.panel{background:#1a251fdd;border:1px solid #66735c66;border-radius:16px;padding:12px;margin:12px 0;box-shadow:0 8px 28px #0004}.stats{display:flex;gap:8px;flex-wrap:wrap}.pill{background:#29372d;border:1px solid #59684e;border-radius:999px;padding:6px 12px;font-size:.9rem}.area-title{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px;color:var(--gold);font-weight:700}.cards{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;min-height:104px}.card{width:68px;height:105px;border-radius:9px;border:2px solid #b79b67;background:linear-gradient(145deg,#fff8e8,#e7d7b6);color:#29251d;padding:5px 3px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;box-shadow:0 3px 7px #0005;position:relative;transition:transform .12s,border-color .12s}.card .month{font-size:.68rem;font-weight:800;align-self:flex-start}.card .art{font-size:2rem;line-height:1.1}.card .kind{font-size:.62rem;color:#5b4b35}.card.selected{outline:3px solid #e8c66e;transform:translateY(-7px)}.card:disabled{opacity:.55;cursor:default}.card.back{background:repeating-linear-gradient(45deg,#263e31,#263e31 7px,#314b3b 7px,#314b3b 14px);color:#e4c783;font-size:2rem;justify-content:center}.card.back .month,.card.back .kind{display:none}.card:focus-visible,button:focus-visible{outline:3px solid #f5d37f;outline-offset:2px}.empty{color:#aab3a8;font-size:.9rem;padding:22px}.hand .card{width:clamp(53px,8vw,72px);height:108px}.field .card,.captured .card{width:58px;height:90px}.field .card .art,.captured .card .art{font-size:1.65rem}.captured{display:flex;flex-wrap:wrap;gap:5px;min-height:45px}.captured .card{width:42px;height:63px;border-width:1px;padding:2px}.captured .card .art{font-size:1.2rem}.captured .card .month,.captured .card .kind{font-size:.48rem}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.btn{border:1px solid #9b8657;border-radius:10px;padding:10px 16px;background:#29372d;color:var(--cream)}.btn.primary{background:var(--gold);color:#1a1a13;font-weight:800}.btn:disabled{opacity:.4;cursor:not-allowed}.message{min-height:48px;text-align:center;color:#f2d58e;padding:8px}.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}.modal.show{display:flex}.dialog{width:min(520px,100%);background:#1b2820;border:1px solid var(--gold);border-radius:18px;padding:18px;text-align:center;box-shadow:0 15px 50px #0009}.dialog h2{color:var(--gold);margin-top:0}.dialog p{line-height:1.8}.yaku-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right;font-size:.85rem}.yaku-list div{background:#27372c;padding:7px;border-radius:8px}.small{font-size:.78rem;color:var(--muted)}.scoreline{font-size:1.15rem;color:var(--gold);font-weight:800}.hidden{display:none!important}@media(max-width:600px){body{padding:8px}.panel{padding:9px;margin:8px 0}.card{width:55px;height:88px}.card .art{font-size:1.6rem}.field .card{width:49px;height:78px}.twocol{grid-template-columns:1fr}.captured .card{width:35px;height:54px}.yaku-list{grid-template-columns:1fr}}
-</style></head>
-<body><main>
-<header class="top"><div><h1>花札 · Hanafuda Koi-Koi</h1><div class="sub">هانافودا ژاپنی · نسخه تک‌نفره در برابر کامپیوتر</div></div><div class="stats"><span class="pill">دور: <b id="roundNo">۱ / ۶</b></span><span class="pill">شما: <b id="playerScore">۰</b></span><span class="pill">کامپیوتر: <b id="cpuScore">۰</b></span></div></header>
-<section class="panel"><div class="area-title"><span>دست کامپیوتر</span><span id="cpuCount">۸ کارت</span></div><div class="cards" id="cpuHand"></div><div class="area-title" style="margin-top:16px"><span>کارت‌های جمع‌شده کامپیوتر</span><span id="cpuYaku" class="small">هنوز ترکیبی ندارد</span></div><div class="captured" id="cpuCaptured"></div></section>
-<section class="panel"><div class="area-title"><span>زمین بازی</span><span id="deckCount">دسته: ۲۴ کارت</span></div><div class="cards field" id="field"></div><div class="message" id="message" aria-live="polite">یک کارت از دستت انتخاب کن.</div><div class="actions"><button class="btn" id="rulesBtn">قوانین و امتیازها</button><button class="btn" id="newBtn">شروع بازی جدید</button></div></section>
-<section class="panel"><div class="area-title"><span>کارت‌های جمع‌شده شما</span><span id="playerYaku" class="small">هنوز ترکیبی نداری</span></div><div class="captured" id="playerCaptured"></div><div class="area-title" style="margin-top:16px"><span>دست شما</span><span id="handCount">۸ کارت</span></div><div class="cards hand" id="playerHand"></div><div class="small" style="text-align:center;margin-top:8px">برای بازی، یک کارت را لمس کن. اگر چند کارت هم‌ماه روی زمین باشد، یکی را انتخاب می‌کنی.</div></section>
-</main>
-<div class="modal" id="choiceModal"><div class="dialog"><h2 id="choiceTitle">ترکیب جدید!</h2><p id="choiceText"></p><div class="actions"><button class="btn primary" id="stopBtn">شو-بو · پایان دور و ثبت امتیاز</button><button class="btn" id="koiBtn">کوی-کوی · ادامه بازی</button></div></div></div>
-<div class="modal" id="pickModal"><div class="dialog"><h2>کدام کارت را می‌گیری؟</h2><p>چند کارت از همین ماه روی زمین است؛ یکی را انتخاب کن.</p><div class="cards" id="pickCards"></div></div></div>
-<div class="modal" id="rulesModal"><div class="dialog"><h2>راهنمای Koi-Koi</h2><p>با کارت هم‌ماه، کارت‌های زمین را جمع کن. بعد یک کارت از دسته رو می‌شود. با ساختن ترکیب امتیازی (Yaku)، می‌توانی دور را تمام کنی یا «کوی‌کوی» بگویی و برای امتیاز بیشتر ادامه بدهی.</p><div class="yaku-list"><div>۵ روشنایی: ۱۰ امتیاز</div><div>۴ روشنایی بدون باران: ۸</div><div>۴ روشنایی با باران: ۷</div><div>۳ روشنایی بدون باران: ۵</div><div>گراز + گوزن + پروانه: ۵</div><div>سه روبان شعر: ۵</div><div>سه روبان آبی: ۵</div><div>تماشای گل + جام: ۵</div><div>تماشای ماه + جام: ۵</div><div>۵ حیوان: ۱، هر اضافه +۱</div><div>۵ روبان: ۱، هر اضافه +۱</div><div>۱۰ ساده: ۱، هر اضافه +۱</div></div><p class="small">این نسخه امتیازها را فقط برای بازی ثبت می‌کند؛ هیچ شرط یا پولی وجود ندارد. برای ساده‌سازی، بازی یک دورِ ۶ مرحله‌ای دارد و بعضی قوانین فرعیِ محلی حذف شده‌اند.</p><div class="actions"><button class="btn primary" id="closeRules">متوجه شدم</button></div></div></div>
-<div class="modal" id="endModal"><div class="dialog"><h2 id="endTitle">پایان دور</h2><p id="endText"></p><div class="actions"><button class="btn primary" id="nextBtn">دور بعدی</button><button class="btn" id="restartBtn">بازی از نو</button></div></div></div>
+:root{--gold:#e3c26e;--cream:#f7efd8;--felt:#143b27}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 0,#1f5a3a,#0c241a 75%);color:var(--cream);font-family:Vazirmatn,Tahoma,system-ui,sans-serif;user-select:none;-webkit-user-select:none;padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px));touch-action:manipulation}
+button{font:inherit;cursor:pointer}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 4px 4px 48px;flex-wrap:wrap}
+.hdr h1{margin:0;font-size:1.02rem;color:var(--gold)}
+.pill{background:rgba(0,0,0,.35);border:1px solid rgba(227,194,110,.35);border-radius:999px;padding:3px 10px;font-size:.8rem;white-space:nowrap}
+.pill b{color:#fff}
+.mini{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:3px 9px;font-size:.78rem}
+.zone{background:rgba(0,0,0,.22);border:1px solid rgba(227,194,110,.18);border-radius:12px;padding:5px 6px;margin:5px auto;max-width:640px}
+.zt{display:flex;justify-content:space-between;font-size:.72rem;color:#cdbf92;margin-bottom:3px}
+.row{display:flex;direction:ltr;justify-content:center;flex-wrap:wrap;gap:3px;min-height:24px}
+.hand{flex-wrap:nowrap}
+.hand .cd{margin-left:calc(var(--hw) * -.16)}.hand .cd:first-child{margin-left:0}
+.hand .cd{width:var(--hw);height:calc(var(--hw) * 1.6)}
+.chand .cd{width:calc(var(--hw) * .6);height:calc(var(--hw) * .96);margin-left:calc(var(--hw) * -.2)}
+.chand .cd:first-child{margin-left:0}
+.fld .cd{width:var(--fw);height:calc(var(--fw) * 1.6)}
+:root{--hw:clamp(38px,calc((100vw - 28px)/7),66px);--fw:clamp(38px,calc((100vw - 56px)/7.3),62px);--cw:clamp(22px,6.4vw,32px)}
+.cap{display:flex;direction:ltr;flex-wrap:wrap;gap:2px 8px;min-height:30px}
+.grp{display:flex;align-items:center}
+.grp .cd{width:var(--cw);height:calc(var(--cw) * 1.6);margin-left:calc(var(--cw) * -.45)}
+.grp .cd:first-child{margin-left:0}
+.grp small{font-size:.58rem;color:#cdbf92;margin-right:4px;direction:rtl}
+.cd{position:relative;display:block;padding:0;border:0;background:none;border-radius:6%;flex:none;transition:transform .15s,filter .15s}
+.cd svg{display:block;width:100%;height:100%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.55))}
+.cd.sel{transform:translateY(-12px)}
+.cd.ok svg{filter:drop-shadow(0 0 5px #ffe27a) drop-shadow(0 0 2px #ffe27a)}
+.cd.ok{animation:pl .8s infinite alternate}
+@keyframes pl{to{transform:translateY(-3px)}}
+.cd.dim{filter:brightness(.6)}
+.cd.nw{animation:nw .35s ease-out}
+@keyframes nw{from{transform:scale(.4) rotate(-12deg);opacity:.2}to{transform:none;opacity:1}}
+.mid{display:flex;gap:8px;align-items:flex-start;direction:ltr}
+.deck{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:calc(var(--fw) * 1.05)}
+.deck .cd{width:var(--fw);height:calc(var(--fw) * 1.6)}
+.deck small{font-size:.65rem;color:#cdbf92;direction:rtl}
+.fld{flex:1}
+#msg{min-height:2.4em;text-align:center;font-size:.9rem;color:#ffe9a8;padding:2px 6px}
+.badge{display:inline-block;background:var(--gold);color:#2b2208;border-radius:6px;padding:0 6px;font-size:.7rem;margin-inline-start:4px}
+.yk{font-size:.7rem;color:#ffe9a8}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:60;padding:14px;overflow:auto}
+#ov.on{display:flex}
+.dlg{background:#16301f;border:1px solid var(--gold);border-radius:18px;padding:16px;max-width:460px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 18px 50px #000a;text-align:center}
+.dlg h2{margin:0 0 6px;color:var(--gold);font-size:1.15rem}
+.dlg p{margin:6px 0;line-height:1.8;font-size:.9rem}
+.dlg .bt{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.dlg button{border:1px solid var(--gold);background:#23442f;color:#fff;border-radius:11px;padding:9px 14px}
+.dlg button.pr{background:var(--gold);color:#2b2208;font-weight:700}
+.yl{text-align:right;font-size:.82rem;margin:6px 0;padding:0;list-style:none}
+.yl li{display:flex;justify-content:space-between;gap:10px;background:rgba(255,255,255,.06);border-radius:8px;padding:5px 9px;margin:3px 0}
+.yl li b{color:#ffe27a;white-space:nowrap}
+.tbl{width:100%;font-size:.78rem;border-collapse:collapse;text-align:right}
+.tbl td{padding:3px 5px;border-bottom:1px solid rgba(255,255,255,.1)}
+.tbl td:last-child{color:#ffe27a;white-space:nowrap}
+.big{font-size:1.6rem;color:#ffe27a;font-weight:800;margin:4px 0}
+.fly{position:fixed;z-index:70;pointer-events:none;transition:left .45s ease,top .45s ease,transform .45s ease;}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>花札 · کوی‌کوی</h1>
+  <span class="pill">ماه <b id="rn">۱</b>/<b id="rt">۶</b></span>
+  <span class="pill">شما <b id="ps">0</b></span>
+  <span class="pill">حریف <b id="cs">0</b></span>
+  <button class="mini" id="rules">قوانین</button>
+  <button class="mini" id="newb">بازی تازه</button>
+</div>
+
+<div class="zone">
+  <div class="zt"><span>حریف <span id="coya"></span></span><span class="yk" id="cyk"></span></div>
+  <div class="row chand" id="chand"></div>
+  <div class="cap" id="ccap"></div>
+</div>
+
+<div class="zone">
+  <div class="mid">
+    <div class="deck"><div id="deck"></div><small id="dcnt"></small><div id="drawn"></div></div>
+    <div class="row fld" id="field"></div>
+  </div>
+  <div id="msg" aria-live="polite"></div>
+</div>
+
+<div class="zone">
+  <div class="zt"><span>شما <span id="poya"></span></span><span class="yk" id="pyk"></span></div>
+  <div class="cap" id="pcap"></div>
+  <div class="row hand" id="hand"></div>
+</div>
+
+<div id="ov"><div class="dlg" id="dlg"></div></div>
+
 <script>
+(function(){
 'use strict';
-const MONTHS=['کاج · ژانویه','آلو · فوریه','شکوفه گیلاس · مارس','ویستریا · آوریل','زنبق · مه','گل صدتومانی · ژوئن','شبدر · ژوئیه','علف پامپاس · اوت','داوودی · سپتامبر','افرا · اکتبر','بید · نوامبر','پاولونیا · دسامبر'];
-// Four cards per month: 48-card hanafuda deck.
-const raw=[
-[0,'🕊️','درنا','light','crane'],[0,'短','روبان شعر کاج','ribbon','redpoem'],[0,'🌲','کاج ساده ۱','plain'],[0,'🌲','کاج ساده ۲','plain'],
-[1,'🐦','بلبل','animal',''],[1,'短','روبان شعر آلو','ribbon','redpoem'],[1,'🌸','آلو ساده ۱','plain'],[1,'🌸','آلو ساده ۲','plain'],
-[2,'幕','پرده شکوفه','light','curtain'],[2,'短','روبان شعر گیلاس','ribbon','redpoem'],[2,'🌸','گیلاس ساده ۱','plain'],[2,'🌸','گیلاس ساده ۲','plain'],
-[3,'🐦','فاخته','animal',''],[3,'短','روبان ویستریا','ribbon','plainribbon'],[3,'🌿','ویستریا ساده ۱','plain'],[3,'🌿','ویستریا ساده ۲','plain'],
-[4,'🌉','پل','animal',''],[4,'短','روبان زنبق','ribbon','plainribbon'],[4,'🌿','زنبق ساده ۱','plain'],[4,'🌿','زنبق ساده ۲','plain'],
-[5,'🦋','پروانه','animal','butterfly'],[5,'短','روبان آبی گل صدتومانی','ribbon','blue'],[5,'🌺','گل صدتومانی ساده ۱','plain'],[5,'🌺','گل صدتومانی ساده ۲','plain'],
-[6,'🐗','گراز','animal','boar'],[6,'短','روبان شبدر','ribbon','plainribbon'],[6,'🍀','شبدر ساده ۱','plain'],[6,'🍀','شبدر ساده ۲','plain'],
-[7,'🌕','ماه','light','moon'],[7,'🪿','غازها','animal',''],[7,'🌾','پامپاس ساده ۱','plain'],[7,'🌾','پامپاس ساده ۲','plain'],
-[8,'🍶','جام ساکه','animal','sake'],[8,'短','روبان آبی داوودی','ribbon','blue'],[8,'🌼','داوودی ساده ۱','plain'],[8,'🌼','داوودی ساده ۲','plain'],
-[9,'🦌','گوزن','animal','deer'],[9,'短','روبان آبی افرا','ribbon','blue'],[9,'🍁','افرا ساده ۱','plain'],[9,'🍁','افرا ساده ۲','plain'],
-[10,'🌧️','باران','light','rain'],[10,'🐦','پرستو','animal',''],[10,'短','روبان بید','ribbon','plainribbon'],[10,'🌿','بید ساده','plain'],
-[11,'🦚','ققنوس','light','phoenix'],[11,'🌸','پاولونیا ساده ۱','plain'],[11,'🌸','پاولونیا ساده ۲','plain'],[11,'🌸','پاولونیا ساده ۳','plain']
+var $=function(i){return document.getElementById(i)};
+var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
+var ac=null;
+function snd(f,d,ty,v){try{if(!ac){var C=window.AudioContext||window.webkitAudioContext;ac=new C()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=ty||'triangle';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*.6,t+d);g.gain.setValueAtTime(GV*(v||.18),t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+function snap(){snd(900,.05,'square',.12);setTimeout(function(){snd(520,.07,'triangle',.14)},40)}
+function chime(){snd(784,.25,'sine',.2);setTimeout(function(){snd(1175,.4,'sine',.18)},120)}
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+var fa=function(n){return String(n).replace(/\d/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'[d]})};
+
+/* ================= ورق‌ها ================= */
+var MON=[
+ {fa:'کاج',ja:'松',en:'Matsu'},{fa:'آلو',ja:'梅',en:'Ume'},{fa:'گیلاس',ja:'桜',en:'Sakura'},{fa:'ویستریا',ja:'藤',en:'Fuji'},
+ {fa:'زنبق',ja:'菖',en:'Ayame'},{fa:'گل صدتومانی',ja:'牡',en:'Botan'},{fa:'شبدر بوته‌ای',ja:'萩',en:'Hagi'},{fa:'پامپاس',ja:'芒',en:'Susuki'},
+ {fa:'داوودی',ja:'菊',en:'Kiku'},{fa:'افرا',ja:'紅',en:'Momiji'},{fa:'بید',ja:'柳',en:'Yanagi'},{fa:'پاولونیا',ja:'桐',en:'Kiri'}];
+// t: L روشنایی، T حیوان، R روبان، K ساده
+var DEF=[
+ [0,'L','crane','درنا','鶴'],[0,'R','redpoem','روبان شعر','あかよろし'],[0,'K','','',''],[0,'K','','',''],
+ [1,'T','warbler','بلبل','鶯'],[1,'R','redpoem','روبان شعر','あかよろし'],[1,'K','','',''],[1,'K','','',''],
+ [2,'L','curtain','پرده','幕'],[2,'R','redpoem','روبان شعر','みよしの'],[2,'K','','',''],[2,'K','','',''],
+ [3,'T','cuckoo','فاخته','時鳥'],[3,'R','red','روبان قرمز','' ],[3,'K','','',''],[3,'K','','',''],
+ [4,'T','bridge','پل','八橋'],[4,'R','red','روبان قرمز',''],[4,'K','','',''],[4,'K','','',''],
+ [5,'T','butterfly','پروانه','蝶'],[5,'R','blue','روبان آبی',''],[5,'K','','',''],[5,'K','','',''],
+ [6,'T','boar','گراز','猪'],[6,'R','red','روبان قرمز',''],[6,'K','','',''],[6,'K','','',''],
+ [7,'L','moon','ماه','月'],[7,'T','geese','غازها','雁'],[7,'K','','',''],[7,'K','','',''],
+ [8,'T','sake','جام ساکه','盃'],[8,'R','blue','روبان آبی',''],[8,'K','','',''],[8,'K','','',''],
+ [9,'T','deer','گوزن','鹿'],[9,'R','blue','روبان آبی',''],[9,'K','','',''],[9,'K','','',''],
+ [10,'L','rain','مرد باران','雨'],[10,'T','swallow','پرستو','燕'],[10,'R','red','روبان','' ],[10,'K','','',''],
+ [11,'L','phoenix','ققنوس','鳳'],[11,'K','','',''],[11,'K','','',''],[11,'K','','','']];
+var DECK=DEF.map(function(d,i){return{id:i,m:d[0],t:d[1],k:d[2],n:d[3],jp:d[4]}});
+var TN={L:'روشنایی',T:'حیوان',R:'روبان',K:'ساده'};
+
+/* ---------- نقاشی ورق (SVG) ---------- */
+function blossom(x,y,r,c,ctr){var s='';for(var k=0;k<5;k++){var a=k*72*Math.PI/180-Math.PI/2;s+='<circle cx="'+(x+Math.cos(a)*r*.75).toFixed(1)+'" cy="'+(y+Math.sin(a)*r*.75).toFixed(1)+'" r="'+(r*.58).toFixed(1)+'" fill="'+c+'" stroke="rgba(120,40,60,.35)" stroke-width=".4"/>'}return s+'<circle cx="'+x+'" cy="'+y+'" r="'+(r*.3)+'" fill="'+(ctr||'#f2c94c')+'"/>'}
+function leaf(x,y,s,rot,c){return '<path transform="translate('+x+' '+y+') rotate('+rot+') scale('+s+')" d="M0 0C5-7 13-6 18 0C13 6 5 7 0 0Z" fill="'+c+'" stroke="rgba(0,50,20,.4)" stroke-width=".5"/>'}
+function maple(x,y,s,c){return '<path transform="translate('+x+' '+y+') scale('+s+')" d="M0-10L2.5-5L8-7L6-1L11 1L5 3L6 9L0 6L-6 9L-5 3L-11 1L-6-1L-8-7L-2.5-5Z" fill="'+c+'" stroke="rgba(90,10,10,.5)" stroke-width=".6"/>'}
+var PLANT=[
+ function(){return '<path d="M30 94V40" stroke="#6b4423" stroke-width="3.2"/>'+[[28,26],[46,22],[64,18]].map(function(a,i){var y=a[0]+4,w=a[1];return '<path d="M'+(30-w)+' '+(y+10)+'Q30 '+(y-16)+' '+(30+w)+' '+(y+10)+'Q30 '+(y+3)+' '+(30-w)+' '+(y+10)+'Z" fill="'+(i?'#2f7d3f':'#3a8c4a')+'" stroke="#16421f" stroke-width=".6"/>'}).join('')+'<path d="M12 62Q30 50 48 62" stroke="#1e5a2a" stroke-width="1.2" fill="none"/><path d="M14 44Q30 34 46 44" stroke="#1e5a2a" stroke-width="1.2" fill="none"/>'},
+ function(){return '<path d="M2 92Q22 66 30 52T58 20" stroke="#5b3a1f" stroke-width="3" fill="none"/>'+blossom(16,72,7,'#f6a9bd')+blossom(30,52,8,'#f48fb1')+blossom(44,34,7.5,'#f6a9bd')+blossom(52,20,6,'#f8bbd0')+blossom(22,56,5,'#f6a9bd')+blossom(40,60,5,'#f8bbd0')},
+ function(){return '<path d="M0 90Q24 68 36 52T60 24" stroke="#5b3a1f" stroke-width="3" fill="none"/>'+blossom(16,74,7,'#fde0e8','#e8a')+blossom(30,58,8.5,'#fbd0dc','#e8a')+blossom(42,44,7.5,'#fde0e8','#e8a')+blossom(52,30,6,'#fbd0dc','#e8a')+blossom(24,44,6,'#fde0e8','#e8a')+blossom(46,64,6,'#fbd0dc','#e8a')},
+ function(){var s='<path d="M0 16Q30 8 60 18" stroke="#5b3a1f" stroke-width="3" fill="none"/>';[10,28,46].forEach(function(x,k){for(var j=0;j<6;j++){var w=(5-j)*.9+1;s+='<circle cx="'+(x+(j%2?2:-2)).toFixed(1)+'" cy="'+(22+j*9+k*3)+'" r="'+(w+2.2).toFixed(1)+'" fill="'+(j%2?'#8e6bbf':'#a58ad6')+'" stroke="rgba(60,30,100,.4)" stroke-width=".5"/>'}});return s+leaf(6,20,.8,70,'#4f9b4a')+leaf(40,16,.8,110,'#4f9b4a')},
+ function(){var s='<path d="M30 94Q22 60 8 28M30 94Q34 56 40 22M30 94Q46 62 54 40" stroke="#2e7d32" stroke-width="5" fill="none" stroke-linecap="round"/>';[[12,32,-10],[40,24,5],[52,42,20]].forEach(function(f){s+='<g transform="translate('+f[0]+' '+f[1]+') rotate('+f[2]+')"><ellipse cx="-6" cy="0" rx="5" ry="9" fill="#4a3fb0" stroke="#1f1a6a" stroke-width=".5" transform="rotate(-30 -6 0)"/><ellipse cx="6" cy="0" rx="5" ry="9" fill="#4a3fb0" stroke="#1f1a6a" stroke-width=".5" transform="rotate(30 6 0)"/><ellipse cx="0" cy="-3" rx="5" ry="10" fill="#6b5ed1" stroke="#1f1a6a" stroke-width=".5"/><path d="M0 -6V4" stroke="#f2c94c" stroke-width="1.5"/></g>'});return s},
+ function(){return leaf(4,80,1.2,-40,'#2e7d32')+leaf(56,80,1.2,220,'#2e7d32')+leaf(30,90,1.2,-90,'#2f8d3a')+'<circle cx="30" cy="48" r="20" fill="#c2185b" stroke="#6a0c33" stroke-width=".8"/><circle cx="30" cy="48" r="14.5" fill="#e0407f"/><circle cx="30" cy="48" r="9" fill="#f06292"/><circle cx="30" cy="48" r="4" fill="#f8bbd0"/><path d="M18 40Q30 30 42 40M16 52Q30 66 44 52" stroke="#8a0f45" stroke-width=".8" fill="none"/>'+'<circle cx="12" cy="76" r="8" fill="#e0407f" stroke="#6a0c33" stroke-width=".6"/><circle cx="12" cy="76" r="4" fill="#f48fb1"/>'},
+ function(){var s='<path d="M4 92Q6 40 54 26" stroke="#6b4a2a" stroke-width="2.6" fill="none"/>';[[10,70],[12,56],[18,44],[28,35],[40,29],[8,82],[22,56],[34,44]].forEach(function(p,i){s+=leaf(p[0],p[1],.6,(i*37)%120-30,'#4f9b4a')+'<circle cx="'+(p[0]+4)+'" cy="'+(p[1]+3)+'" r="2.8" fill="#d6338c" stroke="#7a1650" stroke-width=".4"/><circle cx="'+(p[0]+8)+'" cy="'+(p[1]-2)+'" r="2.4" fill="#e65aa6" stroke="#7a1650" stroke-width=".4"/>'});return s},
+ function(){return '<path d="M0 78Q18 64 40 70T60 76V96H0Z" fill="#26262e"/>'+'<path d="M16 94Q18 60 12 28M30 94Q30 56 32 20M44 94Q42 62 52 30" stroke="#b7a46a" stroke-width="1.6" fill="none"/>'+[[12,28,-8],[32,20,0],[52,30,10]].map(function(p){return '<ellipse cx="'+p[0]+'" cy="'+p[1]+'" rx="3.4" ry="12" fill="#d9c88d" stroke="#8f7c3c" stroke-width=".5" transform="rotate('+p[2]+' '+p[0]+' '+p[1]+')"/>'}).join('')+leaf(10,86,1,-70,'#5b8a3f')+leaf(50,88,1,250,'#5b8a3f')},
+ function(){var s=leaf(6,84,1.2,-30,'#2e7d32')+leaf(54,84,1.2,210,'#2e7d32');[[30,46,18],[13,76,10]].forEach(function(f){for(var k=0;k<16;k++){s+='<ellipse cx="'+f[0]+'" cy="'+(f[1]-f[2]*.62)+'" rx="'+(f[2]*.12)+'" ry="'+(f[2]*.42)+'" fill="'+(k%2?'#f6d54a':'#fbe27a')+'" stroke="#b5870f" stroke-width=".4" transform="rotate('+(k*22.5)+' '+f[0]+' '+f[1]+')"/>'}s+='<circle cx="'+f[0]+'" cy="'+f[1]+'" r="'+(f[2]*.22)+'" fill="#d97706"/>'});return s},
+ function(){return '<path d="M30 94Q26 66 36 46M36 46Q20 38 14 28M36 46Q48 36 52 24" stroke="#5b3a1f" stroke-width="2.6" fill="none"/>'+maple(14,30,1.35,'#d32f2f')+maple(52,26,1.25,'#e64a19')+maple(34,50,1.25,'#c62828')+maple(14,66,1.1,'#e64a19')+maple(48,70,1.2,'#d32f2f')},
+ function(){var s='<path d="M0 12Q30 4 60 14" stroke="#5b3a1f" stroke-width="3.2" fill="none"/>';for(var i=0;i<8;i++){var x=4+i*7.6,dx=(i%2?3:-3);s+='<path d="M'+x+' 12Q'+(x+dx)+' 48 '+(x-dx*.5)+' '+(70+(i%3)*8)+'" stroke="#5a9e4b" stroke-width="1.7" fill="none"/>'+leaf(x-2,30+(i%3)*10,.45,80,'#74b563')+leaf(x-2,50+(i%2)*8,.45,100,'#74b563')}return s},
+ function(){var s=leaf(4,86,1.5,-35,'#2f7d3a')+leaf(56,86,1.5,215,'#2f7d3a')+leaf(30,92,1.3,-90,'#388e3c');[14,30,46].forEach(function(x,k){s+='<path d="M'+x+' 80V'+(24+k*4)+'" stroke="#6b4a2a" stroke-width="1.6"/>';for(var j=0;j<6;j++){s+='<circle cx="'+(x+(j%2?3:-3))+'" cy="'+(30+k*4+j*8)+'" r="'+(3.8-j*.15)+'" fill="'+(j%2?'#7e57c2':'#9575cd')+'" stroke="#3b2a7a" stroke-width=".4"/>'}});return s}
 ];
-const DECK=raw.map((r,i)=>({id:i,month:r[0],art:r[1],name:r[2],type:r[3],tag:r[4]||''}));
-const $=id=>document.getElementById(id);let state=null;
-function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function fresh(){let d=shuffle(DECK.map(c=>({...c})));state={round:1,pScore:0,cScore:0,deck:d.slice(24),field:d.slice(8,16),playerHand:d.slice(0,8),cpuHand:d.slice(16,24),pCap:[],cCap:[],turn:'p',selected:null,waiting:false,pKoi:false,cKoi:false,pYaku:[],cYaku:[],ended:false};render();say('نوبت توست؛ یک کارت از دستت انتخاب کن.')}
-function cardHTML(c,opts={}){return `<button class="card ${opts.back?'back':''} ${opts.selected?'selected':''}" ${opts.disabled?'disabled':''} data-id="${c.id}" aria-label="${c.name||'کارت پشت'}">${opts.back?'花札':`<span class="month">${c.month+1}</span><span class="art">${c.art}</span><span class="kind">${c.name}</span>`}</button>`}
-function render(){if(!state)return;$('roundNo').textContent=`${state.round} / ۶`;$('playerScore').textContent=state.pScore;$('cpuScore').textContent=state.cScore;$('cpuCount').textContent=`${state.cpuHand.length} کارت`;$('handCount').textContent=`${state.playerHand.length} کارت`;$('deckCount').textContent=`دسته: ${state.deck.length} کارت`;
-$('cpuHand').innerHTML=state.cpuHand.map(c=>cardHTML(c,{back:true,disabled:true})).join('')||'<span class="empty">دست کامپیوتر خالی است</span>';
-$('playerHand').innerHTML=state.playerHand.map(c=>cardHTML(c,{selected:state.selected===c.id,disabled:state.turn!=='p'||state.waiting||state.ended})).join('')||'<span class="empty">دستت خالی است</span>';
-$('field').innerHTML=state.field.map(c=>cardHTML(c,{disabled:true})).join('')||'<span class="empty">زمین خالی است</span>';
-$('playerCaptured').innerHTML=state.pCap.map(c=>cardHTML(c,{disabled:true})).join('')||'<span class="empty">هنوز کارتی جمع نکرده‌ای</span>';$('cpuCaptured').innerHTML=state.cCap.map(c=>cardHTML(c,{disabled:true})).join('')||'<span class="empty">هنوز کارتی جمع نکرده</span>';
-$('playerYaku').textContent=state.pYaku.length?state.pYaku.map(y=>y.name).join('، '):'هنوز ترکیبی نداری';$('cpuYaku').textContent=state.cYaku.length?state.cYaku.map(y=>y.name).join('، '):'هنوز ترکیبی ندارد';
-$('playerHand').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>chooseCard(+b.dataset.id)))}
-function say(t){$('message').textContent=t}
-function getMatches(card){return state.field.filter(x=>x.month===card.month)}
-function chooseCard(id){if(state.turn!=='p'||state.waiting||state.ended)return;let c=state.playerHand.find(x=>x.id===id);if(!c)return;state.selected=id;let m=getMatches(c);if(m.length>1){showPick(c,m,'p');return}playCard('p',c,m[0]||null)}
-function showPick(card,matches,who){state.waiting=true;$('pickCards').innerHTML=matches.map(c=>cardHTML(c)).join('');$('pickModal').classList.add('show');$('pickCards').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{let target=matches.find(x=>x.id===+b.dataset.id);$('pickModal').classList.remove('show');state.waiting=false;playCard(who,card,target)}))}
-function capture(who,card,target){let cap=who==='p'?state.pCap:state.cCap;if(!target){state.field.push(card);return}let matches=getMatches(card);if(matches.length>=3){state.field=state.field.filter(x=>x.month!==card.month);cap.push(card,...matches);return}state.field=state.field.filter(x=>x.id!==target.id);cap.push(card,target)}
-function playCard(who,card,target){let hand=who==='p'?state.playerHand:state.cpuHand;hand.splice(hand.findIndex(x=>x.id===card.id),1);capture(who,card,target);state.selected=null;drawOne(who);render();if(who==='p'){checkYaku('p');}else{checkYaku('c');}}
-function drawOne(who){if(!state.deck.length)return;let c=state.deck.pop(),matches=getMatches(c);if(matches.length===1)capture(who,c,matches[0]);else if(matches.length>=3){let cap=who==='p'?state.pCap:state.cCap;state.field=state.field.filter(x=>x.month!==c.month);cap.push(c,...matches)}else if(matches.length===2){let target=matches.sort((a,b)=>typeValue(b)-typeValue(a))[0];capture(who,c,target)}else capture(who,c,null)}
-function yakuFor(cap){let has=t=>cap.some(c=>c.tag===t),count=t=>cap.filter(c=>c.type===t).length;let lights=count('light'),animals=count('animal'),ribbons=count('ribbon'),plains=count('plain'),out=[];
-if(lights===5)out.push({id:'goko',name:'پنج روشنایی',pts:10});else if(lights===4&&has('rain'))out.push({id:'ame-shiko',name:'چهار روشنایی با باران',pts:7});else if(lights===4)out.push({id:'shiko',name:'چهار روشنایی',pts:8});else if(lights>=3&&!has('rain'))out.push({id:'sanko',name:'سه روشنایی',pts:5});
-if(has('boar')&&has('deer')&&has('butterfly'))out.push({id:'inoshika',name:'گراز، گوزن و پروانه',pts:5});if(['redpoem'].filter(t=>cap.filter(c=>c.tag===t).length>=3).length)out.push({id:'akatan',name:'سه روبان شعر',pts:5});if(cap.filter(c=>c.tag==='blue').length>=3)out.push({id:'aotan',name:'سه روبان آبی',pts:5});if(has('curtain')&&has('sake'))out.push({id:'hanami',name:'تماشای گل',pts:5});if(has('moon')&&has('sake'))out.push({id:'tsukimi',name:'تماشای ماه',pts:5});
-if(animals>=5)out.push({id:'tane',name:`حیوان‌ها (${animals})`,pts:1+animals-5});if(ribbons>=5)out.push({id:'tan',name:`روبان‌ها (${ribbons})`,pts:1+ribbons-5});if(plains>=10)out.push({id:'kasu',name:`کارت‌های ساده (${plains})`,pts:1+plains-10});return out}
-function totalYaku(ys){return ys.reduce((s,y)=>s+y.pts,0)}
-function checkYaku(who){let cap=who==='p'?state.pCap:state.cCap,old=who==='p'?state.pYaku:state.cYaku,now=yakuFor(cap),freshY=now.filter(y=>!old.some(o=>o.id===y.id));if(who==='p')state.pYaku=now;else state.cYaku=now;
-if(freshY.length){if(who==='p'){state.waiting=true;$('choiceTitle').textContent='ترکیب جدید ساختی!';$('choiceText').textContent=freshY.map(y=>`${y.name}: ${y.pts} امتیاز`).join(' · ')+` | مجموع ترکیب‌ها: ${totalYaku(now)} امتیاز`; $('choiceModal').classList.add('show');say('ترکیب امتیازی ساختی؛ تصمیم بگیر.');render();}else{let chooseStop=!state.cKoi||Math.random()<.62;if(chooseStop){finishRound('c','کامپیوتر ترکیب ساخت و دور را تمام کرد.')}else{state.cKoi=true;state.turn='p';say('کامپیوتر کوی‌کوی گفت و ادامه می‌دهد؛ نوبت توست.');render();}}return}
-if(who==='p'){if(!state.cpuHand.length){finishDraw();return}state.turn='c';say('نوبت کامپیوتر...');render();setTimeout(cpuTurn,650)}else{if(!state.playerHand.length){finishDraw();return}state.turn='p';say('نوبت توست؛ یک کارت انتخاب کن.');render()}}
-function cpuTurn(){if(state.ended||state.turn!=='c')return;let best=null,bestVal=-1e9;for(let c of state.cpuHand){let ms=getMatches(c),val=(ms.length?5:0)+(c.type==='light'?3:c.type==='animal'?2:c.type==='ribbon'?1:0)+Math.random();if(val>bestVal){bestVal=val;best=c}}let m=getMatches(best);if(m.length>1){let target=m.sort((a,b)=>typeValue(b)-typeValue(a))[0];playCard('c',best,target)}else playCard('c',best,m[0]||null)}
-function typeValue(c){return c.type==='light'?4:c.type==='animal'?3:c.type==='ribbon'?2:1}
-function finishRound(who,reason){if(state.ended)return;state.ended=true;let ys=who==='p'?state.pYaku:state.cYaku,pts=totalYaku(ys);if(who==='p')state.pScore+=pts*(state.cKoi?2:1);else state.cScore+=pts*(state.pKoi?2:1);render();$('endTitle').textContent=who==='p'?'آفرین! این دور را بردی':'این دور را کامپیوتر برد';$('endText').textContent=`${reason} امتیاز این دور: ${pts}${(who==='p'?state.cKoi:state.pKoi)?' (دوبرابر به‌خاطر کوی‌کوی حریف)':''}. مجموع امتیازها — تو: ${state.pScore} | کامپیوتر: ${state.cScore}`;$('nextBtn').textContent=state.round>=6?'نتیجه نهایی':'دور بعدی';$('endModal').classList.add('show')}
-function finishDraw(){state.ended=true;render();$('endTitle').textContent='پایان دور';$('endText').textContent='کارت‌ها تمام شدند و کسی دور را با شو-بو نبست؛ این دور بدون امتیاز تمام شد.';$('nextBtn').textContent=state.round>=6?'نتیجه نهایی':'دور بعدی';$('endModal').classList.add('show')}
-$('stopBtn').onclick=()=>{$('choiceModal').classList.remove('show');state.waiting=false;finishRound('p','تو شو-بو گفتی و امتیازت را ثبت کردی.')};$('koiBtn').onclick=()=>{$('choiceModal').classList.remove('show');state.waiting=false;state.pKoi=true;if(!state.playerHand.length||!state.deck.length){finishDraw();return}state.turn='c';say('کوی‌کوی گفتی؛ کامپیوتر بازی می‌کند.');render();setTimeout(cpuTurn,500)};
-$('newBtn').onclick=()=>{if(confirm('بازی فعلی از نو شروع شود؟')){$('endModal').classList.remove('show');$('choiceModal').classList.remove('show');fresh()}};$('restartBtn').onclick=()=>{$('endModal').classList.remove('show');fresh()};$('nextBtn').onclick=()=>{if(state.round>=6){$('endModal').classList.remove('show');$('endTitle').textContent=state.pScore===state.cScore?'بازی مساوی شد':state.pScore>state.cScore?'قهرمان شدی!':'کامپیوتر برنده شد';$('endText').textContent=`نتیجه پس از ۶ دور: تو ${state.pScore} — کامپیوتر ${state.cScore}`;$('nextBtn').textContent='بازی جدید';$('nextBtn').onclick=()=>{$('endModal').classList.remove('show');fresh()};$('restartBtn').classList.add('hidden');$('endModal').classList.add('show')}else{let p=state.pScore,c=state.cScore,r=state.round+1;fresh();state.pScore=p;state.cScore=c;state.round=r;render();$('endModal').classList.remove('show')}};
-$('rulesBtn').onclick=()=>$('rulesModal').classList.add('show');$('closeRules').onclick=()=>$('rulesModal').classList.remove('show');
-fresh();
+function umbrella(){return '<path d="M12 56Q30 28 48 56Q40 51 30 56Q20 51 12 56Z" fill="#d62828" stroke="#6b0f0f" stroke-width=".7"/><path d="M30 56V76" stroke="#5b3a1f" stroke-width="1.4"/><circle cx="30" cy="68" r="3.2" fill="#f1d9b5"/><path d="M26 72L30 84L34 72Z" fill="#33496b"/>'}
+function figure(c){var k=c.k,s='';
+ if(k==='crane')return '<circle cx="42" cy="26" r="11" fill="#d62828"/><text x="28" y="62" font-size="26" text-anchor="middle">🦢</text>';
+ if(k==='curtain'){var st='';for(var i=0;i<8;i++)st+='<rect x="'+(6+i*6.5)+'" y="40" width="6.5" height="26" fill="'+(i%2?'#fff':'#c62828')+'"/>';return '<rect x="3" y="36" width="54" height="4" rx="2" fill="#5b3a1f"/>'+st+'<path d="M6 66h52" stroke="#5b3a1f" stroke-width="1"/>'}
+ if(k==='moon')return '<rect x="0" y="0" width="60" height="96" fill="#b3261e" opacity=".92"/><circle cx="30" cy="34" r="15" fill="#fff6c9" stroke="#e8d88a" stroke-width="1"/><path d="M0 70Q16 58 34 66T60 62V96H0Z" fill="#15151b"/>'+PLANT[7]().replace('<path d="M0 78Q18 64 40 70T60 76V96H0Z" fill="#26262e"/>','');
+ if(k==='rain')return umbrella();
+ if(k==='phoenix')return '<text x="30" y="44" font-size="30" text-anchor="middle">🦚</text>';
+ if(k==='sake')return '<ellipse cx="30" cy="62" rx="19" ry="6" fill="#7f1010" stroke="#e3c26e" stroke-width="1"/><path d="M11 62Q30 94 49 62Z" fill="#c62828" stroke="#e3c26e" stroke-width="1"/><ellipse cx="30" cy="62" rx="14" ry="3.6" fill="#f2d28a" opacity=".85"/>';
+ if(k==='bridge')return '<path d="M2 64L14 54L26 64L38 54L58 62" stroke="#6b4423" stroke-width="5" fill="none" stroke-linejoin="round"/><path d="M2 70L14 60L26 70L38 60L58 68" stroke="#4e3219" stroke-width="2" fill="none"/>';
+ if(k==='geese')return '<rect x="0" y="0" width="60" height="96" fill="#b3261e" opacity=".92"/><circle cx="42" cy="24" r="11" fill="#fff6c9"/><path d="M0 74Q16 62 34 70T60 66V96H0Z" fill="#15151b"/><path d="M8 38Q14 30 20 38M24 48Q30 40 36 48M38 40Q44 32 50 40" stroke="#15151b" stroke-width="2.6" fill="none" stroke-linecap="round"/>';
+ var E={warbler:'🐦',cuckoo:'🕊️',butterfly:'🦋',boar:'🐗',deer:'🦌',swallow:'🐦'};
+ if(E[k])return '<circle cx="30" cy="56" r="17" fill="rgba(255,255,255,.55)"/><text x="30" y="65" font-size="25" text-anchor="middle">'+E[k]+'</text>';
+ return '';
+}
+function ribbon(c){
+ var col=c.k==='blue'?'#1f5fb5':'#d12a2a',dk=c.k==='blue'?'#0e3568':'#7a1010',s='<g transform="rotate(-6 30 50)"><rect x="14" y="18" width="32" height="64" rx="3" fill="'+col+'" stroke="'+dk+'" stroke-width="1.2"/><rect x="14" y="18" width="32" height="8" fill="rgba(255,255,255,.25)"/>';
+ if(c.k==='redpoem'){var ch=c.jp.split('');ch.forEach(function(x,i){s+='<text x="30" y="'+(36+i*10)+'" font-size="9" fill="#2a1010" text-anchor="middle" font-family="serif">'+x+'</text>'})}
+ else if(c.k==='blue'){s+='<path d="M20 40Q30 34 40 40M20 52Q30 46 40 52M20 64Q30 58 40 64" stroke="rgba(255,255,255,.35)" stroke-width="1.4" fill="none"/>'}
+ return s+'</g>';
+}
+var cache={};
+function cardSVG(c){
+ if(cache[c.id])return cache[c.id];
+ var bg=c.t==='L'?'#fff7da':'#fbf3dd',s='<svg viewBox="0 0 60 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><clipPath id="cp'+c.id+'"><rect x="2" y="2" width="56" height="92" rx="5"/></clipPath></defs>';
+ s+='<rect x="0.5" y="0.5" width="59" height="95" rx="6" fill="'+bg+'" stroke="'+(c.t==='L'?'#c99a2e':'#3a2d18')+'" stroke-width="'+(c.t==='L'?1.6:1)+'"/>';
+ s+='<g clip-path="url(#cp'+c.id+')">';
+ if(c.t==='L')s+='<circle cx="30" cy="48" r="46" fill="#ffe9a6" opacity=".45"/>';
+ s+=PLANT[c.m]();
+ if(c.t==='R')s+=ribbon(c);else s+=figure(c);
+ s+='</g>';
+ s+='<circle cx="9" cy="9" r="6.3" fill="#1b3a2a" stroke="#e3c26e" stroke-width=".8"/><text x="9" y="11.8" font-size="7.6" font-weight="700" fill="#fff" text-anchor="middle">'+(c.m+1)+'</text>';
+ if(c.t==='L')s+='<text x="51" y="12" font-size="8" fill="#b9851a" text-anchor="middle">★</text>';
+ if(c.jp&&c.t!=='R'&&c.t!=='K')s+='<text x="30" y="91" font-size="8" fill="#2b2208" text-anchor="middle" opacity=".9">'+c.jp+'</text>';
+ s+='</svg>';return cache[c.id]=s;
+}
+function backSVG(){return '<svg viewBox="0 0 60 96" aria-hidden="true"><rect x=".5" y=".5" width="59" height="95" rx="6" fill="#7a1616" stroke="#e3c26e" stroke-width="1"/><rect x="5" y="5" width="50" height="86" rx="3" fill="none" stroke="#e3c26e" stroke-width=".7"/><g fill="none" stroke="#e3c26e" stroke-width=".6" opacity=".75"><circle cx="30" cy="48" r="16"/><circle cx="30" cy="48" r="10"/><path d="M30 20V76M2 48H58"/></g><text x="30" y="52" font-size="10" fill="#e3c26e" text-anchor="middle">花札</text></svg>'}
+function cardEl(c,cls,click){
+ var b=document.createElement('button');b.className='cd '+(cls||'');b.innerHTML=c?cardSVG(c):backSVG();
+ if(c)b.setAttribute('aria-label',MON[c.m].fa+' — '+(c.n||TN[c.t]));else b.setAttribute('aria-label','پشت ورق');
+ if(click)b.addEventListener('click',click);else b.tabIndex=-1;
+ return b;
+}
+
+/* ================= یاکو (ترکیب‌ها) ================= */
+function yakuOf(cap){
+ var has=function(k){return cap.some(function(c){return c.k===k})},cnt=function(f){return cap.filter(f).length};
+ var L=cnt(function(c){return c.t==='L'}),T=cnt(function(c){return c.t==='T'}),R=cnt(function(c){return c.t==='R'}),
+  K=cnt(function(c){return c.t==='K'||c.k==='sake'}),
+  red=cnt(function(c){return c.k==='redpoem'}),blue=cnt(function(c){return c.k==='blue'}),rain=has('rain'),out=[];
+ if(L===5)out.push({id:'goko',n:'گوکو — پنج روشنایی',p:10});
+ else if(L===4&&!rain)out.push({id:'shiko',n:'شیکو — چهار روشنایی',p:8});
+ else if(L===4)out.push({id:'ame',n:'آمه‌شیکو — چهار روشنایی با باران',p:7});
+ else if(L===3&&!rain)out.push({id:'sanko',n:'سانکو — سه روشنایی',p:5});
+ if(has('curtain')&&has('sake'))out.push({id:'hanami',n:'هانامی‌زاکه — تماشای گل با ساکه',p:5});
+ if(has('moon')&&has('sake'))out.push({id:'tsukimi',n:'تسوکیمی‌زاکه — تماشای ماه با ساکه',p:5});
+ if(has('boar')&&has('deer')&&has('butterfly'))out.push({id:'ino',n:'اینوشیکاچو — گراز، گوزن، پروانه',p:5});
+ if(red===3)out.push({id:'aka',n:'آکاتان — سه روبان شعر قرمز',p:5});
+ if(blue===3)out.push({id:'ao',n:'آئوتان — سه روبان آبی',p:5});
+ if(T>=5)out.push({id:'tane',n:'تانه — '+fa(T)+' حیوان',p:T-4});
+ if(R>=5)out.push({id:'tan',n:'تان — '+fa(R)+' روبان',p:R-4});
+ if(K>=10)out.push({id:'kasu',n:'کاسو — '+fa(K)+' ورق ساده',p:K-9});
+ return out;
+}
+var sum=function(y){return y.reduce(function(a,b){return a+b.p},0)};
+
+/* ================= وضعیت بازی ================= */
+var G=null,R=null,token=0;
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function badDeal(d){
+ var cnt=function(arr){var m={};arr.forEach(function(c){m[c.m]=(m[c.m]||0)+1});return Object.keys(m).some(function(k){return m[k]===4})};
+ return cnt(d.slice(0,8))||cnt(d.slice(8,16))||cnt(d.slice(16,24));
+}
+function startMatch(n){token++;G={n:n,round:0,s:{p:0,c:0},oya:Math.random()<.5?'p':'c'};nextRound(true)}
+function nextRound(first){
+ var d;do{d=shuffle(DECK.map(function(c){return Object.assign({},c)}))}while(badDeal(d));
+ G.round++;
+ R={hand:{p:d.slice(0,8),c:d.slice(8,16)},field:d.slice(16,24),deck:d.slice(24),cap:{p:[],c:[]},koi:{p:false,c:false},last:{p:0,c:0},turn:G.oya,ask:null,drawn:null,done:false,sel:null,fresh:{}};
+ render();
+ say(G.oya==='p'?(first?'قرعه: شما اولید (اویا). یک ورق از دستت انتخاب کن.':'شما اویا هستید و اول بازی می‌کنید.'):(first?'قرعه: حریف اول بازی می‌کند.':'حریف اویا است و اول بازی می‌کند.'));
+ loop(token);
+}
+async function loop(my){
+ while(!R.done){
+  if(my!==token)return;
+  var who=R.turn;
+  await turn(who,my);
+  if(my!==token||R.done)return;
+  R.turn=who==='p'?'c':'p';
+  if(!R.hand.p.length&&!R.hand.c.length){endDrawOrKoi();return}
+ }
+}
+function matches(m){return R.field.filter(function(c){return c.m===m})}
+function remove(arr,c){var i=arr.indexOf(c);if(i>-1)arr.splice(i,1)}
+function takeCards(who,card,target){
+ var ms=matches(card.m),got=[];
+ if(!ms.length){R.field.push(card);R.fresh[card.id]=1;return got}
+ if(ms.length===3){ms.forEach(function(c){remove(R.field,c);got.push(c)});got.push(card)}
+ else{var t=target||ms[0];remove(R.field,t);got.push(t,card)}
+ got.forEach(function(c){R.cap[who].push(c);R.fresh[c.id]=1});
+ return got;
+}
+function val(c){return c.t==='L'?20:c.t==='T'?(c.k==='sake'?12:10):c.t==='R'?(c.k==='redpoem'||c.k==='blue'?8:5):1}
+function gainOf(who,card,target){
+ var ms=matches(card.m);if(!ms.length)return -val(card)*.7-(R.field.length>6?1:0);
+ var got=ms.length===3?ms.concat([card]):[target||ms[0],card];
+ var before=sum(yakuOf(R.cap[who])),after=sum(yakuOf(R.cap[who].concat(got)));
+ var g=got.reduce(function(a,c){return a+val(c)},0)+(after-before)*14;
+ // پیشرفت به سمت ترکیب‌ها
+ got.forEach(function(c){if(c.k==='redpoem'||c.k==='blue')g+=3;if(c.k==='sake'||c.k==='boar'||c.k==='deer'||c.k==='butterfly')g+=3});
+ return g+(ms.length===3?8:0);
+}
+function aiChoose(who){
+ var best=null,bv=-1e9;
+ R.hand[who].forEach(function(c){
+  var ms=matches(c.m);
+  if(ms.length===2){ms.forEach(function(t){var g=gainOf(who,c,t)+Math.random();if(g>bv){bv=g;best={c:c,t:t}}})}
+  else{var g=gainOf(who,c,ms[0])+Math.random()*1.5;if(g>bv){bv=g;best={c:c,t:ms[0]||null}}}
+ });
+ return best;
+}
+function aiTarget(who,card){var ms=matches(card.m),b=ms[0],bv=-1e9;ms.forEach(function(t){var g=gainOf(who,card,t)+Math.random();if(g>bv){bv=g;b=t}});return b}
+function waitAsk(type,data){return new Promise(function(res){R.ask={type:type,data:data,res:res};render()})}
+function nm(c){return MON[c.m].fa+(c.n?' ('+c.n+')':'')}
+async function turn(who,my){
+ var pick,got;
+ R.sel=null;
+ if(who==='p'){say('نوبت توست؛ یک ورق از دستت انتخاب کن.');pick=await waitAsk('hand')}
+ else{say('حریف فکر می‌کند…');await sleep(750);if(my!==token)return;pick=aiChoose('c')}
+ if(my!==token)return;
+ remove(R.hand[who],pick.c);R.sel=null;
+ got=takeCards(who,pick.c,pick.t);
+ snap();render();
+ say((who==='p'?'شما ':'حریف ')+(got.length?'ورق «'+nm(pick.c)+'» را با «'+nm(got[0]===pick.c?got[1]:got[0])+'» جفت کرد.':'ورق «'+nm(pick.c)+'» را روی زمین گذاشت.'));
+ await sleep(850);if(my!==token)return;
+ // برداشتن از دسته
+ var dc=R.deck.pop();R.drawn=dc;render();say('ورق از دسته رو شد: «'+nm(dc)+'»');snd(380,.12);
+ await sleep(900);if(my!==token)return;
+ var ms=matches(dc.m),tg=null;
+ if(ms.length===2){
+  if(who==='p'){say('دو ورق هم‌ماه روی زمین است؛ یکی را انتخاب کن.');tg=await waitAsk('draw',{card:dc,opts:ms})}
+  else tg=aiTarget('c',dc);
+ }
+ if(my!==token)return;
+ R.drawn=null;got=takeCards(who,dc,tg);snap();render();
+ say((who==='p'?'شما ':'حریف ')+(got.length?'«'+nm(dc)+'» را برداشتید.':'«'+nm(dc)+'» روی زمین ماند.'));
+ await sleep(750);if(my!==token)return;
+ // بررسی ترکیب
+ var ys=yakuOf(R.cap[who]),tot=sum(ys);
+ if(tot>R.last[who]){
+  chime();
+  var lastCard=!R.hand[who].length;
+  var shobu;
+  if(lastCard)shobu=true;
+  else if(who==='p')shobu=await decide(ys,tot);
+  else shobu=aiDecide(tot);
+  if(my!==token)return;
+  if(shobu){finishRound(who,ys,tot);return}
+  R.koi[who]=true;R.last[who]=tot;R.lastKoi=who;
+  say(who==='p'?'کوی‌کوی گفتی! بازی ادامه دارد.':'حریف «کوی‌کوی» گفت و ادامه می‌دهد.');
+  if(who==='c'){await sleep(900)}
+ }
+}
+function aiDecide(tot){
+ var h=R.hand.c.length,pl=yakuOf(R.cap.p),pt=sum(pl);
+ if(tot>=7||h<=2)return true;
+ var threat=R.cap.p.filter(function(c){return c.t==='L'}).length*2+R.cap.p.filter(function(c){return c.t==='T'}).length+R.cap.p.filter(function(c){return c.t==='R'}).length*.8;
+ if(pt>0||threat>=7)return true;
+ return Math.random()<(h>=5?.35:.6);
+}
+function mult(who,tot){var m=1;if(tot>=7)m*=2;if(R.koi[who==='p'?'c':'p'])m*=2;return m}
+function decide(ys,tot){
+ return new Promise(function(res){
+  var m=mult('p',tot),h=R.hand.p.length;
+  var html='<h2>ترکیب جدید ساختی! 🎴</h2><ul class="yl">'+ys.map(function(y){return '<li><span>'+y.n+'</span><b>'+fa(y.p)+' امتیاز</b></li>'}).join('')+'</ul><div class="big">'+fa(tot)+(m>1?' × '+fa(m)+' = '+fa(tot*m):'')+'</div><p>اگر «شوبو» بگویی دور تمام می‌شود و امتیاز می‌گیری. اگر «کوی‌کوی» بگویی بازی ادامه پیدا می‌کند تا امتیاز بیشتری بسازی؛ اما اگر حریف زودتر ترکیب بسازد، امتیاز او دوبرابر می‌شود. ('+fa(h)+' ورق در دستت مانده)</p><div class="bt"><button class="pr" id="bShobu">شوبو · ثبت امتیاز</button><button id="bKoi">کوی‌کوی · ادامه</button></div>';
+  modal(html);
+  $('bShobu').onclick=function(){closeModal();res(true)};
+  $('bKoi').onclick=function(){closeModal();res(false)};
+ });
+}
+function finishRound(who,ys,tot){
+ R.done=true;var m=mult(who,tot),pts=tot*m;G.s[who]+=pts;G.oya=who;render();
+ var me=who==='p';
+ var html='<h2>'+(me?'این ماه را بردی! 🎉':'حریف این ماه را برد')+'</h2><ul class="yl">'+ys.map(function(y){return '<li><span>'+y.n+'</span><b>'+fa(y.p)+'</b></li>'}).join('')+'</ul><p>جمع ترکیب‌ها: '+fa(tot)+(tot>=7?' · امتیاز ۷ یا بیشتر: ×۲':'')+(R.koi[me?'c':'p']?' · «کوی‌کوی» حریف: ×۲':'')+'</p><div class="big">+'+fa(pts)+'</div>'+scoreLine();
+ endDialog(html);
+}
+function endDrawOrKoi(){
+ R.done=true;
+ var w=R.lastKoi,html;
+ if(w){ // کسی کوی‌کوی گفته و دست‌ها تمام شده
+  var ys=yakuOf(R.cap[w]),tot=sum(ys),pts=tot*(tot>=7?2:1);G.s[w]+=pts;G.oya=w;
+  html='<h2>ورق‌ها تمام شد</h2><p>'+(w==='p'?'تو':'حریف')+' قبلاً «کوی‌کوی» گفته بود و ترکیبش حفظ شد.</p><div class="big">+'+fa(pts)+' برای '+(w==='p'?'تو':'حریف')+'</div>'+scoreLine();
+ }else{html='<h2>مساوی — بدون امتیاز</h2><p>ورق‌ها تمام شد و هیچ‌کس ترکیبی نساخت. اویا همان می‌ماند.</p>'+scoreLine()}
+ render();endDialog(html);
+}
+function scoreLine(){return '<p>مجموع امتیازها — شما: <b>'+fa(G.s.p)+'</b> · حریف: <b>'+fa(G.s.c)+'</b></p>'}
+function endDialog(html){
+ var last=G.round>=G.n;
+ modal(html+'<div class="bt"><button class="pr" id="bNext">'+(last?'نتیجه‌ی نهایی':'ماه بعد')+'</button></div>');
+ $('bNext').onclick=function(){closeModal();if(last)finalDialog();else nextRound(false)};
+}
+function finalDialog(){
+ var p=G.s.p,c=G.s.c;
+ modal('<h2>'+(p>c?'قهرمان شدی! 🏆':p<c?'این بار حریف برد':'بازی مساوی شد')+'</h2><div class="big">'+fa(p)+' — '+fa(c)+'</div><p>بعد از '+fa(G.n)+' ماه بازی.</p><div class="bt"><button class="pr" id="bAgain">بازی تازه</button></div>');
+ $('bAgain').onclick=function(){closeModal();menu()};
+}
+
+/* ================= رابط ================= */
+function modal(html){$('dlg').innerHTML=html;$('ov').classList.add('on')}
+function closeModal(){$('ov').classList.remove('on')}
+function say(t){$('msg').textContent=t}
+function menu(){
+ token++;
+ modal('<h2>花札 · هانافودا کوی‌کوی</h2><p>بازی واقعی ورق‌های ژاپنی با ۴۸ ورق، قوانین و امتیازهای اصلی کوی‌کوی. چند «ماه» (دور) بازی کنیم؟</p><div class="bt"><button id="m3">۳ ماه</button><button class="pr" id="m6">۶ ماه</button><button id="m12">۱۲ ماه (کامل)</button></div><div class="bt"><button id="mr">قوانین و امتیازها</button></div>');
+ [['m3',3],['m6',6],['m12',12]].forEach(function(x){$(x[0]).onclick=function(){closeModal();startMatch(x[1])}});
+ $('mr').onclick=function(){rules(true)};
+}
+function rules(back){
+ modal('<h2>راهنمای کوی‌کوی</h2><p style="text-align:right">هر نفر ۸ ورق می‌گیرد و ۸ ورق روی زمین است. در نوبتت یک ورق از دستت را با ورق هم‌ماه زمین جفت می‌کنی و هر دو را برمی‌داری (اگر هم‌ماهی نبود، ورق روی زمین می‌ماند). بعد یک ورق از دسته رو می‌شود و همین کار را می‌کند. اگر ۳ ورق هم‌ماه روی زمین باشد، چهارمی هر ۴ را برمی‌دارد.</p><p style="text-align:right">با ساختن ترکیب (یاکو) می‌توانی «شوبو» بگویی و امتیاز بگیری، یا «کوی‌کوی» بگویی و ادامه بدهی. مجموع ۷ امتیاز یا بیشتر ×۲؛ اگر حریف کوی‌کوی گفته باشد و تو ببری ×۲ دیگر. اگر ورق‌ها تمام شوند و کسی کوی‌کوی نگفته باشد، ماه بدون امتیاز تمام می‌شود.</p><table class="tbl"><tr><td>گوکو — ۵ روشنایی</td><td>۱۰</td></tr><tr><td>شیکو — ۴ روشنایی (بدون باران)</td><td>۸</td></tr><tr><td>آمه‌شیکو — ۴ روشنایی با باران</td><td>۷</td></tr><tr><td>سانکو — ۳ روشنایی (بدون باران)</td><td>۵</td></tr><tr><td>هانامی‌زاکه — پرده + ساکه</td><td>۵</td></tr><tr><td>تسوکیمی‌زاکه — ماه + ساکه</td><td>۵</td></tr><tr><td>اینوشیکاچو — گراز + گوزن + پروانه</td><td>۵</td></tr><tr><td>آکاتان — ۳ روبان شعر قرمز</td><td>۵</td></tr><tr><td>آئوتان — ۳ روبان آبی</td><td>۵</td></tr><tr><td>تانه — ۵ حیوان (هر اضافه +۱)</td><td>۱</td></tr><tr><td>تان — ۵ روبان (هر اضافه +۱)</td><td>۱</td></tr><tr><td>کاسو — ۱۰ ساده (هر اضافه +۱)</td><td>۱</td></tr></table><p style="font-size:.78rem;color:#cdbf92;text-align:right">جام ساکه هم «حیوان» حساب می‌شود و هم برای ترکیب کاسو «ساده». روشنایی‌ها: درنا، پرده، ماه، مرد باران، ققنوس (با ★ مشخص‌اند).</p><div class="bt"><button class="pr" id="bBack">بستن</button></div>');
+ $('bBack').onclick=function(){if(back)menu();else closeModal()};
+}
+function groups(arr){
+ var o={L:[],T:[],R:[],K:[]};arr.forEach(function(c){o[c.t].push(c)});return o;
+}
+function renderCap(el,arr){
+ el.innerHTML='';
+ if(!arr.length){var e=document.createElement('small');e.style.cssText='color:#8c9a8a;font-size:.7rem;padding:6px';e.textContent='هنوز ورقی نگرفته';el.appendChild(e);return}
+ var g=groups(arr);
+ ['L','T','R','K'].forEach(function(t){
+  if(!g[t].length)return;var d=document.createElement('div');d.className='grp';
+  g[t].forEach(function(c){d.appendChild(cardEl(c,R.fresh[c.id]?'nw':''))});
+  var s=document.createElement('small');s.textContent=TN[t]+' '+fa(g[t].length);d.appendChild(s);el.appendChild(d);
+ });
+}
+function render(){
+ if(!G||!R)return;
+ $('rn').textContent=fa(G.round);$('rt').textContent=fa(G.n);$('ps').textContent=fa(G.s.p);$('cs').textContent=fa(G.s.c);
+ $('poya').innerHTML=G.oya==='p'?'<span class="badge">اویا</span>':'';$('coya').innerHTML=G.oya==='c'?'<span class="badge">اویا</span>':'';
+ var ch=$('chand');ch.innerHTML='';R.hand.c.forEach(function(){ch.appendChild(cardEl(null))});
+ renderCap($('ccap'),R.cap.c);renderCap($('pcap'),R.cap.p);
+ var ay=yakuOf(R.cap.c),py=yakuOf(R.cap.p);
+ $('cyk').textContent=ay.length?ay.map(function(y){return y.n.split(' — ')[0]}).join('، ')+(R.koi.c?' · کوی‌کوی':''):'';
+ $('pyk').textContent=py.length?py.map(function(y){return y.n.split(' — ')[0]}).join('، ')+(R.koi.p?' · کوی‌کوی':''):'';
+ var ask=R.ask,selCard=R.sel?R.hand.p.filter(function(c){return c.id===R.sel})[0]:null;
+ var hl=[]; // ورق‌های زمین که قابل انتخاب‌اند
+ if(ask&&ask.type==='draw')hl=ask.data.opts.map(function(c){return c.id});
+ else if(selCard)hl=matches(selCard.m).map(function(c){return c.id});
+ var f=$('field');f.innerHTML='';
+ R.field.forEach(function(c){
+  var ok=hl.indexOf(c.id)>-1;
+  f.appendChild(cardEl(c,(ok?'ok ':'')+(R.fresh[c.id]?'nw':''),ok?function(){fieldClick(c)}:null));
+ });
+ if(!R.field.length){var e=document.createElement('small');e.style.cssText='color:#8c9a8a;padding:10px';e.textContent='زمین خالی است';f.appendChild(e)}
+ var dk=$('deck');dk.innerHTML='';if(R.deck.length)dk.appendChild(cardEl(null));$('dcnt').textContent=fa(R.deck.length)+' ورق';
+ var dr=$('drawn');dr.innerHTML='';if(R.drawn){dr.appendChild(cardEl(R.drawn,'nw'));dr.firstChild.style.width='var(--fw)';dr.firstChild.style.height='calc(var(--fw) * 1.6)'}
+ var h=$('hand');h.innerHTML='';
+ var canPick=ask&&(ask.type==='hand'||ask.type==='target');
+ R.hand.p.forEach(function(c){
+  var cls=(R.sel===c.id?'sel ':'')+(canPick&&matches(c.m).length?'ok ':'')+(canPick?'':'dim');
+  h.appendChild(cardEl(c,cls,function(){handClick(c)}));
+ });
+ R.fresh={};
+}
+function handClick(c){
+ if(!R||!R.ask||R.done)return;
+ var a=R.ask;if(a.type!=='hand'&&a.type!=='target')return;
+ if(R.sel===c.id){R.sel=null;a.type='hand';render();return}
+ var ms=matches(c.m);
+ if(ms.length===2){R.sel=c.id;a.type='target';a.data={card:c,opts:ms};render();say('کدام ورق زمین را می‌خواهی؟ یکی از ورق‌های درخشان را لمس کن.');return}
+ R.ask=null;a.res({c:c,t:ms[0]||null});
+}
+function fieldClick(t){
+ if(!R||!R.ask)return;var a=R.ask;
+ if(a.type==='target'){R.ask=null;a.res({c:a.data.card,t:t})}
+ else if(a.type==='draw'){R.ask=null;a.res(t)}
+}
+$('rules').onclick=function(){rules(false)};
+$('newb').onclick=function(){menu()};
+menu();
+})();
 </script>
-</body></html>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

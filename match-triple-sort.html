@@ -1,15 +1,217 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Match Triple Sort | S Loop</title><style>
-*{box-sizing:border-box}body{margin:0;padding:18px;background:#e8e8e8;color:#171717;font-family:system-ui,sans-serif;text-align:center}
-main{max-width:650px;margin:auto;background:white;border-radius:18px;padding:16px;box-shadow:0 8px 28px #0002}
-h1{font-size:1.4rem}button{cursor:pointer;font:inherit}#info{min-height:32px;margin:12px;color:#444}
-.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px}
-.actions button{border:0;border-radius:10px;padding:10px 16px;background:#171717;color:white}
-</style></head><body><main><h1>Match Triple Sort</h1>
-<style>.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tile{min-height:75px;border:1px solid #bbb;border-radius:12px;background:#eee;font-size:1.8rem}.selected{outline:3px solid #159c90}</style>
-<div id="info"></div><div class="grid" id="grid"></div><div class="actions"><button onclick="reset()">چیدمان جدید</button></div>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#5b3fa8">
+<title>Triple Tile Puzzle | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:linear-gradient(170deg,#6d4fc4,#3b2a82 70%,#241a5a);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.top{display:flex;justify-content:space-between;align-items:center;width:min(100%,560px);padding:8px 14px 4px 52px;gap:8px}
+.top b{font-size:1.05rem}.top span{opacity:.85;font-size:.9rem}
+#bwrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#board{position:relative}
+.t{position:absolute;border-radius:22%;background:linear-gradient(160deg,#fffdf4,#f1e9cf);display:grid;place-items:center;cursor:pointer;
+ box-shadow:0 .09em 0 #b7a574,0 .16em 0 #8c7a4a,0 .3em .5em rgba(0,0,0,.45);transition:filter .2s,transform .12s}
+.t span{line-height:1;pointer-events:none}
+.t.cv{filter:brightness(.52) saturate(.8);cursor:not-allowed}
+.t:not(.cv):active{transform:scale(.93)}
+.t.gone{display:none}
+.t.shake{animation:sh .25s}
+@keyframes sh{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+#tray{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;background:rgba(0,0,0,.35);border:3px solid #cdb97a;border-radius:16px;padding:6px;width:min(96vw,500px);margin:6px 0}
+.sl{aspect-ratio:1/1.12;border-radius:20%;background:rgba(255,255,255,.08);display:grid;place-items:center;position:relative}
+.sl .t2{position:absolute;inset:0;border-radius:20%;background:linear-gradient(160deg,#fffdf4,#f1e9cf);display:grid;place-items:center;box-shadow:0 3px 0 #8c7a4a;animation:pop .22s ease-out}
+.sl .t2.out{animation:out .25s ease-in forwards}
+@keyframes pop{from{transform:scale(.4)}to{transform:scale(1)}}
+@keyframes out{to{transform:scale(1.3);opacity:0}}
+.tools{display:flex;gap:8px;justify-content:center;padding:2px 8px calc(10px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+.tools button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;min-width:84px}
+.tools button:disabled{opacity:.35;cursor:default}
+#ov{position:fixed;inset:0;background:rgba(10,5,40,.78);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#ov.on{display:flex}
+.card{background:#fff;color:#2a2060;border-radius:22px;padding:22px 24px;text-align:center;max-width:320px;width:100%;box-shadow:0 20px 50px #0008}
+.card h2{margin:0 0 6px}.card p{margin:4px 0 16px}
+.card button{font:inherit;border:0;border-radius:12px;padding:10px 20px;background:#6d4fc4;color:#fff;cursor:pointer;margin:3px}
+.card button.alt{background:#e7e1fa;color:#3b2a82}
+</style>
+</head>
+<body>
+<div class="top"><b id="lv">مرحله ۱</b><span id="left"></span></div>
+<div id="bwrap"><div id="board"></div></div>
+<div id="tray" aria-label="سینی"></div>
+<div class="tools">
+  <button id="undo">↶ برگشت <small id="uc"></small></button>
+  <button id="shuf">🔀 بُر زدن <small id="sc"></small></button>
+  <button id="rest">⟲ از نو</button>
+</div>
+<div id="ov"><div class="card"><h2 id="ot"></h2><p id="op"></p><div id="ob"></div></div></div>
 <script>
-const symbols=['🍓','🍋','🍇','🍒','🍉','🥝'];let tiles=[],selected=[],score=0;
-function reset(){tiles=Array.from({length:24},()=>symbols[Math.floor(Math.random()*symbols.length)]);selected=[];score=0;draw()}
-function draw(){let g=document.getElementById('grid');g.innerHTML='';tiles.forEach((t,i)=>{if(!t)return;let b=document.createElement('button');b.className='tile'+(selected.includes(i)?' selected':'');b.textContent=t;b.onclick=()=>{if(selected.includes(i))return;selected.push(i);if(selected.length===3){let vals=selected.map(j=>tiles[j]);if(vals.every(v=>v===vals[0])){selected.forEach(j=>tiles[j]='');score+=3}selected=[]}draw()};g.append(b)});document.getElementById('info').textContent=`امتیاز: ${score} | سه میوه یکسان را انتخاب کن.`}
-reset();
-</script><div class="actions"><button onclick="location.href='../index.html'">بازگشت به S Loop</button></div></main></body></html>
+(function(){
+'use strict';
+var UC=7,VR=8,TRAY=7,TH=1.2;
+var SYM=['🍓','🍋','🍇','🍒','🍉','🥝','🍑','🍍','🥕','🌽','🍄','🌸','🐟','🍩'];
+var $=function(i){return document.getElementById(i)};
+var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
+var level=1;try{level=Math.max(1,+localStorage.getItem('sl-tt-level')||1)}catch(e){}
+var tiles=[],tray=[],hist=[],undos=3,shufs=2,over=false,S=40,lock=false,token=0;
+var ac=null;
+function snd(f,d,ty,v){try{if(!ac){var C=window.AudioContext||window.webkitAudioContext;ac=new C()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(GV*(v||.2),t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+
+/* ---------- ساخت مرحله ---------- */
+function gen(lv){
+  var N=Math.min(99,12+3*lv),K=Math.min(SYM.length-2,3+lv),L=Math.min(5,2+Math.floor((lv-1)/2));
+  var wts=[1.7,1.3,1,.8,.6].slice(0,L),ws=wts.reduce(function(a,b){return a+b},0),quota=wts.map(function(w){return Math.round(N*w/ws)});
+  var diff=N-quota.reduce(function(a,b){return a+b},0);quota[0]+=diff;
+  var out=[],cx=(UC-1)/2,cy=(VR-1)/2;
+  for(var l=0;l<L;l++){
+    var odd=l%2,xs=[],ys=[],x,y;
+    for(x=odd?.5:0;x<=UC-1-(odd?.5:0)+1e-9;x+=1)xs.push(x);
+    for(y=odd?.5:0;y<=VR-1-(odd?.5:0)+1e-9;y+=1)ys.push(y);
+    var units=[];
+    ys.forEach(function(y){xs.forEach(function(x){
+      if(x>cx+1e-9)return;
+      var d=Math.abs(x-cx)*1.1+Math.abs(y-cy)*.8+Math.random()*(2.2+l*.4);
+      units.push({x:x,y:y,d:d,pair:Math.abs(x-cx)>1e-9});
+    })});
+    units.sort(function(a,b){return a.d-b.d});
+    var got=0,q=quota[l],i,u;
+    for(i=0;i<units.length&&got<q;i++){
+      u=units[i];
+      if(u.pair){
+        out.push({l:l,x:u.x,y:u.y});got++;
+        if(got<q){out.push({l:l,x:UC-1-u.x,y:u.y});got++}
+      }else{out.push({l:l,x:u.x,y:u.y});got++}
+    }
+  }
+  while(out.length>N)out.pop();
+  // اگر کم بود (نباید)، ادامه با لایه ۰
+  var tries=0;while(out.length<N&&tries<400){tries++;var xx=Math.floor(Math.random()*UC),yy=Math.floor(Math.random()*VR);if(!out.some(function(t){return t.l===0&&t.x===xx&&t.y===yy}))out.push({l:0,x:xx,y:yy})}
+  out.forEach(function(t,i){t.id=i;t.done=false;t.t=0});
+  // تخصیص نوع بر اساس ترتیب برداشتنِ قابل‌حل
+  var rem=out.slice(),order=[];
+  while(rem.length){
+    var free=rem.filter(function(a){return !rem.some(function(b){return b.l>a.l&&Math.abs(b.x-a.x)<1&&Math.abs(b.y-a.y)<1})});
+    var p=free[Math.floor(Math.random()*free.length)];order.push(p);rem.splice(rem.indexOf(p),1);
+  }
+  var seq=[];for(var g=0;g<N/3;g++)seq.push(g%K);shuffle(seq);
+  order.forEach(function(t,i){t.t=seq[Math.floor(i/3)]});
+  return out;
+}
+
+/* ---------- نمایش ---------- */
+function covered(a){return tiles.some(function(b){return !b.done&&!b.inTray&&b.l>a.l&&Math.abs(b.x-a.x)<1&&Math.abs(b.y-a.y)<1})}
+function size(){
+  var w=$('bwrap').clientWidth-16,h=$('bwrap').clientHeight-10;
+  S=Math.floor(Math.max(26,Math.min(w/UC,h/(VR*TH+.3),64)));
+}
+function render(){
+  var b=$('board');b.style.width=(UC*S)+'px';b.style.height=(VR*S*TH+S*.3)+'px';
+  tiles.forEach(function(t){
+    var e=t.el;
+    if(!e){e=t.el=document.createElement('div');e.className='t';var s=document.createElement('span');e.appendChild(s);s.textContent=SYM[t.t];e.addEventListener('click',function(){pick(t)});b.appendChild(e)}
+    e.style.width=S+'px';e.style.height=(S*TH)+'px';e.style.left=(t.x*S)+'px';e.style.top=(t.y*S*TH)+'px';e.style.fontSize=(S*.62)+'px';
+    e.style.zIndex=t.l*10+Math.round(t.y);
+    e.firstChild.textContent=SYM[t.t];
+    e.classList.toggle('gone',!!(t.done||t.inTray));
+    e.classList.toggle('cv',!t.done&&!t.inTray&&covered(t));
+  });
+  var tr=$('tray');tr.innerHTML='';
+  for(var i=0;i<TRAY;i++){
+    var sl=document.createElement('div');sl.className='sl';
+    if(tray[i]){var d=document.createElement('div');d.className='t2'+(tray[i].out?' out':'');d.style.fontSize='min(7.6vw,34px)';d.textContent=SYM[tray[i].t];if(tray[i].fresh){tray[i].fresh=false}else if(!tray[i].out){d.style.animation='none'}sl.appendChild(d)}
+    tr.appendChild(sl);
+  }
+  var left=tiles.filter(function(t){return !t.done}).length;
+  $('lv').textContent='مرحله '+level;$('left').textContent='باقی‌مانده: '+left;
+  $('undo').disabled=!hist.length||undos<=0||over||lock;$('uc').textContent='('+undos+')';
+  $('shuf').disabled=shufs<=0||over||lock;$('sc').textContent='('+shufs+')';
+}
+function buildLevel(){
+  token++;
+  $('board').innerHTML='';size();
+  tiles=gen(level);tray=[];hist=[];undos=3;shufs=2;over=false;lock=false;$('ov').classList.remove('on');
+  render();
+}
+function pick(t){
+  if(over||lock||t.done||t.inTray)return;
+  if(covered(t)){t.el.classList.remove('shake');void t.el.offsetWidth;t.el.classList.add('shake');snd(160,.1,'square',.12);return}
+  hist.push({tray:tray.map(function(x){return x.id}),done:tiles.filter(function(x){return x.done}).map(function(x){return x.id})});
+  if(hist.length>3)hist.shift();
+  t.inTray=true;t.fresh=true;
+  var idx=-1;for(var i=0;i<tray.length;i++)if(tray[i].t===t.t)idx=i;
+  if(idx>-1)tray.splice(idx+1,0,t);else tray.push(t);
+  snd(520+t.t*30,.08,'triangle',.22);
+  var same=tray.filter(function(x){return x.t===t.t});
+  if(same.length>=3){
+    lock=true;render();
+    var my=token;
+    setTimeout(function(){
+      if(my!==token)return;
+      same.slice(0,3).forEach(function(x){x.out=true});render();
+      setTimeout(function(){
+        if(my!==token)return;
+        same.slice(0,3).forEach(function(x){x.done=true;x.inTray=false;x.out=false;tray.splice(tray.indexOf(x),1)});
+        lock=false;snd(784,.18,'sine',.25);snd(1046,.25,'sine',.2);
+        render();check();
+      },230);
+    },180);
+    return;
+  }
+  render();check();
+}
+function check(){
+  var left=tiles.filter(function(x){return !x.done}).length;
+  if(!left){over=true;render();win();return}
+  if(tray.length>=TRAY){over=true;render();lose()}
+}
+function show(t,p,btns){$('ot').textContent=t;$('op').textContent=p;var b=$('ob');b.innerHTML='';btns.forEach(function(x){var e=document.createElement('button');e.textContent=x[0];if(x[2])e.className='alt';e.onclick=x[1];b.appendChild(e)});$('ov').classList.add('on')}
+function win(){
+  snd(660,.2);setTimeout(function(){snd(880,.2)},150);setTimeout(function(){snd(1175,.35)},300);
+  try{localStorage.setItem('sl-tt-level',String(level+1))}catch(e){}
+  show('آفرین! 🎉','مرحله '+level+' را تمام کردی.',[['مرحله بعد',function(){level++;buildLevel()}],['تکرار همین مرحله',function(){buildLevel()},1]]);
+}
+function lose(){
+  snd(150,.4,'sawtooth',.2);
+  show('سینی پر شد 😕','جایی برای کاشی بعدی نماند.',[['دوباره امتحان کن',function(){buildLevel()}]]);
+}
+$('undo').onclick=function(){
+  if(!hist.length||undos<=0||over||lock)return;
+  var h=hist.pop();undos--;
+  var byId={};tiles.forEach(function(t){byId[t.id]=t});
+  tiles.forEach(function(t){t.inTray=false;t.done=h.done.indexOf(t.id)>-1;t.out=false});
+  tray=h.tray.map(function(id){var t=byId[id];t.inTray=true;return t});
+  snd(300,.08,'sine',.2);render();
+};
+$('shuf').onclick=function(){
+  if(shufs<=0||over||lock)return;shufs--;
+  var live=tiles.filter(function(t){return !t.done&&!t.inTray}),types=shuffle(live.map(function(t){return t.t}));
+  live.forEach(function(t,i){t.t=types[i]});snd(440,.12,'triangle',.2);render();
+};
+$('rest').onclick=function(){buildLevel()};
+addEventListener('resize',function(){size();render()});
+buildLevel();
+})();
+</script>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

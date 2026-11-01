@@ -20,7 +20,7 @@
 :root{--bg1:#d1d5db;--bg2:#9ca3af;--ink:#20242b;--muted:#59616d;--card:rgba(255,255,255,.72);--line:rgba(55,65,81,.22);--field:rgba(255,255,255,.82);--head:#4b5563;--lime:#d9f24a;--tq:#14a89b;--btn:#14a89b;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#252a32;--bg2:#171b22;--ink:#f1f3f5;--muted:#b5bdc8;--card:rgba(255,255,255,.08);--line:rgba(209,213,219,.2);--field:rgba(255,255,255,.09);--head:#111827;--tq:#2fd5c3;--btn:#2fd5c3;--btnink:#08201d}}
 :root[data-theme="dark"]{--bg1:#252a32;--bg2:#171b22;--ink:#f1f3f5;--muted:#b5bdc8;--card:rgba(255,255,255,.08);--line:rgba(209,213,219,.2);--field:rgba(255,255,255,.09);--head:#111827;--tq:#2fd5c3;--btn:#2fd5c3;--btnink:#08201d}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}html,body{overflow-x:hidden}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;min-height:100vh;color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;background:var(--bg1);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed}
@@ -150,7 +150,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 
 /* S Loop mini games */
-#sl-game-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.78);display:none;overflow:auto;padding:18px 12px;direction:rtl}#sl-game-modal.open{display:block}.sl-game-box{max-width:620px;margin:3vh auto;background:var(--bg1);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 20px 70px #0008}.sl-game-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.sl-game-top h2{font-size:1.25rem}.sl-game-board{margin:14px auto;max-width:500px}.sl-game-info{text-align:center;color:var(--muted);min-height:28px}.sl-game-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.sl-game-board button{font:inherit;cursor:pointer}.rv-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#176b49;padding:6px;border-radius:10px;max-width:420px;margin:auto}.rv-cell{aspect-ratio:1;border:0;border-radius:4px;background:#26885e;display:grid;place-items:center;padding:2px}.rv-piece{width:82%;height:82%;border-radius:50%;box-shadow:inset 0 2px 4px #fff5,0 2px 3px #0005}.hana-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.hana-card{min-height:92px;border:2px solid #b98a4b;border-radius:10px;background:#fff4d7;color:#442b12;font-size:1.7rem;display:grid;place-items:center}.hana-card small{font-size:.65rem}.triple-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.triple-tile{min-height:70px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:1.8rem}.triple-tile.selected{outline:3px solid var(--tq);transform:scale(.96)}.stress-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.stress-bubble{aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#fff,#8bded3 45%,#159c90 80%);box-shadow:inset -5px -6px 10px #006b6255,0 3px 5px #0003}.stress-bubble.popped{visibility:hidden}.ping-wrap{max-width:440px;margin:auto}.ping-canvas{display:block;width:100%;height:auto;background:linear-gradient(90deg,#247c70 49.5%,#fff9 49.5% 50.5%,#247c70 50.5%);border:3px solid #fff;border-radius:12px;touch-action:none}.ping-controls{display:flex;justify-content:space-between;gap:12px;margin-top:10px}.ping-controls button{flex:1;padding:14px 5px;border-radius:12px;border:0;background:var(--btn);color:var(--btnink);font-weight:700;touch-action:none}
+#sl-game-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.78);display:none;overflow:auto;padding:18px 12px;direction:rtl}#sl-game-modal.open{display:block}.sl-game-box{max-width:620px;margin:3vh auto;background:var(--bg1);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 20px 70px #0008}.sl-game-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.sl-game-top h2{font-size:1.25rem}.sl-game-board{margin:14px auto;max-width:500px}.sl-game-info{text-align:center;color:var(--muted);min-height:28px}.sl-game-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.sl-game-board button{font:inherit;cursor:pointer}#sl-game-modal .sl-game-box.fr{max-width:560px;height:calc(100vh - 28px);height:calc(100dvh - 28px);margin:0 auto;padding:10px;display:flex;flex-direction:column}#sl-game-modal .sl-game-box.fr #sl-game-content{flex:1;min-height:0;margin-top:8px}#sl-game-modal iframe{width:100%;height:100%;border:0;border-radius:14px;background:#000;display:block}#sl-game-modal .sl-game-box.fr .sl-game-top h2{margin:0}.rv-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#176b49;padding:6px;border-radius:10px;max-width:420px;margin:auto}.rv-cell{aspect-ratio:1;border:0;border-radius:4px;background:#26885e;display:grid;place-items:center;padding:2px}.rv-piece{width:82%;height:82%;border-radius:50%;box-shadow:inset 0 2px 4px #fff5,0 2px 3px #0005}.hana-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.hana-card{min-height:92px;border:2px solid #b98a4b;border-radius:10px;background:#fff4d7;color:#442b12;font-size:1.7rem;display:grid;place-items:center}.hana-card small{font-size:.65rem}.triple-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.triple-tile{min-height:70px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:1.8rem}.triple-tile.selected{outline:3px solid var(--tq);transform:scale(.96)}.stress-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.stress-bubble{aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#fff,#8bded3 45%,#159c90 80%);box-shadow:inset -5px -6px 10px #006b6255,0 3px 5px #0003}.stress-bubble.popped{visibility:hidden}.ping-wrap{max-width:440px;margin:auto}.ping-canvas{display:block;width:100%;height:auto;background:linear-gradient(90deg,#247c70 49.5%,#fff9 49.5% 50.5%,#247c70 50.5%);border:3px solid #fff;border-radius:12px;touch-action:none}.ping-controls{display:flex;justify-content:space-between;gap:12px;margin-top:10px}.ping-controls button{flex:1;padding:14px 5px;border-radius:12px;border:0;background:var(--btn);color:var(--btnink);font-weight:700;touch-action:none}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -362,11 +362,11 @@ const GM=[
 {id:'mathquest',n:'Math Quest',u:'mathquest.html',a:'<rect width="100" height="100" fill="#13213a"/>'+T(50,38,'2x+3=11',16,'#fff')+T(50,64,'x = ?',20,'#ffd23f')+T(78,20,'✓',16,'#5fdc90')+T(22,84,'x²',14,'#6aa0ff')},
 {id:'eightball',n:'8 Ball',u:'eightball.html',a:'<rect width="100" height="100" fill="#0f7a4a"/><circle cx="96" cy="6" r="13" fill="#050505"/><circle cx="30" cy="70" r="12" fill="#f8f8f2" stroke="#999"/><circle cx="62" cy="42" r="14" fill="#111"/><circle cx="62" cy="42" r="6.5" fill="#fff"/>'+T(62,43,'8',9,'#111')+'<circle cx="76" cy="74" r="9" fill="#f4c20d" stroke="#fff" stroke-width="1.5"/><path d="M6 94L22 82" stroke="#e8c88a" stroke-width="3" stroke-linecap="round"/>'},
 {id:'memory',n:'Memory Cards',u:'memory.html',a:'<rect width="100" height="100" fill="#e4edb9"/><rect x="10" y="10" width="38" height="38" rx="6" fill="#fff"/><rect x="52" y="10" width="38" height="38" rx="6" fill="#14a89b"/><rect x="10" y="52" width="38" height="38" rx="6" fill="#14a89b"/><rect x="52" y="52" width="38" height="38" rx="6" fill="#fff"/>'+T(29,38,'🐼',22,'#000')+T(71,38,'?',22,'#fff')+T(29,80,'?',22,'#fff')+T(71,80,'🐼',22,'#000')},
-{id:'reversi',n:'Reversi',u:'#play=reversi',a:'<rect width="100" height="100" fill="#16734d"/><path d="M25 0V100M50 0V100M75 0V100M0 25H100M0 50H100M0 75H100" stroke="#d9f2df" stroke-width="2"/><circle cx="38" cy="38" r="10" fill="#fff"/><circle cx="62" cy="38" r="10" fill="#111"/><circle cx="38" cy="62" r="10" fill="#111"/><circle cx="62" cy="62" r="10" fill="#fff"/>'},
-{id:'hanafuda',n:'Hanafuda',u:'#play=hanafuda',a:'<rect width="100" height="100" fill="#f6e8c8"/><g stroke="#8d2734" stroke-width="2"><rect x="12" y="10" width="34" height="80" rx="5" fill="#fff8e9"/><rect x="54" y="10" width="34" height="80" rx="5" fill="#fff8e9"/></g><text x="29" y="56" font-size="25" text-anchor="middle">🌸</text><text x="71" y="56" font-size="25" text-anchor="middle">🎴</text>'},
-{id:'pingpong',n:'Ping-Pong',u:'#play=pingpong',a:'<rect width="100" height="100" fill="#167c70"/><path d="M50 0V100" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/><rect x="8" y="34" width="7" height="32" rx="3" fill="#ffcf55"/><rect x="85" y="34" width="7" height="32" rx="3" fill="#ffcf55"/><circle cx="51" cy="48" r="6" fill="#fff"/>'},
-{id:'triplesort',n:'Match Triple Sort',u:'#play=triplesort',a:'<rect width="100" height="100" fill="#e9e3fa"/>'+[[18,20,'🍓'],[50,20,'🍋'],[82,20,'🍇'],[18,52,'🍇'],[50,52,'🍓'],[82,52,'🍋'],[18,84,'🍋'],[50,84,'🍇'],[82,84,'🍓']].map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="18" text-anchor="middle">${t}</text>`).join('')},
-{id:'antistress',n:'Anti Stress Game',u:'#play=antistress',a:'<rect width="100" height="100" fill="#d9f3ef"/>'+[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="#28b8a8" stroke="#fff" stroke-width="2"/>`).join('')},
+{id:'reversi',n:'Reversi',u:'reversi.html',a:'<rect width="100" height="100" fill="#16734d"/><path d="M25 0V100M50 0V100M75 0V100M0 25H100M0 50H100M0 75H100" stroke="#d9f2df" stroke-width="2"/><circle cx="38" cy="38" r="10" fill="#fff"/><circle cx="62" cy="38" r="10" fill="#111"/><circle cx="38" cy="62" r="10" fill="#111"/><circle cx="62" cy="62" r="10" fill="#fff"/>'},
+{id:'hanafuda',n:'Hanafuda Koi-Koi',u:'hanafuda.html',a:'<rect width="100" height="100" fill="#f6e8c8"/><g stroke="#8d2734" stroke-width="2"><rect x="12" y="10" width="34" height="80" rx="5" fill="#fff8e9"/><rect x="54" y="10" width="34" height="80" rx="5" fill="#fff8e9"/></g><text x="29" y="56" font-size="25" text-anchor="middle">🌸</text><text x="71" y="56" font-size="25" text-anchor="middle">🎴</text>'},
+{id:'pingpong',n:'Ping-Pong',u:'pingpong.html',a:'<rect width="100" height="100" fill="#167c70"/><path d="M50 0V100" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/><rect x="8" y="34" width="7" height="32" rx="3" fill="#ffcf55"/><rect x="85" y="34" width="7" height="32" rx="3" fill="#ffcf55"/><circle cx="51" cy="48" r="6" fill="#fff"/>'},
+{id:'triplesort',n:'Triple Tile Puzzle',u:'match-triple-sort.html',a:'<rect width="100" height="100" fill="#e9e3fa"/>'+[[18,20,'🍓'],[50,20,'🍋'],[82,20,'🍇'],[18,52,'🍇'],[50,52,'🍓'],[82,52,'🍋'],[18,84,'🍋'],[50,84,'🍇'],[82,84,'🍓']].map(([x,y,t])=>`<text x="${x}" y="${y}" font-size="18" text-anchor="middle">${t}</text>`).join('')},
+{id:'antistress',n:'Anti Stress Game',u:'anti-stress.html',a:'<rect width="100" height="100" fill="#d9f3ef"/>'+[[25,25],[50,25],[75,25],[25,50],[50,50],[75,50],[25,75],[50,75],[75,75]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="#28b8a8" stroke="#fff" stroke-width="2"/>`).join('')},
 ];
 let fav=LS.get('sl-fav',[]);
 const cardHTML=g=>`<div class="cw"><button class="hrt" data-f="${g.id}" aria-label="Favorite ${g.n}" aria-pressed="${fav.includes(g.id)}">${fav.includes(g.id)?'♥':'♡'}</button><a class="card" href="${g.u}" target="_blank" rel="noopener" data-id="${g.id}"><div class="disc"><div class="lbl"><svg viewBox="0 0 100 100" aria-hidden="true">${g.a}</svg></div><i></i></div><div class="nm">${g.n}</div></a></div>`;
@@ -393,7 +393,7 @@ function renderStats(){
   $('sts').innerHTML=GM.map(g=>`<div class="st"><span>${g.n}</span><div class="bar"><i style="width:${(stats[g.id]||0)/mx*100}%"></i></div><b>${ft(stats[g.id]||0)}</b></div>`).join('');
 }
 $('rs').onclick=()=>{stats={};LS.set('sl-stats',stats);renderStats();toast('آمار پاک شد')};
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(au)au.suspend();if(cAud)cAud.pause()}else{settle();if(au&&musicOn&&!cMus)au.resume();if(cAud&&cMus&&musicOn)cAud.play().catch(()=>{})}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(au)au.suspend();if(cAud)cAud.pause();if(dAud)dAud.pause()}else{settle();if(au&&musicOn&&!cMus&&!dAud)au.resume();if(cAud&&cMus&&musicOn)cAud.play().catch(()=>{});if(dAud&&musOk&&musicOn&&!cMus)dAud.play().catch(()=>{})}});
 addEventListener('focus',settle);
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
 const SEC=['games','favorites','friends','ai','support','apps','account','category','settings','creator'];
@@ -432,20 +432,33 @@ function bell(){
   g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.06,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+2.5);o.start(t);o.stop(t+2.6);
   tb=setTimeout(bell,1800+Math.random()*3200);
 }
+let dAud=null,dFail=false,musOk=false;
+const DEF_MUSIC='music.mp3';
+function startDefault(){
+  if(dFail){startSynth();return}
+  try{
+    if(!dAud){dAud=new Audio(DEF_MUSIC);dAud.loop=true;dAud.preload='auto';dAud.addEventListener('error',()=>{dFail=true;dAud=null;musOk=false;if(musicOn&&!cMus)startSynth()})}
+    dAud.volume=mv/100;
+    const p=dAud.play();if(p&&p.then)p.then(()=>{musOk=true}).catch(()=>{musOk=false});
+  }catch(e){startSynth()}
+}
 function startMusic(){
   if(cMus){startCustom();return}
+  startDefault();
+}
+function startSynth(){
   try{
     if(!au){au=new(window.AudioContext||window.webkitAudioContext)();mg=au.createGain();mg.gain.value=mv/100*.9;
       bus=au.createBiquadFilter();bus.type='lowpass';bus.frequency.value=1400;const dl=au.createDelay(1),fb=au.createGain();dl.delayTime.value=.55;fb.gain.value=.38;
       dl.connect(fb);fb.connect(dl);bus.connect(mg);bus.connect(dl);dl.connect(mg);mg.connect(au.destination)}
-    au.resume();clearTimeout(tc);clearTimeout(tb);chord();bell();
+    au.resume();musOk=true;clearTimeout(tc);clearTimeout(tb);chord();bell();
   }catch(e){}
 }
-function stopMusic(){clearTimeout(tc);clearTimeout(tb);if(au)au.suspend();if(cAud)cAud.pause()}
+function stopMusic(){clearTimeout(tc);clearTimeout(tb);musOk=false;if(au)au.suspend();if(cAud)cAud.pause();if(dAud)dAud.pause()}
 function musicBtn(){$('mu').textContent=musicOn&&mv>0?'🔊':'🔇'}
 $('mu').onclick=()=>{musicOn=!musicOn;LS.set('sl-music',musicOn);musicOn?startMusic():stopMusic();musicBtn()};
-addEventListener('pointerdown',()=>{if(musicOn&&!au)startMusic()},{once:true});
-$('mv').oninput=e=>{mv=+e.target.value;LS.set('sl-mv',mv);if(au)mg.gain.setTargetAtTime(mv/100*.9,au.currentTime,.1);if(cAud)cAud.volume=mv/100;musicBtn()};
+['pointerdown','keydown','touchend'].forEach(ev=>addEventListener(ev,()=>{if(musicOn&&!musOk)startMusic()},{passive:true}));
+$('mv').oninput=e=>{mv=+e.target.value;LS.set('sl-mv',mv);if(au)mg.gain.setTargetAtTime(mv/100*.9,au.currentTime,.1);if(cAud)cAud.volume=mv/100;if(dAud)dAud.volume=mv/100;musicBtn()};
 $('gv').oninput=e=>{gv=+e.target.value;LS.set('sl-gv',gv)};
 function saver(on){
   document.documentElement.classList.toggle('saver',on);
@@ -921,13 +934,13 @@ $('bgdim').value=bgDim;$('bgdim').oninput=e=>{bgDim=+e.target.value;LS.set('sl-b
 applyBg();
 /* ---- custom music ---- */
 let cMus=false,cAud=null,cUrl=null,musName='';
-function musLabel(){$('musname').textContent=cMus?'🎶 '+musName:'آهنگ پیش‌فرض (ساخته‌شده توسط خود سایت)'}
+function musLabel(){$('musname').textContent=cMus?'🎶 '+musName:'آهنگ پیش‌فرض: La petite fille de la mer — Vangelis'}
 async function loadMusic(){try{const f=await IDB.get('kv','music');if(f){cMus=true;musName=(await IDB.get('kv','musicName'))||'آهنگ دلخواه'}}catch(e){}musLabel()}
 function dropAud(){if(cAud){cAud.pause();cAud=null}if(cUrl){try{URL.revokeObjectURL(cUrl)}catch(e){}cUrl=null}}
 async function startCustom(){
   try{const f=await IDB.get('kv','music');if(!f){cMus=false;musLabel();startMusic();return}
     if(!cAud){cUrl=URL.createObjectURL(f);cAud=new Audio(cUrl);cAud.loop=true}
-    cAud.volume=mv/100;await cAud.play();
+    cAud.volume=mv/100;await cAud.play();musOk=true;
   }catch(e){toast('پخش آهنگ دلخواه ممکن نشد — یک بار روی صفحه بزن')}
 }
 $('mupick').onclick=()=>$('mufile').click();
@@ -935,7 +948,7 @@ $('mufile').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
   if(f.size>30*1024*1024)return toast('فایل بزرگ‌تر از ۳۰ مگابایت است');
   try{await IDB.put('kv',f,'music');await IDB.put('kv',f.name,'musicName')}catch(err){return toast('ذخیره‌ی آهنگ ممکن نشد')}
-  dropAud();if(au)au.suspend();clearTimeout(tc);clearTimeout(tb);cMus=true;musName=f.name;musLabel();toast('آهنگ دلخواه ذخیره شد ✓');if(musicOn)startCustom();
+  dropAud();if(au)au.suspend();if(dAud)dAud.pause();clearTimeout(tc);clearTimeout(tb);cMus=true;musName=f.name;musLabel();toast('آهنگ دلخواه ذخیره شد ✓');if(musicOn)startCustom();
 };
 $('murm').onclick=async()=>{try{await IDB.del('kv','music');await IDB.del('kv','musicName')}catch(e){}dropAud();cMus=false;musLabel();toast('آهنگ پیش‌فرض برگشت');if(musicOn)startMusic()};
 loadMusic();
@@ -1026,22 +1039,36 @@ $('rlist').addEventListener('click',async e=>{const d=e.target.closest('[data-rd
 $('app-rec').onclick=()=>{openApp('rec-app');rList()};
 renderProfile();renderStats();musicBtn();renderTime();go('games');settle();renderFriends();renderQR();try{const ad=new URLSearchParams(location.search).get('add');if(ad)handleInvite(String(location.href))}catch(e){}
 if(musicOn)toast('🎵 برای شروع موسیقی یک بار روی صفحه بزن');
-// Built-in S Loop mini games
+// S Loop mini games — صفحه‌های مستقل داخل مودال باز می‌شوند تا موسیقی‌ی صفحه‌ی اصلی قطع نشود
 (()=>{
-const modal=document.getElementById('sl-game-modal'),content=document.getElementById('sl-game-content'),title=document.getElementById('sl-game-title');
-let cleanup=()=>{};const close=()=>{cleanup();modal.classList.remove('open');content.innerHTML='';};document.getElementById('sl-game-close').onclick=close;modal.addEventListener('click',e=>{if(e.target===modal)close()});
-const btn=(label,fn)=>{const b=document.createElement('button');b.className='pr';b.textContent=label;b.onclick=fn;return b};
-function open(id){cleanup();content.innerHTML='';modal.classList.add('open');const names={reversi:'ریورسی (دو نفره روی یک دستگاه)',hanafuda:'هانافودا — جفت‌یابی کارت‌ها',pingpong:'پینگ‌پونگ دو نفره',triplesort:'Match Triple Sort',antistress:'Anti Stress Game'};title.textContent=names[id]||'بازی';
-if(id==='reversi') reversi(); if(id==='hanafuda') hanafuda(); if(id==='pingpong') pingpong(); if(id==='triplesort') triplesort(); if(id==='antistress') antistress();}
-// Open built-in games in the site's own game modal instead of navigating to a broken hash URL.
-document.addEventListener('click',e=>{const a=e.target.closest('.card,.ailink');if(!a)return;const id=a.dataset.id;if(!['reversi','hanafuda','pingpong','triplesort','antistress'].includes(id))return;e.preventDefault();open(id);});
-function reversi(){let board=Array(64).fill(0),turn=1,ended=false;board[27]=2;board[28]=1;board[35]=1;board[36]=2;const info=document.createElement('div');info.className='sl-game-info';const grid=document.createElement('div');grid.className='rv-grid';content.append(info,grid);const dirs=[-9,-8,-7,-1,1,7,8,9];function flips(i,p){let out=[];const r0=Math.floor(i/8),c0=i%8;for(const d of dirs){let dr=Math.sign(Math.trunc(d/8)),dc=d%8; if(d===-7) {dr=-1;dc=1} if(d===7){dr=1;dc=-1} if(d===-9){dr=-1;dc=-1} if(d===9){dr=1;dc=1} if(d===-8){dr=-1;dc=0} if(d===8){dr=1;dc=0} if(d===-1){dr=0;dc=-1} if(d===1){dr=0;dc=1} let r=r0+dr,c=c0+dc,line=[];while(r>=0&&r<8&&c>=0&&c<8){let j=r*8+c;if(board[j]===3-p){line.push(j);r+=dr;c+=dc}else break}if(line.length&&r>=0&&r<8&&c>=0&&c<8&&board[r*8+c]===p)out.push(...line)}return [...new Set(out)]}function legal(p){return board.map((v,i)=>v===0&&flips(i,p).length?i:-1).filter(i=>i>=0)}function draw(){grid.innerHTML='';let moves=legal(turn);for(let i=0;i<64;i++){const b=document.createElement('button');b.className='rv-cell';if(board[i]){const q=document.createElement('i');q.className='rv-piece';q.style.background=board[i]===1?'#f7f7f7':'#171717';b.append(q)}else if(moves.includes(i)){b.textContent='•';b.style.color='#d9f24a'}b.onclick=()=>{if(ended||!moves.includes(i))return;board[i]=turn;flips(i,turn).forEach(j=>board[j]=turn);turn=3-turn;if(!legal(turn).length){turn=3-turn;if(!legal(turn).length)ended=true}draw()};grid.append(b)}let a=board.filter(x=>x===1).length,b=board.filter(x=>x===2).length;info.textContent=ended?`پایان! سفید ${a} — سیاه ${b} | ${a===b?'مساوی':a>b?'سفید برنده شد':'سیاه برنده شد'}`:`نوبت ${turn===1?'سفید ⚪':'سیاه ⚫'} | سفید ${a} — سیاه ${b}`}
-content.append(btn('شروع دوباره',()=>{board=Array(64).fill(0);board[27]=2;board[28]=1;board[35]=1;board[36]=2;turn=1;ended=false;draw()}));draw()}
-function hanafuda(){const flowers=['🌸','🌺','🌼','🌻','🍁','🌾','🌿','🌷','🌹','🍂','🎋','🌙'];let deck=flowers.flatMap((x,i)=>[{x,m:i},{x,m:i}]).sort(()=>Math.random()-.5),open=[],matched=0,tries=0,lock=false;const info=document.createElement('div');info.className='sl-game-info';const grid=document.createElement('div');grid.className='hana-grid';content.append(info,grid);function draw(){grid.innerHTML='';deck.forEach((c,i)=>{let b=document.createElement('button');b.className='hana-card';b.textContent=c.done?c.x:open.includes(i)?c.x:'🎴';b.disabled=!!c.done||lock;b.onclick=()=>{if(open.length>=2||open.includes(i)||c.done)return;open.push(i);draw();if(open.length===2){tries++;lock=true;setTimeout(()=>{let [a,z]=open;if(deck[a].m===deck[z].m){deck[a].done=deck[z].done=true;matched++}open=[];lock=false;draw()},650)}};grid.append(b)});info.textContent=`جفت‌ها: ${matched}/12 | تلاش‌ها: ${tries}${matched===12?' — آفرین، برنده شدی!':''}`}content.append(btn('بازی جدید',()=>{deck=flowers.flatMap((x,i)=>[{x,m:i},{x,m:i}]).sort(()=>Math.random()-.5);open=[];matched=tries=0;lock=false;draw()}));draw()}
-function pingpong(){const wrap=document.createElement('div');wrap.className='ping-wrap';wrap.innerHTML='<div class="sl-game-info" id="ppscore">بازیکن چپ: 0 — 0 :بازیکن راست</div><canvas class="ping-canvas" id="ppcanvas" width="420" height="560"></canvas><div class="ping-controls"><button id="ppleft">▲ بازیکن چپ</button><button id="ppleftdown">▼ چپ</button><button id="ppright">▲ راست</button><button id="pprightdown">▼ راست</button></div><p class="sl-game-info">برای حرکت، دکمه هر بازیکن را نگه دار؛ در رایانه از W/S و ↑/↓ استفاده کن.</p>';content.append(wrap);const c=wrap.querySelector('canvas'),ctx=c.getContext('2d'),score=wrap.querySelector('#ppscore');let y1=230,y2=230,ball={x:210,y:280,vx:3,vy:3},s1=0,s2=0,keys={},raf;const down=(id,k)=>{let el=wrap.querySelector(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,()=>keys[k]=false))};down('#ppleft','l');down('#ppleftdown','s');down('#ppright','r');down('#pprightdown','arrowdown');const kd=e=>{keys[e.key.toLowerCase()]=true},ku=e=>{keys[e.key.toLowerCase()]=false};window.addEventListener('keydown',kd);window.addEventListener('keyup',ku);function reset(dir){ball={x:210,y:280,vx:3*dir,vy:(Math.random()-.5)*4}}function frame(){ctx.clearRect(0,0,420,560);if(keys.l||keys.w)y1=Math.max(0,y1-5);if(keys.s)y1=Math.min(480,y1+5);if(keys.r||keys.arrowup)y2=Math.max(0,y2-5);if(keys.arrowdown)y2=Math.min(480,y2+5);ball.x+=ball.vx;ball.y+=ball.vy;if(ball.y<8||ball.y>552)ball.vy*=-1;if(ball.x<32&&ball.x>20&&ball.y>y1-12&&ball.y<y1+80)ball.vx=Math.abs(ball.vx)*1.04;if(ball.x>388&&ball.x<400&&ball.y>y2-12&&ball.y<y2+80)ball.vx=-Math.abs(ball.vx)*1.04;if(ball.x<0){s2++;reset(1)}if(ball.x>420){s1++;reset(-1)}ctx.fillStyle='#fff';ctx.fillRect(12,y1,12,80);ctx.fillRect(396,y2,12,80);ctx.beginPath();ctx.arc(ball.x,ball.y,9,0,Math.PI*2);ctx.fill();score.textContent=`بازیکن چپ: ${s1} — ${s2} :بازیکن راست`;raf=requestAnimationFrame(frame)}frame();cleanup=()=>{cancelAnimationFrame(raf);window.removeEventListener('keydown',kd);window.removeEventListener('keyup',ku)}}
-function triplesort(){let symbols=['🍓','🍋','🍇','🍒','🍉','🥝'],tiles=Array.from({length:24},()=>symbols[Math.floor(Math.random()*symbols.length)]),selected=[],score=0;const info=document.createElement('div');info.className='sl-game-info';const grid=document.createElement('div');grid.className='triple-grid';content.append(info,grid);function draw(){grid.innerHTML='';tiles.forEach((t,i)=>{if(!t)return;let b=document.createElement('button');b.className='triple-tile'+(selected.includes(i)?' selected':'');b.textContent=t;b.onclick=()=>{if(selected.includes(i))return;selected.push(i);if(selected.length===3){let vals=selected.map(j=>tiles[j]);if(vals.every(v=>v===vals[0])){selected.forEach(j=>tiles[j]='');score+=3}else{}selected=[]}draw()};grid.append(b)});info.textContent=`امتیاز: ${score} | سه میوه یکسان را انتخاب کن؛ اگر جور نبود دوباره امتحان کن.`}content.append(btn('چیدمان جدید',()=>{tiles=Array.from({length:24},()=>symbols[Math.floor(Math.random()*symbols.length)]);selected=[];score=0;draw()}));draw()}
-function antistress(){let count=30,popped=0;const info=document.createElement('div');info.className='sl-game-info';const grid=document.createElement('div');grid.className='stress-grid';content.append(info,grid);function draw(){grid.innerHTML='';for(let i=0;i<count;i++){let b=document.createElement('button');b.className='stress-bubble';b.setAttribute('aria-label','حباب');b.onclick=()=>{if(b.classList.contains('popped'))return;b.classList.add('popped');popped++;info.textContent=`${popped} از ${count} حباب ترکیده شد`;if(popped===count)info.textContent='همه حباب‌ها ترکیدند! عالی بود.'};grid.append(b)}info.textContent=`حباب‌ها را لمس کن: ${popped}/${count}`}content.append(btn('شروع دوباره',()=>{popped=0;draw()}));draw()}
-document.addEventListener('click',e=>{const a=e.target.closest('a.card');if(!a)return;const m=a.getAttribute('href').match(/^#play=(reversi|hanafuda|pingpong|triplesort|antistress)$/);if(m){e.preventDefault();open(m[1])}});
+const FR={reversi:['reversi.html','ریورسی'],hanafuda:['hanafuda.html','هانافودا — کوی‌کوی'],pingpong:['pingpong.html','پینگ‌پونگ'],triplesort:['match-triple-sort.html','Triple Tile Puzzle'],antistress:['anti-stress.html','Anti Stress']};
+const modal=document.getElementById('sl-game-modal'),box=modal.querySelector('.sl-game-box'),content=document.getElementById('sl-game-content'),title=document.getElementById('sl-game-title');
+let cur=null,t0=0;
+function close(){
+  if(!cur)return;
+  const id=cur;cur=null;
+  const s=Math.min((Date.now()-t0)/1000,10800);
+  content.innerHTML='';modal.classList.remove('open');box.classList.remove('fr');document.body.style.overflow='';
+  if(s>=5){stats[id]=(stats[id]||0)+s;LS.set('sl-stats',stats);renderStats();addUsage(s)}
+}
+function open(id){
+  const f=FR[id];if(!f)return;
+  cur=id;t0=Date.now();try{localStorage.removeItem('sl-pending')}catch(e){}
+  title.textContent=f[1];box.classList.add('fr');
+  content.innerHTML='';const fr=document.createElement('iframe');
+  fr.src=f[0]+'#v'+gv;fr.title=f[1];fr.setAttribute('allow','autoplay');fr.setAttribute('loading','eager');
+  content.appendChild(fr);modal.classList.add('open');document.body.style.overflow='hidden';
+}
+document.getElementById('sl-game-close').onclick=close;
+modal.addEventListener('click',e=>{if(e.target===modal)close()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+addEventListener('message',e=>{if(e.data==='sl-close')close()});
+document.addEventListener('click',e=>{
+  const a=e.target.closest('.card,.ailink');if(!a)return;
+  const id=a.dataset.id;if(!FR[id])return;
+  if(e.defaultPrevented)return; // زمان بازی تمام شده
+  e.preventDefault();open(id);
+});
 })();
 
 </script>

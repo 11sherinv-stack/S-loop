@@ -1,18 +1,210 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ping-Pong | S Loop</title><style>
-*{box-sizing:border-box}body{margin:0;padding:18px;background:#e8e8e8;color:#171717;font-family:system-ui,sans-serif;text-align:center}
-main{max-width:650px;margin:auto;background:white;border-radius:18px;padding:16px;box-shadow:0 8px 28px #0002}
-h1{font-size:1.4rem}button{cursor:pointer;font:inherit}#info{min-height:32px;margin:12px;color:#444}
-.actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px}
-.actions button{border:0;border-radius:10px;padding:10px 16px;background:#171717;color:white}
-</style></head><body><main><h1>Ping-Pong</h1>
-<style>.canvas{width:100%;max-width:420px;height:auto;background:#247c70;border:3px solid white;border-radius:12px;touch-action:none}.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.controls button{padding:14px 3px;border:0;border-radius:10px;background:#171717;color:white}</style>
-<div id="info">بازیکن چپ: 0 — 0 :بازیکن راست</div><canvas class="canvas" id="c" width="420" height="560"></canvas><div class="controls"><button id="lu">▲ چپ</button><button id="ld">▼ چپ</button><button id="ru">▲ راست</button><button id="rd">▼ راست</button></div><p>دکمه‌ها را نگه دار. در رایانه از W/S و کلیدهای بالا/پایین استفاده کن.</p><div class="actions"><button onclick="restart()">شروع دوباره</button></div>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b3b36">
+<title>Ping-Pong | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:#07211e;color:#e9fffb;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.bar{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px 8px 6px 52px;width:100%}
+select,button{font:inherit;font-size:.85rem;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;padding:5px 9px}
+select option{color:#111}
+button{cursor:pointer}
+#stage{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;padding:0 6px 6px}
+canvas{display:block;border-radius:14px;box-shadow:0 10px 30px #000a;touch-action:none;cursor:none}
+.hint{font-size:.72rem;opacity:.6;padding:0 8px 6px;text-align:center}
+a.back{display:none}
+</style>
+</head>
+<body>
+<div class="bar">
+  <select id="mode" aria-label="حالت"><option value="1">۱ نفره (با کامپیوتر)</option><option value="2">۲ نفره</option></select>
+  <select id="lvl" aria-label="سطح"><option value="1">آسان</option><option value="2" selected>متوسط</option><option value="3">سخت</option></select>
+  <button id="rst">شروع دوباره</button>
+</div>
+<div id="stage"><canvas id="c"></canvas></div>
+<div class="hint" id="hint">انگشتت را روی صفحه بکش تا راکت حرکت کند · در رایانه موس یا کلیدهای ← → (و A / D برای نفر دوم)</div>
 <script>
-const c=document.getElementById('c'),ctx=c.getContext('2d');let y1,y2,ball,s1,s2,keys={},raf;
-function restart(){y1=y2=230;ball={x:210,y:280,vx:3,vy:2.5};s1=s2=0}
-function bind(id,k){let e=document.getElementById(id);e.onpointerdown=x=>{x.preventDefault();keys[k]=true};['pointerup','pointerleave','pointercancel'].forEach(t=>e.addEventListener(t,()=>keys[k]=false))}
-bind('lu','w');bind('ld','s');bind('ru','up');bind('rd','down');
-window.onkeydown=e=>keys[e.key.toLowerCase()]=true;window.onkeyup=e=>keys[e.key.toLowerCase()]=false;
-function frame(){ctx.clearRect(0,0,420,560);if(keys.w)y1=Math.max(0,y1-5);if(keys.s)y1=Math.min(480,y1+5);if(keys.up)y2=Math.max(0,y2-5);if(keys.down)y2=Math.min(480,y2+5);ball.x+=ball.vx;ball.y+=ball.vy;if(ball.y<8||ball.y>552)ball.vy*=-1;if(ball.x<32&&ball.x>20&&ball.y>y1-12&&ball.y<y1+92)ball.vx=Math.abs(ball.vx)*1.04;if(ball.x>388&&ball.x<400&&ball.y>y2-12&&ball.y<y2+92)ball.vx=-Math.abs(ball.vx)*1.04;if(ball.x<0){s2++;ball={x:210,y:280,vx:3,vy:2}}if(ball.x>420){s1++;ball={x:210,y:280,vx:-3,vy:-2}}ctx.fillStyle='#fff';ctx.fillRect(12,y1,12,80);ctx.fillRect(396,y2,12,80);ctx.beginPath();ctx.arc(ball.x,ball.y,9,0,Math.PI*2);ctx.fill();document.getElementById('info').textContent=`بازیکن چپ: ${s1} — ${s2} :بازیکن راست`;raf=requestAnimationFrame(frame)}
-restart();frame();
-</script><div class="actions"><button onclick="location.href='../index.html'">بازگشت به S Loop</button></div></main></body></html>
+(function(){
+'use strict';
+var W=400,H=600,PW=88,PH=14,R=9,WIN=7;
+var cv=document.getElementById('c'),ctx=cv.getContext('2d');
+var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
+var mode=1,lvl=2,state='ready',sc=[0,0]; // sc[0]=پایین، sc[1]=بالا
+var bot={x:W/2,t:W/2},top={x:W/2,t:W/2};
+var ball={x:W/2,y:H/2,vx:0,vy:0,sp:340},trail=[],hits=0,serveT=0,serveDir=1,msg='',flash=0;
+var ai={err:0,tx:W/2};
+var keys={},ptr={}; // pointerId -> 'b'|'t'
+var ac=null;
+function A(){try{if(!ac){var C=window.AudioContext||window.webkitAudioContext;ac=new C()}if(ac.state==='suspended')ac.resume()}catch(e){}return ac}
+function beep(f,d,type,v){var c=A();if(!c)return;var t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(GV*(v||.18),t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.02)}
+
+function fit(){
+  var st=document.getElementById('stage'),aw=st.clientWidth-12,ah=st.clientHeight-6;
+  var w=Math.min(aw,ah*W/H),h=w*H/W,d=Math.min(window.devicePixelRatio||1,2.5);
+  cv.style.width=w+'px';cv.style.height=h+'px';
+  cv.width=Math.round(w*d);cv.height=Math.round(h*d);
+  ctx.setTransform(cv.width/W,0,0,cv.height/H,0,0);
+}
+function resetBall(dir){
+  ball.x=W/2;ball.y=H/2;ball.vx=0;ball.vy=0;ball.sp=340;hits=0;trail=[];serveDir=dir;serveT=1.0;state='serve';
+  ai.err=0;
+}
+function launch(){
+  var a=(Math.random()*50-25)*Math.PI/180;
+  ball.vx=Math.sin(a)*ball.sp;ball.vy=Math.cos(a)*ball.sp*serveDir; // serveDir=1 → پایین
+  state='play';
+}
+function restart(){sc=[0,0];bot.x=bot.t=W/2;top.x=top.t=W/2;msg='';resetBall(Math.random()<.5?1:-1);state='ready'}
+
+/* ورودی */
+function pos(e){var r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}}
+function who(p){return mode===1?'b':(p.y<H/2?'t':'b')}
+cv.addEventListener('pointerdown',function(e){
+  e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(x){}
+  A();var p=pos(e);
+  if(state==='ready'||state==='over'){if(state==='over')restart();state='serve';serveT=.8;return}
+  var w=who(p);ptr[e.pointerId]=w;(w==='b'?bot:top).t=p.x;
+});
+cv.addEventListener('pointermove',function(e){
+  var p=pos(e),w=ptr[e.pointerId];
+  if(!w){if(e.pointerType==='mouse'){w=who(p)}else return}
+  (w==='b'?bot:top).t=p.x;
+});
+['pointerup','pointercancel'].forEach(function(t){cv.addEventListener(t,function(e){delete ptr[e.pointerId]})});
+addEventListener('keydown',function(e){var k=e.key.toLowerCase();if(['arrowleft','arrowright','a','d',' '].indexOf(k)>-1)e.preventDefault();keys[k]=true;if(k===' '&&(state==='ready'||state==='over')){if(state==='over')restart();state='serve';serveT=.8}});
+addEventListener('keyup',function(e){keys[e.key.toLowerCase()]=false});
+document.addEventListener('visibilitychange',function(){if(document.hidden&&state==='play')state='paused'});
+function resume(){if(state==='paused'){state='serve';serveT=.8}}
+cv.addEventListener('pointerdown',resume);
+
+/* منطق */
+function predictX(){ // محل رسیدن توپ به لبه‌ی بالا
+  var x=ball.x,y=ball.y,vx=ball.vx,vy=ball.vy;if(vy>=0)return null;
+  var t=(y-(30+PH/2+R))/-vy;x+=vx*t;
+  var span=W-2*R;x=((x-R)%(2*span)+2*span)%(2*span);if(x>span)x=2*span-x;return x+R;
+}
+function step(dt){
+  // کیبورد
+  var ks=520*dt;
+  if(mode===1){if(keys.arrowleft||keys.a)bot.t-=ks;if(keys.arrowright||keys.d)bot.t+=ks}
+  else{if(keys.arrowleft)bot.t-=ks;if(keys.arrowright)bot.t+=ks;if(keys.a)top.t-=ks;if(keys.d)top.t+=ks}
+  bot.t=Math.max(PW/2,Math.min(W-PW/2,bot.t));top.t=Math.max(PW/2,Math.min(W-PW/2,top.t));
+  // حرکت راکت‌ها
+  var mv=function(p,sp){var d=p.t-p.x,m=sp*dt;p.x+=Math.max(-m,Math.min(m,d))};
+  mv(bot,2200);
+  if(mode===2)mv(top,2200);
+  else{ // هوش مصنوعی
+    var spd=[0,210,300,430][lvl],err=[0,50,24,7][lvl];
+    if(state==='play'&&ball.vy<0){
+      var px=predictX();
+      if(px!==null){if(lvl===1){px=ball.x}ai.tx=px+ai.err}
+    }else if(state==='play'){ai.tx=W/2+(ball.x-W/2)*.25}
+    else ai.tx=W/2;
+    top.t=Math.max(PW/2,Math.min(W-PW/2,ai.tx));
+    mv(top,spd);
+    top._err=err;
+  }
+  if(state==='serve'){serveT-=dt;if(serveT<=0)launch();return}
+  if(state!=='play')return;
+  var sub=Math.ceil(ball.sp*dt/6),i;
+  for(i=0;i<sub;i++){
+    ball.x+=ball.vx*dt/sub;ball.y+=ball.vy*dt/sub;
+    if(ball.x<R){ball.x=R;ball.vx=Math.abs(ball.vx);beep(300,.04,'sine',.12)}
+    if(ball.x>W-R){ball.x=W-R;ball.vx=-Math.abs(ball.vx);beep(300,.04,'sine',.12)}
+    // پایین
+    var by=H-30;
+    if(ball.vy>0&&ball.y+R>=by-PH/2&&ball.y-R<=by+PH/2&&Math.abs(ball.x-bot.x)<=PW/2+R){hit(bot,-1,by-PH/2-R)}
+    var ty=30;
+    if(ball.vy<0&&ball.y-R<=ty+PH/2&&ball.y+R>=ty-PH/2&&Math.abs(ball.x-top.x)<=PW/2+R){hit(top,1,ty+PH/2+R)}
+    if(ball.y<-R*2){point(0);return}
+    if(ball.y>H+R*2){point(1);return}
+  }
+  trail.push({x:ball.x,y:ball.y});if(trail.length>14)trail.shift();
+}
+function hit(p,dir,y){
+  var off=Math.max(-1,Math.min(1,(ball.x-p.x)/(PW/2+R)));
+  hits++;ball.sp=Math.min(780,ball.sp*1.045);
+  var a=off*62*Math.PI/180;
+  ball.vx=Math.sin(a)*ball.sp;ball.vy=Math.cos(a)*ball.sp*(dir===-1?-1:1);
+  ball.y=y;flash=.12;
+  beep(420+Math.min(hits,12)*28,.06,'square',.2);
+  if(p===top&&mode===1){ai.err=(Math.random()*2-1)*top._err}
+}
+function point(i){ // i=0 → پایین امتیاز گرفت
+  sc[i]++;beep(i===0?660:200,.25,'triangle',.25);
+  if(sc[i]>=WIN){state='over';msg=mode===1?(i===0?'بردی! 🎉':'کامپیوتر برد'):(i===0?'بازیکن پایین برد! 🎉':'بازیکن بالا برد! 🎉');return}
+  resetBall(i===0?-1:1);
+}
+
+/* رسم */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  var g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0f5a52');g.addColorStop(.5,'#12766b');g.addColorStop(1,'#0f5a52');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=4;ctx.strokeRect(6,6,W-12,H-12);
+  ctx.setLineDash([10,10]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(10,H/2);ctx.lineTo(W-10,H/2);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,.14)';ctx.font='bold 120px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(sc[1],W/2,H/2-110);ctx.fillText(sc[0],W/2,H/2+110);
+  // دنباله‌ی توپ
+  for(var i=0;i<trail.length;i++){ctx.globalAlpha=i/trail.length*.35;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(trail[i].x,trail[i].y,R*(i/trail.length),0,7);ctx.fill()}
+  ctx.globalAlpha=1;
+  // راکت‌ها
+  function pad(p,y,c){ctx.shadowColor=c;ctx.shadowBlur=16;ctx.fillStyle=c;var x=p.x-PW/2;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y-PH/2,PW,PH,7):ctx.rect(x,y-PH/2,PW,PH);ctx.fill();ctx.shadowBlur=0}
+  pad(top,30,'#ff8a65');pad(bot,H-30,'#ffe082');
+  // توپ
+  ctx.shadowColor='#fff';ctx.shadowBlur=flash>0?20:8;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ball.x,ball.y,R,0,7);ctx.fill();ctx.shadowBlur=0;
+  // متن‌ها
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(state==='ready'||state==='paused'){
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.fillRect(0,H/2-70,W,140);
+    ctx.fillStyle='#fff';ctx.font='bold 26px Tahoma,system-ui,sans-serif';
+    ctx.fillText(state==='paused'?'متوقف شد':'پینگ‌پونگ',W/2,H/2-26);
+    ctx.font='18px Tahoma,system-ui,sans-serif';ctx.fillText('برای شروع صفحه را لمس کن',W/2,H/2+14);
+    ctx.font='14px Tahoma,system-ui,sans-serif';ctx.fillStyle='#d9f24a';ctx.fillText('اولین نفری که به '+WIN+' برسد می‌برد',W/2,H/2+46);
+  }
+  if(state==='serve'&&serveT>0){ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='bold 22px Tahoma,system-ui,sans-serif';ctx.fillText(Math.ceil(serveT*2)/2>0.5?'آماده…':'برو!',W/2,H/2+(serveDir===1?-50:50))}
+  if(state==='over'){
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(0,H/2-80,W,160);
+    ctx.fillStyle='#ffe082';ctx.font='bold 30px Tahoma,system-ui,sans-serif';ctx.fillText(msg,W/2,H/2-24);
+    ctx.fillStyle='#fff';ctx.font='20px Tahoma,system-ui,sans-serif';ctx.fillText(sc[1]+' — '+sc[0],W/2,H/2+16);
+    ctx.font='15px Tahoma,system-ui,sans-serif';ctx.fillText('برای بازی دوباره لمس کن',W/2,H/2+52);
+  }
+  if(mode===2){ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='12px Tahoma,system-ui,sans-serif';ctx.fillText('بازیکن ۲ ▲',60,H/2-12);ctx.fillText('▼ بازیکن ۱',W-60,H/2+12)}
+}
+var last=0,acc=0;
+function loop(ts){
+  if(!last)last=ts;var dt=Math.min(.05,(ts-last)/1000);last=ts;
+  if(flash>0)flash-=dt;
+  acc+=dt;while(acc>=1/120){step(1/120);acc-=1/120}
+  draw();requestAnimationFrame(loop);
+}
+document.getElementById('mode').onchange=function(){mode=+this.value;document.getElementById('lvl').disabled=mode===2;restart()};
+document.getElementById('lvl').onchange=function(){lvl=+this.value;restart()};
+document.getElementById('rst').onclick=function(){restart()};
+addEventListener('resize',fit);
+fit();restart();state='ready';requestAnimationFrame(loop);
+})();
+</script>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

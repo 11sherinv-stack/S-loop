@@ -1,22 +1,24 @@
 {
-  "id": "/sherinv.github.io/",
-  "name": "S Loop",
+  "id": "./",
+  "name": "S Loop — بازی‌های آنلاین",
   "short_name": "S Loop",
-  "description": "بازی‌ها و ابزارهای S Loop",
-  "lang": "fa",
-  "dir": "rtl",
-  "start_url": "/sherinv.github.io/",
-  "scope": "/sherinv.github.io/",
+  "description": "مجموعه‌ی بازی‌های آنلاین رایگان S Loop",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#e4edb9",
-  "theme_color": "#586a2b",
+  "lang": "fa",
+  "dir": "rtl",
+  "background_color": "#9ca3af",
+  "theme_color": "#6b7280",
   "icons": [
-    {
-      "src": "./icon.png",
-      "sizes": "192x192 512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Minesweeper", "short_name": "مین‌روب", "url": "./?game=minesweeper", "icons": [{ "src": "icon.png", "sizes": "192x192" }] },
+    { "name": "Snake.io", "short_name": "Snake.io", "url": "./?game=snakeio", "icons": [{ "src": "icon.png", "sizes": "192x192" }] },
+    { "name": "Hanafuda Koi-Koi", "short_name": "هانافودا", "url": "./?game=hanafuda", "icons": [{ "src": "icon.png", "sizes": "192x192" }] },
+    { "name": "Reversi", "short_name": "ریورسی", "url": "./?game=reversi", "icons": [{ "src": "icon.png", "sizes": "192x192" }] }
   ]
 }

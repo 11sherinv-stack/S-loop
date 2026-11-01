@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#2e3b4e">
+<title>Jigsaw | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:linear-gradient(160deg,#3b4a63,#1d2533);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;touch-action:none}
+.top{display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;padding:6px 8px 4px 52px}
+select,button,label.fb{font:inherit;font-size:.82rem;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;padding:5px 10px;cursor:pointer}
+select option{color:#111}
+#st{text-align:center;font-size:.85rem;opacity:.85;min-height:1.4em}
+#play{position:relative;flex:1;min-height:0;margin:4px 8px 8px;border-radius:14px;background:rgba(0,0,0,.25);overflow:hidden;touch-action:none}
+#ghost{position:absolute;opacity:.2;pointer-events:none;border:2px dashed rgba(255,255,255,.5);border-radius:4px}
+.pc{position:absolute;touch-action:none;cursor:grab;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.pc.lk{filter:none;cursor:default;pointer-events:none}
+.pc.dr{cursor:grabbing;filter:drop-shadow(0 8px 10px rgba(0,0,0,.6))}
+#prev{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.75);z-index:500}
+#prev.on{display:flex}#prev canvas{max-width:94%;max-height:94%;border-radius:8px}
+#win{position:absolute;inset:0;background:rgba(10,15,30,.8);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:600;text-align:center}
+#win.on{display:flex}#win button{background:#ffd54f;color:#2b2100;border:0;font-weight:800;padding:10px 24px}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="top">
+  <select id="img" aria-label="تصویر"><option value="0">🌅 غروب کوهستان</option><option value="1">🌊 دریا</option><option value="2">🌲 جنگل</option><option value="3">🌌 شب پرستاره</option><option value="4">🎨 رنگارنگ</option><option value="u">📷 عکس خودم…</option></select>
+  <select id="sz" aria-label="تعداد تکه"><option value="3x4">۱۲ تکه</option><option value="4x5" selected>۲۰ تکه</option><option value="5x7">۳۵ تکه</option><option value="6x8">۴۸ تکه</option></select>
+  <button id="pv">👁 نمایش</button><button id="sh">بُر زدن</button>
+  <label class="fb" id="fl" style="display:none">انتخاب عکس<input type="file" id="file" accept="image/*"></label>
+</div>
+<div id="st"></div>
+<div id="play"><div id="ghost"></div><div id="prev"><canvas id="pvc"></canvas></div><div id="win"><div style="font-size:3rem">🎉</div><div id="wt"></div><button id="again">پازل تازه</button></div></div>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.15),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var play=$('play'),pieces=[],img=null,BW,BH,PW,PH,PAD,cols,rows,bx,by,placed,t0,tmr,userImg=null,dpr=Math.min(window.devicePixelRatio||1,2),zTop=10;
+/* تصویرهای ساخته‌شده */
+function scene(k,w,h){
+  var c=document.createElement('canvas');c.width=w;c.height=h;var g=c.getContext('2d'),i,r=function(a,b){return a+Math.random()*(b-a)};
+  var sd=[11,22,33,44,55][k%5],rn=function(){sd=(sd*9301+49297)%233280;return sd/233280};
+  if(k===0){var s=g.createLinearGradient(0,0,0,h);s.addColorStop(0,'#2b1055');s.addColorStop(.45,'#d9455f');s.addColorStop(.7,'#ffb36b');s.addColorStop(1,'#ffe3a1');g.fillStyle=s;g.fillRect(0,0,w,h);
+    g.fillStyle='#fff3c4';g.beginPath();g.arc(w*.68,h*.52,w*.09,0,7);g.fill();
+    [[.45,'#4a2a5a'],[.6,'#35204a'],[.75,'#1f1433']].forEach(function(L,li){g.fillStyle=L[1];g.beginPath();g.moveTo(0,h);for(var x=0;x<=w;x+=w/24){g.lineTo(x,h*L[0]+Math.sin(x*.01+li*2)*h*.07+rn()*h*.05*(li+1))}g.lineTo(w,h);g.fill()})}
+  else if(k===1){var s2=g.createLinearGradient(0,0,0,h);s2.addColorStop(0,'#7ad7ff');s2.addColorStop(.45,'#d4f4ff');s2.addColorStop(.46,'#0aa2c0');s2.addColorStop(1,'#023e66');g.fillStyle=s2;g.fillRect(0,0,w,h);
+    g.fillStyle='#fff';for(i=0;i<5;i++){var cx=rn()*w,cy=rn()*h*.3+10;for(var j=0;j<5;j++){g.globalAlpha=.85;g.beginPath();g.arc(cx+j*w*.03,cy+Math.sin(j)*8,w*.04,0,7);g.fill()}}g.globalAlpha=1;
+    g.strokeStyle='rgba(255,255,255,.4)';g.lineWidth=2;for(i=0;i<40;i++){var y=h*.48+rn()*h*.5,x=rn()*w;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+20,y-6,x+44,y);g.stroke()}
+    g.fillStyle='#f7c948';g.beginPath();g.arc(w*.2,h*.14,w*.07,0,7);g.fill();
+    g.fillStyle='#fff';g.beginPath();g.moveTo(w*.55,h*.46);g.lineTo(w*.55,h*.3);g.lineTo(w*.7,h*.46);g.fill();g.fillStyle='#8d5524';g.fillRect(w*.5,h*.46,w*.22,h*.03)}
+  else if(k===2){var s3=g.createLinearGradient(0,0,0,h);s3.addColorStop(0,'#cfe9a8');s3.addColorStop(1,'#4c8c3a');g.fillStyle=s3;g.fillRect(0,0,w,h);
+    for(i=0;i<46;i++){var tx=rn()*w,ty=h*.3+rn()*h*.7,sz=h*(.08+ty/h*.14);g.fillStyle='#5b3a1f';g.fillRect(tx-sz*.06,ty,sz*.12,sz*.5);g.fillStyle='hsl('+(100+rn()*40)+',55%,'+(22+ty/h*18)+'%)';for(var l=0;l<3;l++){g.beginPath();g.moveTo(tx,ty-sz*(.7-l*.02)+l*sz*.28);g.lineTo(tx-sz*(.3+l*.1),ty+l*sz*.28);g.lineTo(tx+sz*(.3+l*.1),ty+l*sz*.28);g.fill()}}
+    g.fillStyle='rgba(255,255,220,.3)';g.beginPath();g.arc(w*.8,h*.1,w*.2,0,7);g.fill()}
+  else if(k===3){var s4=g.createLinearGradient(0,0,w,h);s4.addColorStop(0,'#04051c');s4.addColorStop(.5,'#2a1a5e');s4.addColorStop(1,'#0b3d6b');g.fillStyle=s4;g.fillRect(0,0,w,h);
+    for(i=0;i<260;i++){g.fillStyle='rgba(255,255,255,'+(.3+rn()*.7)+')';g.beginPath();g.arc(rn()*w,rn()*h,rn()*1.8+.3,0,7);g.fill()}
+    var gl=g.createRadialGradient(w*.5,h*.45,10,w*.5,h*.45,w*.5);gl.addColorStop(0,'rgba(120,255,200,.35)');gl.addColorStop(1,'rgba(120,255,200,0)');g.fillStyle=gl;g.fillRect(0,0,w,h);
+    g.fillStyle='#ffe9a8';g.beginPath();g.arc(w*.25,h*.22,w*.06,0,7);g.fill();g.fillStyle='#04051c';g.beginPath();g.arc(w*.27,h*.2,w*.055,0,7);g.fill();
+    g.fillStyle='#060a24';g.beginPath();g.moveTo(0,h);for(var x=0;x<=w;x+=w/16)g.lineTo(x,h*.82-rn()*h*.12);g.lineTo(w,h);g.fill()}
+  else{g.fillStyle='#fff7e6';g.fillRect(0,0,w,h);for(i=0;i<70;i++){g.fillStyle='hsla('+Math.floor(rn()*360)+',80%,60%,.75)';var sx=rn()*w,sy=rn()*h,q=w*(.05+rn()*.14);g.beginPath();if(i%3===0)g.arc(sx,sy,q,0,7);else if(i%3===1)g.rect(sx,sy,q*1.4,q);else{g.moveTo(sx,sy);g.lineTo(sx+q,sy+q*1.5);g.lineTo(sx-q,sy+q*1.5)}g.fill()}}
+  return c;
+}
+function fit(src){ // تصویر را با نسبت صفحه‌ی بازی برش می‌دهد
+  var c=document.createElement('canvas');c.width=Math.round(BW*dpr);c.height=Math.round(BH*dpr);var g=c.getContext('2d');
+  var sw=src.width||src.naturalWidth,sh=src.height||src.naturalHeight,sr=sw/sh,tr=BW/BH,sx=0,sy=0,w=sw,h=sh;
+  if(sr>tr){w=sh*tr;sx=(sw-w)/2}else{h=sw/tr;sy=(sh-h)/2}
+  g.drawImage(src,sx,sy,w,h,0,0,c.width,c.height);return c;
+}
+/* شکل تکه‌ها */
+function edge(g,ax,ay,bx,by,s){
+  if(!s){g.lineTo(bx,by);return}
+  var dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy),nx=dy/L*s,ny=-dx/L*s;
+  var P=function(t,h){return[ax+dx*t+nx*h*L,ay+dy*t+ny*h*L]};
+  var a=P(.36,0);g.lineTo(a[0],a[1]);
+  var c1=P(.38,.05),c2=P(.31,.09),e1=P(.35,.14);g.bezierCurveTo(c1[0],c1[1],c2[0],c2[1],e1[0],e1[1]);
+  var d1=P(.38,.2),d2=P(.62,.2),e2=P(.65,.14);g.bezierCurveTo(d1[0],d1[1],d2[0],d2[1],e2[0],e2[1]);
+  var f1=P(.69,.09),f2=P(.62,.05),e3=P(.64,0);g.bezierCurveTo(f1[0],f1[1],f2[0],f2[1],e3[0],e3[1]);
+  g.lineTo(bx,by);
+}
+function build(){
+  clearInterval(tmr);[].slice.call(play.querySelectorAll('.pc')).forEach(function(e){e.remove()});$('win').classList.remove('on');
+  var sz=$('sz').value.split('x');cols=+sz[0];rows=+sz[1];
+  var aw=play.clientWidth,ah=play.clientHeight;
+  // صفحه‌ی اصلی: قسمت بالا؛ انبار تکه‌ها: پایین
+  var maxW=aw-16,maxH=ah*.56,ratio=cols/rows;
+  BW=Math.min(maxW,maxH*ratio);BH=BW/ratio;if(BH>maxH){BH=maxH;BW=BH*ratio}
+  BW=Math.floor(BW);BH=Math.floor(BH);PW=BW/cols;PH=BH/rows;PAD=Math.min(PW,PH)*.24;
+  bx=Math.floor((aw-BW)/2);by=8;
+  var g=$('ghost');g.style.left=bx+'px';g.style.top=by+'px';g.style.width=BW+'px';g.style.height=BH+'px';
+  var k=$('img').value,base;
+  if(k==='u'){if(!userImg){$('st').textContent='یک عکس انتخاب کن';return}base=userImg}else base=scene(+k,900,Math.round(900*BH/BW));
+  img=fit(base);
+  var pv=$('pvc');pv.width=BW;pv.height=BH;pv.getContext('2d').drawImage(img,0,0,BW,BH);
+  // لبه‌ها
+  var hE=[],vE=[],r,c;
+  for(r=0;r<rows;r++){hE[r]=[];for(c=0;c<cols-1;c++)hE[r][c]=Math.random()<.5?1:-1}
+  for(r=0;r<rows-1;r++){vE[r]=[];for(c=0;c<cols;c++)vE[r][c]=Math.random()<.5?1:-1}
+  pieces=[];placed=0;
+  for(r=0;r<rows;r++)for(c=0;c<cols;c++){
+    var top=r>0?-vE[r-1][c]:0,right=c<cols-1?hE[r][c]:0,bottom=r<rows-1?vE[r][c]:0,left=c>0?-hE[r][c-1]:0;
+    pieces.push(mkPiece(r,c,top,right,bottom,left));
+  }
+  // پخش در پایین
+  var y0=by+BH+16,ph=ah-y0-4;
+  pieces.forEach(function(p){
+    p.x=Math.random()*(aw-PW-PAD*2)+0;p.y=y0+Math.random()*Math.max(10,ph-PH-PAD)-PAD*.2;
+    p.el.style.left=p.x+'px';p.el.style.top=p.y+'px';
+  });
+  t0=Date.now();tmr=setInterval(stat,1000);stat();
+}
+function mkPiece(r,c,t,rt,b,l){
+  var cw=Math.ceil((PW+PAD*2)*dpr),ch=Math.ceil((PH+PAD*2)*dpr),cv=document.createElement('canvas');cv.width=cw;cv.height=ch;
+  cv.style.width=(PW+PAD*2)+'px';cv.style.height=(PH+PAD*2)+'px';cv.className='pc';
+  var g=cv.getContext('2d');g.scale(dpr,dpr);
+  var x0=PAD,y0=PAD,x1=PAD+PW,y1=PAD+PH;
+  g.beginPath();g.moveTo(x0,y0);edge(g,x0,y0,x1,y0,t);edge(g,x1,y0,x1,y1,rt);edge(g,x1,y1,x0,y1,b);edge(g,x0,y1,x0,y0,l);g.closePath();
+  g.save();g.clip();g.drawImage(img,c*PW*dpr-PAD*dpr,r*PH*dpr-PAD*dpr,cw,ch,0,0,cw/dpr,ch/dpr);g.restore();
+  g.lineWidth=1.4;g.strokeStyle='rgba(255,255,255,.55)';g.stroke();
+  g.lineWidth=1;g.strokeStyle='rgba(0,0,0,.35)';g.save();g.translate(.8,.8);g.stroke();g.restore();
+  var p={r:r,c:c,el:cv,x:0,y:0,ok:false,tx:bx+c*PW-PAD,ty:by+r*PH-PAD};
+  // hit-test دقیق با شکل
+  p.hit=function(px,py){return g.isPointInPath(px*dpr,py*dpr)};
+  p.g=g;cv.style.pointerEvents='none';
+  play.appendChild(cv);return p;
+}
+
+/* لمس: بالاترین تکه‌ای که نقطه داخل شکلش است */
+var drag=null,ox=0,oy=0;
+play.addEventListener('pointerdown',function(e){
+  var list=pieces.filter(function(q){return !q.ok}).sort(function(a,b){return (+b.el.style.zIndex||0)-(+a.el.style.zIndex||0)});
+  for(var i=0;i<list.length;i++){
+    var q=list[i],rc=q.el.getBoundingClientRect();
+    if(e.clientX<rc.left||e.clientX>rc.right||e.clientY<rc.top||e.clientY>rc.bottom)continue;
+    if(q.g.isPointInPath((e.clientX-rc.left)*dpr,(e.clientY-rc.top)*dpr)){
+      e.preventDefault();drag={q:q,id:e.pointerId};try{play.setPointerCapture(e.pointerId)}catch(x){}
+      ox=e.clientX-q.x;oy=e.clientY-q.y;q.el.classList.add('dr');q.el.style.zIndex=++zTop;snd(420,.04,'triangle',.08);return;
+    }
+  }
+});
+play.addEventListener('pointermove',function(e){if(!drag||drag.id!==e.pointerId)return;var q=drag.q;q.x=e.clientX-ox;q.y=e.clientY-oy;q.el.style.left=q.x+'px';q.el.style.top=q.y+'px'});
+function endDrag(e){
+  if(!drag||drag.id!==e.pointerId)return;var q=drag.q;drag=null;q.el.classList.remove('dr');
+  if(Math.hypot(q.x-q.tx,q.y-q.ty)<Math.min(PW,PH)*.35){
+    q.x=q.tx;q.y=q.ty;q.el.style.left=q.x+'px';q.el.style.top=q.y+'px';q.ok=true;q.el.classList.add('lk');q.el.style.zIndex=1;placed++;snd(660,.08,'sine',.18);stat();
+    if(placed===pieces.length)done();
+  }
+}
+play.addEventListener('pointerup',endDrag);play.addEventListener('pointercancel',endDrag);
+function stat(){var s=Math.floor((Date.now()-t0)/1000);$('st').textContent='جا افتاده: '+placed+' از '+pieces.length+' · زمان: '+Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
+function done(){clearInterval(tmr);var s=Math.floor((Date.now()-t0)/1000);$('wt').textContent='پازل کامل شد! زمان: '+Math.floor(s/60)+':'+('0'+s%60).slice(-2);$('win').classList.add('on');[660,880,1100,1320].forEach(function(f,i){setTimeout(function(){snd(f,.2,'sine',.2)},i*120)})}
+function shufflePieces(){
+  var aw=play.clientWidth,ah=play.clientHeight,y0=by+BH+16,ph=ah-y0-4;
+  pieces.forEach(function(p){if(p.ok)return;p.x=Math.random()*(aw-PW-PAD*2);p.y=y0+Math.random()*Math.max(10,ph-PH-PAD);p.el.style.left=p.x+'px';p.el.style.top=p.y+'px'});
+}
+$('img').onchange=function(){var u=$('img').value==='u';$('fl').style.display=u?'':'none';if(u&&!userImg){$('file').click();return}build()};
+$('file').onchange=function(e){var f=e.target.files[0];if(!f)return;var im=new Image();im.onload=function(){userImg=im;build()};im.src=URL.createObjectURL(f)};
+$('sz').onchange=build;$('sh').onclick=shufflePieces;$('again').onclick=build;
+var hold=function(on){return function(e){e.preventDefault();$('prev').classList.toggle('on',on)}};
+$('pv').addEventListener('pointerdown',hold(true));['pointerup','pointerleave','pointercancel'].forEach(function(t){$('pv').addEventListener(t,hold(false))});
+var lw=innerWidth;addEventListener('resize',function(){if(Math.abs(innerWidth-lw)<40)return;lw=innerWidth;clearTimeout(window._rz);window._rz=setTimeout(build,350)});
+setTimeout(build,50);
+})();
+</script>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

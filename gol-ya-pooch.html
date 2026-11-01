@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#4a2c6b">
+<title>گل یا پوچ | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at top,#6a3fa0,#2a1745 75%);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:8px 10px calc(14px + env(safe-area-inset-bottom,0px));user-select:none;-webkit-user-select:none;min-height:100vh}
+h1{margin:4px 0 6px;font-size:1.2rem;padding-left:46px}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
+select,button{font:inherit;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.13);color:#fff;padding:7px 12px}
+select option{color:#111}button{cursor:pointer}
+.score{display:flex;gap:10px;width:min(96vw,460px);margin:6px 0}
+.sc{flex:1;background:rgba(0,0,0,.3);border:2px solid transparent;border-radius:14px;padding:6px 10px;text-align:center}
+.sc.h{border-color:#ffd54f}.sc b{font-size:1.6rem;display:block;line-height:1.2}.sc small{opacity:.8}
+#info{min-height:3em;text-align:center;font-size:1.02rem;margin:10px 6px 4px;color:#ffe9a8;font-weight:700}
+.hands{display:flex;gap:14px;justify-content:center;margin:6px 0;direction:ltr}
+.hd{width:min(40vw,170px);aspect-ratio:1/1.1;border-radius:26px;background:rgba(255,255,255,.1);border:3px solid rgba(255,255,255,.2);display:grid;place-items:center;font-size:min(20vw,86px);cursor:pointer;transition:transform .15s,background .2s,border-color .2s;position:relative;padding:0}
+.hd small{position:absolute;bottom:6px;left:0;right:0;font-size:.8rem;color:#fff;opacity:.85;text-align:center}
+.hd:active{transform:scale(.94)}
+.hd.pick{border-color:#ffd54f;background:rgba(255,213,79,.2)}
+.hd.win{border-color:#69f0ae;background:rgba(105,240,174,.22)}
+.hd.lose{border-color:#ff5252}
+.hd.shake{animation:sh .5s}
+@keyframes sh{20%{transform:rotate(-8deg) translateY(-6px)}40%{transform:rotate(8deg) translateY(-6px)}60%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}}
+.hd:disabled{cursor:default;opacity:.85}
+#pooch{margin:6px 0;padding:10px 26px;font-size:1.02rem;background:rgba(255,255,255,.18)}
+#pooch.pick{border-color:#ffd54f;background:rgba(255,213,79,.25)}
+#pooch.win{border-color:#69f0ae;background:rgba(105,240,174,.25)}
+.act{margin-top:10px;display:flex;gap:8px}
+button.pr{background:#ffd54f;color:#2b2100;border:0;font-weight:800;padding:10px 22px}
+#cover{position:fixed;inset:0;background:#2a1745;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:20;text-align:center;padding:20px}
+#cover.on{display:flex}
+.rules{font-size:.74rem;opacity:.65;text-align:center;max-width:420px;margin-top:10px;line-height:1.8}
+</style>
+</head>
+<body>
+<h1>🌼 گل یا پوچ</h1>
+<div class="bar">
+  <select id="mode" aria-label="حالت"><option value="cpu">با کامپیوتر</option><option value="two">دو نفره (یک گوشی)</option></select>
+  <select id="goal" aria-label="امتیاز پایان"><option value="5">تا ۵ امتیاز</option><option value="7" selected>تا ۷ امتیاز</option><option value="10">تا ۱۰ امتیاز</option></select>
+  <button id="new">بازی تازه</button>
+</div>
+<div class="score"><div class="sc" id="s0"><small id="n0">شما</small><b id="v0">0</b></div><div class="sc" id="s1"><small id="n1">کامپیوتر</small><b id="v1">0</b></div></div>
+<div id="info"></div>
+<div class="hands">
+  <button class="hd" id="hl" aria-label="دست چپ">✊<small>دست چپ</small></button>
+  <button class="hd" id="hr" aria-label="دست راست">✊<small>دست راست</small></button>
+</div>
+<button id="pooch">🖐 پوچ (هر دو دست خالی)</button>
+<div class="act"><button class="pr" id="next" style="display:none">دور بعد</button></div>
+<div class="rules">یک نفر «گل» را در یکی از دست‌هایش پنهان می‌کند (یا هر دو دست را خالی نگه می‌دارد = <b>پوچ</b>). نفر مقابل حدس می‌زند: دست چپ، دست راست یا پوچ. حدس درست = ۱ امتیاز و نوبت پنهان‌کردن. حدس غلط = امتیاز برای پنهان‌کننده.</div>
+<div id="cover"><div style="font-size:3rem">🙈</div><div id="ctext" style="font-size:1.1rem"></div><button class="pr" id="cok">آماده‌ام</button></div>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.2),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var mode='cpu',goal=7,sc=[0,0],hider=0,hidden=null,phase='',hist=[0,0,0],last=[];
+var NAMES=function(i){return mode==='cpu'?(i===0?'شما':'کامپیوتر'):(i===0?'نفر ۱':'نفر ۲')};
+var LBL={L:'دست چپ',R:'دست راست',P:'پوچ'};
+function paint(){
+  $('v0').textContent=sc[0];$('v1').textContent=sc[1];$('n0').textContent=NAMES(0);$('n1').textContent=NAMES(1);
+  $('s0').classList.toggle('h',hider===0);$('s1').classList.toggle('h',hider===1);
+}
+function reset(){['hl','hr'].forEach(function(i){var e=$(i);e.className='hd';e.firstChild.nodeValue='✊';e.disabled=false});$('pooch').className='';$('pooch').disabled=false;$('next').style.display='none'}
+function newGame(){mode=$('mode').value;goal=+$('goal').value;sc=[0,0];hider=0;hist=[0,0,0];last=[];round()}
+function round(){
+  reset();paint();hidden=null;
+  if(mode==='cpu'&&hider===1){ // کامپیوتر پنهان می‌کند، شما حدس می‌زنید
+    hidden=cpuHide();phase='guess';$('info').textContent='کامپیوتر گل را پنهان کرد. حدس بزن: کدام دست؟ یا پوچ؟';return;
+  }
+  phase='hide';
+  $('info').textContent=(mode==='cpu'?'تو گل را پنهان می‌کنی: ':NAMES(hider)+' پنهان می‌کند (نفر دیگر نگاه نکند): ')+'یک دست را انتخاب کن یا «پوچ» بزن.';
+}
+function cpuHide(){
+  var w=[.4,.4,.2],k=['L','R','P'];
+  // از تکرار الگو پرهیز می‌کند
+  if(last.length>=2&&last[last.length-1]===last[last.length-2]){var i=k.indexOf(last[last.length-1]);w[i]*=.35}
+  var s=w[0]+w[1]+w[2],r=Math.random()*s;return r<w[0]?'L':r<w[0]+w[1]?'R':'P';
+}
+function cpuGuess(){
+  var base=[.36,.36,.28],tot=hist[0]+hist[1]+hist[2]+3,k=['L','R','P'],w=[0,0,0];
+  for(var i=0;i<3;i++)w[i]=(hist[i]+1)/tot*.6+base[i]*.4;
+  var s=w[0]+w[1]+w[2],r=Math.random()*s;return r<w[0]?'L':r<w[0]+w[1]?'R':'P';
+}
+function choose(c){
+  if(phase==='hide'){
+    hidden=c;
+    if(mode==='cpu'){hist[c==='L'?0:c==='R'?1:2]++;last.push(c);phase='wait';mark(c,'pick');$('info').textContent='پنهان شد! کامپیوتر حدس می‌زند…';lock();snd(380,.1);setTimeout(function(){reveal(cpuGuess())},1100)}
+    else{phase='pass';snd(380,.1);cover('گوشی را به '+NAMES(1-hider)+' بده تا حدس بزند — بعد «آماده‌ام» را بزن.',function(){phase='guess';reset();$('info').textContent=NAMES(1-hider)+': حدس بزن کدام دست؟ یا پوچ؟'})}
+  }else if(phase==='guess'){phase='done';mark(c,'pick');lock();reveal(c)}
+}
+function mark(c,cl){var e=c==='L'?$('hl'):c==='R'?$('hr'):$('pooch');e.classList.add(cl)}
+function lock(){$('hl').disabled=$('hr').disabled=$('pooch').disabled=true}
+function cover(t,cb){$('ctext').textContent=t;$('cover').classList.add('on');$('cok').onclick=function(){$('cover').classList.remove('on');cb()}}
+function reveal(guess){
+  phase='done';lock();
+  var gi=1-hider,ok=guess===hidden;
+  // نمایش
+  ['L','R'].forEach(function(c){var e=c==='L'?$('hl'):$('hr');e.firstChild.nodeValue=(hidden===c)?'🌼':'🖐';e.classList.remove('pick');e.classList.add('shake');if(hidden===c)e.classList.add('win')});
+  if(hidden==='P')$('pooch').classList.add('win');
+  if(guess==='L'||guess==='R'||guess==='P'){var ge=guess==='L'?$('hl'):guess==='R'?$('hr'):$('pooch');if(!ok)ge.classList.add('lose');}
+  var what=hidden==='P'?'هر دو دست خالی بود (پوچ)!':'گل در '+LBL[hidden]+' بود.';
+  var winner=ok?gi:hider;sc[winner]++;
+  if(ok){hider=gi}
+  snd(ok?784:220,.3,ok?'sine':'sawtooth',.2);
+  $('info').textContent=NAMES(gi)+' گفت «'+LBL[guess]+'» — '+what+' '+(ok?'حدس درست! +۱ برای '+NAMES(gi)+' و نوبت پنهان‌کردن او.':'حدس غلط! +۱ برای '+NAMES(winner)+'.');
+  paint();
+  var done=sc[winner]>=goal;
+  if(done){$('info').textContent+='  🏆 '+NAMES(winner)+' برنده شد!';snd(1046,.5);var n=$('next');n.textContent='بازی تازه';n.style.display='';n.onclick=newGame;return}
+  var n2=$('next');n2.textContent='دور بعد';n2.style.display='';n2.onclick=round;
+}
+$('hl').onclick=function(){choose('L')};$('hr').onclick=function(){choose('R')};$('pooch').onclick=function(){choose('P')};
+$('new').onclick=newGame;$('mode').onchange=newGame;$('goal').onchange=newGame;
+newGame();
+})();
+</script>
+<script>
+/* S Loop — پخش موسیقی پس‌زمینه (فقط وقتی بازی مستقل باز شده؛ داخل index موسیقی از خود صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  if(window.top!==window) return;
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

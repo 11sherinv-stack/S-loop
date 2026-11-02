@@ -17,3 +17,12 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(r).then(m => m || (r.mode === 'navigate' ? caches.match('./index.html') : undefined)))
   );
 });
+
+/* کلیک روی اعلان → بازکردن/فوکوس‌کردن سایت */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow('./');
+  }));
+});

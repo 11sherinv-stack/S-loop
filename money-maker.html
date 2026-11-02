@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0e17">
+<title>Money Maker | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0e17;overscroll-behavior:none}
+body{color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;touch-action:manipulation;background:radial-gradient(ellipse at 50% 20%,#2a1d05,#0b0e17 62%)}
+.top{display:flex;gap:8px;align-items:center;padding:8px 10px 4px 52px}
+.lg{flex:1;background:rgba(255,255,255,.07);border-radius:12px;padding:5px 10px;font-size:.78rem;cursor:pointer}
+.lg b{color:var(--lc,#cd7f32)}.lbar{height:6px;background:rgba(255,255,255,.12);border-radius:4px;margin-top:4px;overflow:hidden}.lbar i{display:block;height:100%;background:var(--lc,#cd7f32);width:0}
+.ph{background:rgba(255,255,255,.07);border-radius:12px;padding:5px 10px;text-align:center;font-size:.7rem;white-space:nowrap}.ph b{display:block;font-size:.95rem;color:#69f0ae}
+.bal{display:flex;align-items:center;justify-content:center;gap:8px;font-size:2.3rem;font-weight:900;margin:6px 0 0;direction:ltr}
+.bal svg{width:42px;height:42px}
+.view{display:none;flex:1;min-height:0;flex-direction:column}.view.on{display:flex}
+#v-tap{align-items:center;justify-content:space-between;padding:0 12px 8px}
+#coinwrap{flex:1;display:grid;place-items:center;width:100%;perspective:600px;position:relative}
+#coin{width:min(64vw,270px);aspect-ratio:1;transition:transform .12s;filter:drop-shadow(0 10px 28px rgba(247,147,26,.5));touch-action:manipulation}
+#coin svg{width:100%;height:100%;display:block;pointer-events:none}
+.fl{position:absolute;font-weight:900;font-size:1.6rem;color:#ffd54f;pointer-events:none;text-shadow:0 2px 4px #000;animation:up .9s ease-out forwards;direction:ltr}
+@keyframes up{to{transform:translateY(-90px);opacity:0}}
+.en{width:100%;max-width:420px}
+.en .t{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px}
+.en .b{height:14px;background:rgba(255,255,255,.12);border-radius:8px;overflow:hidden}.en .b i{display:block;height:100%;background:linear-gradient(90deg,#ffb300,#ffee58);width:100%}
+.turbo{color:#ff7043;font-weight:900;min-height:1.2em;font-size:.9rem}
+.list{flex:1;overflow:auto;padding:6px 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}
+.list.one{grid-template-columns:1fr}
+.card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:9px;display:flex;flex-direction:column;gap:3px;font-size:.78rem}
+.card .e{font-size:1.6rem}.card b{font-size:.88rem}
+.card button{margin-top:4px;font:inherit;font-size:.82rem;border:0;border-radius:10px;padding:7px;background:#f7931a;color:#2b1700;font-weight:800;cursor:pointer;direction:ltr}
+.card button:disabled{opacity:.35}
+.card .p{color:#69f0ae}
+h3{margin:6px 12px 0;font-size:.95rem}
+.nav{display:flex;background:#10131f;border-top:1px solid rgba(255,255,255,.1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav button{flex:1;background:none;border:0;color:#9aa4b2;font:inherit;font-size:.75rem;padding:8px 2px;cursor:pointer;position:relative}
+.nav button span{display:block;font-size:1.3rem}.nav button.on{color:#f7931a}
+.nav button .dot{position:absolute;top:6px;right:30%;width:9px;height:9px;border-radius:50%;background:#ff5252;display:none}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 10px}
+.day{background:rgba(255,255,255,.07);border-radius:10px;padding:6px 2px;text-align:center;font-size:.72rem}.day.c{background:rgba(105,240,174,.25)}.day.n{outline:2px solid #f7931a}
+.day b{display:block;font-size:.8rem}
+.bt{margin:6px 12px;font:inherit;border:0;border-radius:12px;padding:11px;background:#f7931a;color:#2b1700;font-weight:900;cursor:pointer;font-size:1rem}.bt:disabled{opacity:.4}
+#toast{position:fixed;left:12px;right:12px;bottom:80px;background:#1c2233;border:1px solid #f7931a;border-radius:12px;padding:10px;text-align:center;z-index:30;display:none}
+.row{display:flex;align-items:center;justify-content:space-between;margin:4px 12px;font-size:.85rem;background:rgba(255,255,255,.06);border-radius:12px;padding:8px 10px}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="lg" id="lg"><span id="lgn"></span><div class="lbar"><i id="lgb"></i></div></div>
+  <div class="ph">درآمد در ساعت<b id="ph">+0</b></div>
+</div>
+<div class="bal"><svg viewBox="0 0 200 200" aria-hidden="true"><use href="#btc"/></svg><span id="bal">0</span></div>
+
+<div class="view on" id="v-tap">
+  <div id="coinwrap"><div id="coin" aria-label="سکه بیت‌کوین"><svg viewBox="0 0 200 200"><use href="#btc"/></svg></div></div>
+  <div class="turbo" id="turbo"></div>
+  <div class="en"><div class="t"><span>⚡ انرژی</span><span id="et"></span></div><div class="b"><i id="eb"></i></div></div>
+</div>
+<div class="view" id="v-mine"><h3>⛏ ماینینگ — درآمد ساعتی بساز</h3><div class="list" id="cards"></div></div>
+<div class="view" id="v-boost"><h3>🚀 تقویت‌کننده‌ها</h3><div class="list one" id="boosts"></div><div class="row"><span>🔔 اعلان وقتی انرژی پر شد یا درآمد آماده است</span><input type="checkbox" id="nt"></div></div>
+<div class="view" id="v-daily"><h3>📅 جایزه‌ی روزانه</h3><div class="days" id="days"></div><button class="bt" id="claim">دریافت جایزه‌ی امروز</button><div class="row" style="justify-content:center;opacity:.8" id="dnote"></div></div>
+
+<div class="nav">
+  <button data-v="tap" class="on"><span>🪙</span>ضربه</button>
+  <button data-v="mine"><span>⛏️</span>ماینینگ</button>
+  <button data-v="boost"><span>🚀</span>تقویت</button>
+  <button data-v="daily"><span>📅</span>روزانه<i class="dot" id="dd"></i></button>
+</div>
+<div id="toast"></div>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="btc" viewBox="0 0 200 200">
+    <defs>
+      <radialGradient id="g1" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#ffd27a"/><stop offset=".45" stop-color="#f7931a"/><stop offset="1" stop-color="#b8620b"/></radialGradient>
+      <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe3a8"/><stop offset="1" stop-color="#d9780c"/></linearGradient>
+    </defs>
+    <circle cx="100" cy="100" r="96" fill="url(#g2)"/>
+    <circle cx="100" cy="100" r="88" fill="url(#g1)"/>
+    <circle cx="100" cy="100" r="76" fill="none" stroke="#ffe3a8" stroke-opacity=".55" stroke-width="3" stroke-dasharray="2 6"/>
+    <g transform="rotate(14 100 100)" fill="#fff">
+      <rect x="82" y="44" width="9" height="20" rx="2"/><rect x="104" y="44" width="9" height="20" rx="2"/>
+      <rect x="82" y="136" width="9" height="20" rx="2"/><rect x="104" y="136" width="9" height="20" rx="2"/>
+      <path d="M72 62h46c20 0 31 9 31 24 0 11-6 18-16 22 13 3 21 11 21 24 0 19-14 28-37 28H72z M96 80v22h20c8 0 12-4 12-11s-4-11-12-11z M96 118v26h24c9 0 14-5 14-13s-5-13-14-13z" fill-rule="evenodd"/>
+    </g>
+    <ellipse cx="72" cy="46" rx="30" ry="14" fill="#fff" fill-opacity=".28" transform="rotate(-25 72 46)"/>
+  </symbol>
+</defs></svg>
+
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'triangle';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*1.5,t+d);q.gain.setValueAtTime(GV*(v||.07),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var LG=[['برنز',0,'#cd7f32'],['نقره',5e3,'#b0bec5'],['طلا',5e4,'#ffd54f'],['پلاتین',5e5,'#80deea'],['الماس',5e6,'#4fc3f7'],['استاد',5e7,'#ba68c8'],['افسانه',5e8,'#ff5252']];
+var CARDS=[
+ {id:'asic',n:'ماینر ASIC',e:'⛏️',base:150,p:12},{id:'gpu',n:'مزرعه GPU',e:'🖥️',base:600,p:45},{id:'solar',n:'برق خورشیدی',e:'☀️',base:2e3,p:140},
+ {id:'bot',n:'ربات معامله',e:'🤖',base:5e3,p:320},{id:'wallet',n:'کیف سخت‌افزاری',e:'🔐',base:12e3,p:700},{id:'ln',n:'نود لایتنینگ',e:'⚡',base:3e4,p:1500},
+ {id:'pool',n:'استخر ماینینگ',e:'🏊',base:8e4,p:3600},{id:'dex',n:'صرافی غیرمتمرکز',e:'🏦',base:2e5,p:8e3},{id:'lab',n:'آزمایشگاه بلاک‌چین',e:'🧪',base:5e5,p:17e3},
+ {id:'fund',n:'صندوق ساتوشی',e:'💎',base:15e5,p:48e3},{id:'ai',n:'هوش مصنوعی معامله‌گر',e:'🧠',base:5e6,p:14e4},{id:'moon',n:'مأموریت ماه',e:'🚀',base:2e7,p:52e4}];
+var DAILY=[500,1e3,2500,5e3,15e3,25e3,1e5,5e5,1e6,5e6];
+var KEY='sl-mm-v1',OFFCAP=3*3600;
+var dayKey=function(d){return (d||new Date()).toLocaleDateString('en-CA')};
+var S=load();
+function load(){var d={coins:0,total:0,energy:1000,tapLvl:0,enLvl:0,rgLvl:0,cards:{},fullLeft:3,turboLeft:2,boostDay:'',turboUntil:0,streak:0,lastClaim:'',last:Date.now()};
+  try{var v=JSON.parse(localStorage.getItem(KEY));if(v)for(var k in v)d[k]=v[k]}catch(e){}return d}
+function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function fmt(n){n=Math.floor(n);if(n<1e4)return String(n);var u=[[1e12,'T'],[1e9,'B'],[1e6,'M'],[1e3,'K']];for(var i=0;i<u.length;i++)if(n>=u[i][0]){var v=n/u[i][0];return (v<100?v.toFixed(2):v.toFixed(1)).replace(/\.?0+$/,'')+u[i][1]}return String(n)}
+var maxE=function(){return 1000+500*S.enLvl},regen=function(){return 2+S.rgLvl},tapV=function(){return 1+S.tapLvl};
+var cost=function(c){return Math.round(c.base*Math.pow(1.45,S.cards[c.id]||0))};
+function profit(){var p=0;CARDS.forEach(function(c){p+=(S.cards[c.id]||0)*c.p});return p}
+function resetDay(){var k=dayKey();if(S.boostDay!==k){S.boostDay=k;S.fullLeft=3;S.turboLeft=2}}
+resetDay();
+/* پول آفلاین */
+(function(){var el=Math.min(OFFCAP,Math.max(0,(Date.now()-S.last)/1000));if(el>60){var g=profit()/3600*el;S.coins+=g;S.total+=g;S.energy=Math.min(maxE(),S.energy+regen()*el);if(g>=1)setTimeout(function(){toast('💰 در غیابت '+fmt(g)+' سکه درآمد داشتی!')},500)}S.last=Date.now()})();
+function toast(t){var e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(function(){e.style.display='none'},2600)}
+/* ضربه */
+var coin=$('coin'),wrap=$('coinwrap');
+function tap(e){
+  var turbo=S.turboUntil>Date.now(),v=tapV()*(turbo?5:1);
+  if(!turbo){if(S.energy<tapV()){return}S.energy-=tapV()}
+  S.coins+=v;S.total+=v;snd(520+Math.random()*180,.06);try{navigator.vibrate&&navigator.vibrate(6)}catch(x){}
+  var r=wrap.getBoundingClientRect(),cr=coin.getBoundingClientRect(),px=(e.clientX-cr.left)/cr.width-.5,py=(e.clientY-cr.top)/cr.height-.5;
+  coin.style.transform='rotateY('+(px*28)+'deg) rotateX('+(-py*28)+'deg) scale(.95)';setTimeout(function(){coin.style.transform=''},110);
+  var f=document.createElement('div');f.className='fl';f.textContent='+'+v;f.style.left=(e.clientX-r.left-14)+'px';f.style.top=(e.clientY-r.top-20)+'px';wrap.appendChild(f);setTimeout(function(){f.remove()},900);
+  ui();
+}
+coin.addEventListener('pointerdown',function(e){e.preventDefault();tap(e)});
+/* نمایش */
+function league(){var i=0;for(var k=0;k<LG.length;k++)if(S.total>=LG[k][1])i=k;return i}
+function ui(){
+  $('bal').textContent=fmt(S.coins);$('ph').textContent='+'+fmt(profit());
+  var i=league(),L=LG[i],N=LG[i+1];document.documentElement.style.setProperty('--lc',L[2]);
+  $('lgn').innerHTML='لیگ <b>'+L[0]+'</b> '+(N?'· '+fmt(S.total)+' / '+fmt(N[1]):'· حداکثر');
+  $('lgb').style.width=(N?Math.min(100,(S.total-L[1])/(N[1]-L[1])*100):100)+'%';
+  $('eb').style.width=(S.energy/maxE()*100)+'%';$('et').textContent=Math.floor(S.energy)+' / '+maxE();
+  var tl=S.turboUntil-Date.now();$('turbo').textContent=tl>0?'🔥 توربو ×۵ — '+Math.ceil(tl/1000)+' ثانیه':'';
+  var cd=S.lastClaim!==dayKey();$('dd').style.display=cd?'block':'none';
+}
+function renderMine(){
+  var el=$('cards');el.innerHTML='';
+  CARDS.forEach(function(c){var lv=S.cards[c.id]||0,cs=cost(c),d=document.createElement('div');d.className='card';
+    d.innerHTML='<span class="e">'+c.e+'</span><b>'+c.n+'</b><span>سطح '+lv+'</span><span class="p">+'+fmt(c.p)+' / ساعت</span><button '+(S.coins<cs?'disabled':'')+'>🪙 '+fmt(cs)+'</button>';
+    d.querySelector('button').onclick=function(){if(S.coins<cs)return;S.coins-=cs;S.cards[c.id]=lv+1;snd(700,.15);save();renderMine();ui()};el.appendChild(d)});
+}
+function boostItem(name,desc,lvl,cs,fn){var d=document.createElement('div');d.className='card';d.innerHTML='<b>'+name+' <span style="opacity:.7;font-weight:400">(سطح '+lvl+')</span></b><span>'+desc+'</span><button '+(S.coins<cs?'disabled':'')+'>🪙 '+fmt(cs)+'</button>';d.querySelector('button').onclick=function(){if(S.coins<cs)return;S.coins-=cs;fn();snd(800,.15);save();renderBoost();ui()};return d}
+function renderBoost(){
+  var el=$('boosts');el.innerHTML='';resetDay();
+  var fe=document.createElement('div');fe.className='card';fe.innerHTML='<b>🔋 انرژی کامل</b><span>امروز '+S.fullLeft+' بار باقی مانده</span><button '+(S.fullLeft>0?'':'disabled')+'>استفاده</button>';
+  fe.querySelector('button').onclick=function(){S.fullLeft--;S.energy=maxE();snd(900,.2);save();renderBoost();ui()};el.appendChild(fe);
+  var tb=document.createElement('div');tb.className='card';tb.innerHTML='<b>🔥 توربو ×۵ (۲۰ ثانیه)</b><span>بدون مصرف انرژی · امروز '+S.turboLeft+' بار</span><button '+(S.turboLeft>0&&S.turboUntil<Date.now()?'':'disabled')+'>فعال کن</button>';
+  tb.querySelector('button').onclick=function(){S.turboLeft--;S.turboUntil=Date.now()+20000;snd(1000,.3);save();renderBoost();ui();$('v-tap').classList.add('on');go('tap')};el.appendChild(tb);
+  el.appendChild(boostItem('👆 ضربه‌ی چندگانه','+۱ سکه در هر ضربه',S.tapLvl,1000*Math.pow(2,S.tapLvl),function(){S.tapLvl++}));
+  el.appendChild(boostItem('🔋 ظرفیت انرژی','+۵۰۰ ظرفیت',S.enLvl,1000*Math.pow(2,S.enLvl),function(){S.enLvl++}));
+  el.appendChild(boostItem('⚡ سرعت شارژ','+۱ انرژی در ثانیه',S.rgLvl,2000*Math.pow(2,S.rgLvl),function(){S.rgLvl++}));
+  $('nt').checked=!!readLS('sl-notif',false);
+}
+function readLS(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}}
+$('nt').onchange=function(){
+  var on=$('nt').checked;
+  if(!on){try{localStorage.setItem('sl-notif','false')}catch(e){}return}
+  if(!('Notification' in window)){toast('مرورگر اعلان را پشتیبانی نمی‌کند');$('nt').checked=false;return}
+  Notification.requestPermission().then(function(p){if(p==='granted'){try{localStorage.setItem('sl-notif','true')}catch(e){}toast('اعلان‌ها فعال شد 🔔');window.slNotify&&slNotify('🔔 اعلان‌ها فعال شد','Money Maker')}else{$('nt').checked=false;toast('اجازه‌ی اعلان داده نشد')}});
+};
+function renderDaily(){
+  var el=$('days');el.innerHTML='';var today=dayKey(),y=new Date();y.setDate(y.getDate()-1);
+  var st=S.streak;if(S.lastClaim&&S.lastClaim!==today&&S.lastClaim!==dayKey(y))st=0;
+  var done=S.lastClaim===today;
+  DAILY.forEach(function(r,i){var d=document.createElement('div');d.className='day'+(i<st?' c':'')+(i===st%10&&!done?' n':'');d.innerHTML='روز '+(i+1)+'<b>'+fmt(r)+'</b>'+(i<st?'✅':'🪙');el.appendChild(d)});
+  $('claim').disabled=done;$('claim').textContent=done?'امروز دریافت شد ✔':'دریافت '+fmt(DAILY[st%10])+' سکه';$('dnote').textContent=done?'فردا دوباره بیا تا زنجیره‌ات ادامه پیدا کند.':'هر روز بیایی جایزه بزرگ‌تر می‌شود.';
+}
+$('claim').onclick=function(){
+  var today=dayKey(),y=new Date();y.setDate(y.getDate()-1);if(S.lastClaim===today)return;
+  if(S.lastClaim!==dayKey(y))S.streak=0;var r=DAILY[S.streak%10];S.coins+=r;S.total+=r;S.streak++;S.lastClaim=today;snd(900,.4);toast('🎁 '+fmt(r)+' سکه گرفتی!');save();renderDaily();ui();
+};
+function go(v){
+  document.querySelectorAll('.view').forEach(function(e){e.classList.toggle('on',e.id==='v-'+v)});
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});
+  if(v==='mine')renderMine();if(v==='boost')renderBoost();if(v==='daily')renderDaily();
+}
+document.querySelector('.nav').addEventListener('click',function(e){var b=e.target.closest('button');if(b)go(b.dataset.v)});
+/* حلقه */
+var lt=Date.now(),sv=0;
+setInterval(function(){
+  if(document.hidden){lt=Date.now();return}
+  var now=Date.now(),dt=Math.min(5,(now-lt)/1000);lt=now;
+  var g=profit()/3600*dt;S.coins+=g;S.total+=g;S.energy=Math.min(maxE(),S.energy+regen()*dt);
+  sv+=dt;if(sv>3){sv=0;save();var mv=document.querySelector('#v-mine.on');if(mv)renderMine()}
+  ui();
+},250);
+/* اعلان‌ها هنگام بیرون رفتن */
+var nt1=null,nt2=null;
+function sched(){
+  clearTimeout(nt1);clearTimeout(nt2);
+  var need=Math.max(1,(maxE()-S.energy)/regen());
+  nt1=setTimeout(function(){if(document.hidden&&window.slNotify)slNotify('⚡ انرژی پر شد!','برگرد و سکه جمع کن 🪙','mm-energy')},Math.min(need,6*3600)*1000);
+  if(profit()>0)nt2=setTimeout(function(){if(document.hidden&&window.slNotify)slNotify('💰 درآمد ماینینگ آماده است','درآمد آفلاین به سقف ۳ ساعت رسید؛ بیا برداشت کن!','mm-profit')},OFFCAP*1000);
+}
+document.addEventListener('visibilitychange',function(){if(document.hidden){save();sched()}else{clearTimeout(nt1);clearTimeout(nt2);var el=Math.min(OFFCAP,(Date.now()-S.last)/1000);if(el>60){var g=profit()/3600*el;if(g>=1){S.coins+=g;S.total+=g;toast('💰 در غیابت '+fmt(g)+' سکه درآمد داشتی!')}S.energy=Math.min(maxE(),S.energy+regen()*el)}S.last=Date.now();lt=Date.now()}});
+addEventListener('pagehide',function(){save();sched()});
+ui();
+window.__mm={S:function(){return S},tap:function(){tap({clientX:200,clientY:300})}};
+})();
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

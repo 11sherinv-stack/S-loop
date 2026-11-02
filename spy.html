@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#1a237e">
+<title>Spy | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at top,#283593,#0d1033 80%);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));user-select:none;-webkit-user-select:none;min-height:100vh}
+h1{margin:4px 0 8px;font-size:1.2rem;padding-left:46px}
+.scr{display:none;width:min(94vw,440px);flex-direction:column;align-items:center;gap:10px;text-align:center}
+.scr.on{display:flex}
+.box{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:12px;width:100%}
+.box b{display:block;margin-bottom:6px}
+.stp{display:flex;align-items:center;justify-content:center;gap:14px}
+.stp button{width:42px;height:42px;border-radius:50%;font-size:1.4rem;padding:0}
+.stp span{min-width:2.4em;font-size:1.5rem;font-weight:800}
+button{font:inherit;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;border-radius:12px;padding:8px 14px;cursor:pointer}
+button.big{border:0;background:#ffca28;color:#2b2100;font-weight:800;font-size:1.15rem;padding:13px 30px;border-radius:16px}
+button.red{background:#ef5350;color:#fff;border:0}
+input.nm{font:inherit;width:100%;padding:7px 10px;margin:3px 0;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.25);color:#fff}
+#role{width:100%;min-height:240px;border-radius:22px;display:grid;place-items:center;padding:20px;font-size:1.8rem;font-weight:900;line-height:1.6}
+#role.loc{background:linear-gradient(160deg,#00897b,#004d40)}#role.spy{background:linear-gradient(160deg,#c62828,#4a0000)}#role.hide{background:#37474f;font-size:1.1rem;font-weight:500}
+#role small{display:block;font-size:.85rem;font-weight:500;opacity:.85;margin-top:8px}
+#timer{font-size:3rem;font-weight:900;font-variant-numeric:tabular-nums}#timer.low{color:#ff8a80}
+.locs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.lc{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 11px;font-size:.82rem;background:transparent;color:#fff}
+.lc.x{text-decoration:line-through;opacity:.4}
+.pl{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.pl button{padding:12px 6px}
+.hint{font-size:.78rem;opacity:.75;line-height:1.8}
+.res{font-size:1.25rem;font-weight:800;line-height:1.8}
+</style>
+</head>
+<body>
+<h1>🕵️ Spy — جاسوس</h1>
+
+<div class="scr on" id="s-setup">
+  <div class="box"><b>تعداد بازیکن</b><div class="stp"><button id="pm">−</button><span id="pc">5</span><button id="pp">+</button></div></div>
+  <div class="box"><b>تعداد جاسوس</b><div class="stp"><button id="sm">−</button><span id="sc">1</span><button id="sp">+</button></div></div>
+  <div class="box"><b>زمان بحث (دقیقه)</b><div class="stp"><button id="tm">−</button><span id="tc">6</span><button id="tp">+</button></div></div>
+  <div class="box"><b>اسم بازیکن‌ها (اختیاری)</b><div id="names"></div></div>
+  <button class="big" id="start">شروع بازی</button>
+  <div class="hint">همه بجز جاسوس «مکان» را می‌دانند. با سؤال و جواب بپرسید و جاسوس را پیدا کنید؛ جاسوس باید مکان را حدس بزند بدون اینکه لو برود!</div>
+</div>
+
+<div class="scr" id="s-pass">
+  <div class="box"><div style="font-size:1.1rem">گوشی را بده به</div><div id="who" style="font-size:1.8rem;font-weight:900;margin:6px 0"></div><div class="hint">فقط خودش نگاه کند! 🙈</div></div>
+  <button class="big" id="show">نمایش نقش من</button>
+</div>
+
+<div class="scr" id="s-role">
+  <div id="role"></div>
+  <div class="box" id="spylocs" style="display:none"><b>فهرست مکان‌های ممکن</b><div class="locs" id="spyl"></div></div>
+  <button class="big" id="hide">فهمیدم — پنهان کن</button>
+</div>
+
+<div class="scr" id="s-play">
+  <div id="timer">6:00</div>
+  <div class="hint">به‌نوبت از هم سؤال بپرسید. جواب‌ها نباید مکان را لو بدهد!</div>
+  <div class="box"><b>مکان‌های ممکن (برای خط زدن لمس کن)</b><div class="locs" id="playl"></div></div>
+  <button class="red" id="spyGuess">🕵️ من جاسوسم و مکان را می‌دانم!</button>
+  <button class="big" id="vote">⏹ رأی‌گیری</button>
+</div>
+
+<div class="scr" id="s-vote">
+  <div class="box"><b>به کی شک دارید؟</b><div class="pl" id="votes"></div></div>
+</div>
+
+<div class="scr" id="s-guess">
+  <div class="box"><b>جاسوس، مکان را حدس بزن:</b><div class="locs" id="gl"></div></div>
+</div>
+
+<div class="scr" id="s-end">
+  <div style="font-size:3rem" id="eicon"></div><div class="res" id="etxt"></div>
+  <div class="box"><div id="edet" class="hint" style="font-size:.95rem"></div></div>
+  <button class="big" id="again">بازی تازه</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.2),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var LOC=['فرودگاه','بیمارستان','مدرسه','رستوران','سینما','ساحل','کتابخانه','بانک','زندان','سفارت','کشتی تفریحی','قطار','سیرک','پمپ‌بنزین','باغ‌وحش','دانشگاه','هتل','مسجد','ایستگاه فضایی','کارخانه','موزه','استادیوم فوتبال','پارک','سوپرمارکت','بازار سنتی','ایستگاه پلیس','کوه‌نوردی','کمپ تابستانی','آتش‌نشانی','باشگاه ورزشی'];
+var cfg={n:5,s:1,t:6},G;
+function stp(m,p,v,k,lo,hi){$(m).onclick=function(){cfg[k]=Math.max(lo(),cfg[k]-1);draw()};$(p).onclick=function(){cfg[k]=Math.min(hi(),cfg[k]+1);draw()}}
+function draw(){
+  cfg.s=Math.min(cfg.s,Math.max(1,Math.floor((cfg.n-1)/2)));
+  $('pc').textContent=cfg.n;$('sc').textContent=cfg.s;$('tc').textContent=cfg.t;
+  var el=$('names'),old=[];[].forEach.call(el.querySelectorAll('input'),function(i){old.push(i.value)});el.innerHTML='';
+  for(var i=0;i<cfg.n;i++){var inp=document.createElement('input');inp.className='nm';inp.placeholder='بازیکن '+(i+1);inp.value=old[i]||'';el.appendChild(inp)}
+}
+stp('pm','pp','pc','n',function(){return 3},function(){return 12});
+stp('sm','sp','sc','s',function(){return 1},function(){return Math.max(1,Math.floor((cfg.n-1)/2))});
+stp('tm','tp','tc','t',function(){return 2},function(){return 15});
+function show(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.toggle('on',e.id===id)})}
+function sh(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function chips(el,fn,mark){el.innerHTML='';LOC.forEach(function(l){var b=document.createElement('button');b.className='lc';b.textContent=l;if(fn)b.onclick=function(){fn(l,b)};else if(mark)b.onclick=function(){b.classList.toggle('x')};el.appendChild(b)})}
+var tm,left,idx;
+$('start').onclick=function(){
+  var names=[].map.call($('names').querySelectorAll('input'),function(i,k){return i.value.trim()||('بازیکن '+(k+1))});
+  var order=sh(names.map(function(_,i){return i})),spies=order.slice(0,cfg.s);
+  G={names:names,loc:LOC[Math.floor(Math.random()*LOC.length)],spies:spies};idx=0;next();
+};
+function next(){if(idx>=G.names.length){startTimer();return}$('who').textContent=G.names[idx];show('s-pass')}
+$('show').onclick=function(){
+  var isSpy=G.spies.indexOf(idx)>-1,r=$('role');
+  if(isSpy){r.className='spy';r.innerHTML='<div>🕵️ تو جاسوسی!<small>مکان را نمی‌دانی. از جواب‌ها حدس بزن و لو نرو.'+(G.spies.length>1?'<br>('+G.spies.length+' جاسوس در بازی هست)':'')+'</small></div>';$('spylocs').style.display='';chips($('spyl'),null,true)}
+  else{r.className='loc';r.innerHTML='<div><small>مکان:</small>'+G.loc+'<small>جاسوس را پیدا کن 🕵️</small></div>';$('spylocs').style.display='none'}
+  show('s-role');snd(isSpy?220:660,.2);
+};
+$('hide').onclick=function(){idx++;next()};
+function fmt(s){return Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
+function startTimer(){
+  left=cfg.t*60;$('timer').textContent=fmt(left);$('timer').className='';chips($('playl'),null,true);show('s-play');snd(500,.2);
+  clearInterval(tm);tm=setInterval(function(){left--;$('timer').textContent=fmt(Math.max(0,left));$('timer').className=left<=30?'low':'';
+    if(left<=0){clearInterval(tm);snd(300,.7,'sawtooth',.3);try{navigator.vibrate&&navigator.vibrate([300,100,300])}catch(e){}openVote()}},1000);
+}
+function openVote(){
+  clearInterval(tm);var el=$('votes');el.innerHTML='';
+  G.names.forEach(function(n,i){var b=document.createElement('button');b.textContent=n;b.onclick=function(){accuse(i)};el.appendChild(b)});show('s-vote');
+}
+$('vote').onclick=openVote;
+function accuse(i){
+  if(G.spies.indexOf(i)>-1){
+    if(G.spies.length>1){G.caught=(G.caught||[]);if(G.caught.indexOf(i)<0)G.caught.push(i)}
+    if(G.caught&&G.caught.length<G.spies.length){snd(700,.2);var left2=G.spies.length-G.caught.length;G.names.forEach(function(){});toast2('درست! '+G.names[i]+' جاسوس بود. هنوز '+left2+' جاسوس دیگر هست؛ دوباره رأی بدهید.');return}
+    // همه‌ی جاسوس‌ها لو رفتند — فرصت حدس مکان
+    guess(true,i)
+  }else end(false,'بازیگر اشتباه متهم شد: '+G.names[i]+' جاسوس نبود!')
+}
+function toast2(t){var d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;left:10px;right:10px;bottom:20px;background:#00897b;padding:12px;border-radius:12px;text-align:center;z-index:50';document.body.appendChild(d);setTimeout(function(){d.remove()},3500)}
+$('spyGuess').onclick=function(){guess(false)};
+function guess(caught,who){
+  clearInterval(tm);var el=$('gl');el.innerHTML='';
+  LOC.forEach(function(l){var b=document.createElement('button');b.className='lc';b.textContent=l;b.onclick=function(){
+    if(l===G.loc)end(true,caught?'جاسوس لو رفت ولی مکان را درست حدس زد!':'جاسوس بدون لو رفتن مکان را درست حدس زد!');
+    else end(false,(caught?'جاسوس لو رفت و ':'جاسوس ')+'مکان را غلط حدس زد («'+l+'»).')};el.appendChild(b)});
+  show('s-guess');
+}
+function end(spyWins,detail){
+  clearInterval(tm);$('eicon').textContent=spyWins?'🕵️':'🎉';
+  $('etxt').textContent=spyWins?'جاسوس برنده شد!':'بازیکن‌های عادی برنده شدند!';
+  $('edet').innerHTML=detail+'<br><br>مکان: <b>'+G.loc+'</b><br>جاسوس: <b>'+G.spies.map(function(i){return G.names[i]}).join('، ')+'</b>';
+  show('s-end');snd(spyWins?250:880,.5);
+}
+$('again').onclick=function(){show('s-setup')};
+draw();
+})();
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

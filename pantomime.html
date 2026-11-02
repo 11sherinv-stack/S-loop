@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#e65100">
+<title>Pantomime | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:linear-gradient(160deg,#ff8f00,#bf360c);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:10px 12px calc(16px + env(safe-area-inset-bottom,0px));user-select:none;-webkit-user-select:none;min-height:100vh}
+h1{margin:4px 0 8px;font-size:1.2rem;padding-left:46px}
+.scr{display:none;width:min(94vw,440px);flex-direction:column;align-items:center;gap:10px;text-align:center}
+.scr.on{display:flex}
+.box{background:rgba(0,0,0,.25);border-radius:16px;padding:12px;width:100%}
+.box b{display:block;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{border:2px solid rgba(255,255,255,.4);border-radius:999px;padding:5px 12px;font-size:.88rem;cursor:pointer;background:transparent;color:#fff;font-family:inherit}
+.chip.on{background:#fff;color:#bf360c;border-color:#fff;font-weight:700}
+button.big{font:inherit;border:0;border-radius:16px;padding:13px 32px;font-size:1.15rem;font-weight:800;background:#fff;color:#bf360c;cursor:pointer}
+button.alt{font:inherit;border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:8px 16px;background:rgba(255,255,255,.15);color:#fff;cursor:pointer}
+#timer{font-size:2.6rem;font-weight:900;font-variant-numeric:tabular-nums}
+#timer.low{color:#ffeb3b;animation:bl .5s infinite alternate}
+@keyframes bl{to{opacity:.4}}
+#word{background:#fff;color:#3e2723;border-radius:22px;padding:34px 14px;width:100%;min-height:170px;display:grid;place-items:center;font-size:2rem;font-weight:900;box-shadow:0 10px 26px #0006;line-height:1.5}
+#word small{display:block;font-size:.8rem;font-weight:500;color:#8d6e63;margin-bottom:6px}
+.row{display:flex;gap:10px;width:100%}.row button{flex:1}
+#ok{background:#00c853;color:#fff}#skip{background:#ffd54f;color:#3e2723}
+.sc{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;width:100%}
+.sc div{background:rgba(0,0,0,.28);border-radius:12px;padding:5px 12px;font-size:.9rem}.sc div.cur{outline:2px solid #ffeb3b}
+ul{list-style:none;margin:0;padding:0;width:100%}
+li{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.25);border-radius:10px;padding:8px 12px;margin:4px 0;cursor:pointer}
+li.y span:last-child{color:#69f0ae}li.n span:last-child{color:#ff8a80}
+select{font:inherit;border-radius:10px;padding:6px 10px;border:0}
+.hint{font-size:.78rem;opacity:.8}
+</style>
+</head>
+<body>
+<h1>🎭 Pantomime — پانتومیم</h1>
+
+<div class="scr on" id="s-setup">
+  <div class="box"><b>تعداد تیم</b><div class="chips" id="teams"></div></div>
+  <div class="box"><b>زمان هر نوبت</b><div class="chips" id="times"></div></div>
+  <div class="box"><b>تعداد دور برای هر تیم</b><div class="chips" id="rounds"></div></div>
+  <div class="box"><b>دسته‌ها</b><div class="chips" id="cats"></div></div>
+  <div class="box"><label style="display:flex;gap:8px;align-items:center;justify-content:center"><input type="checkbox" id="pen"> رد کردن کلمه ۱ امتیاز منفی دارد</label></div>
+  <button class="big" id="start">شروع بازی</button>
+  <div class="hint">بازیگر کلمه را فقط با حرکت و بدون حرف زدن نشان می‌دهد؛ هم‌تیمی‌ها حدس می‌زنند.</div>
+</div>
+
+<div class="scr" id="s-ready">
+  <div class="sc" id="sc1"></div>
+  <div class="box"><div style="font-size:1.1rem" id="who"></div><div class="hint" style="margin-top:8px">گوشی را به بازیگر بده. بقیه نگاه نکنند! 🙈</div></div>
+  <button class="big" id="go">من آماده‌ام — نمایش کلمه</button>
+</div>
+
+<div class="scr" id="s-play">
+  <div id="timer">60</div>
+  <div class="sc" id="sc2"></div>
+  <div id="word"></div>
+  <div class="row"><button class="big" id="ok">✅ درست</button><button class="big" id="skip">⏭ رد</button></div>
+  <div class="hint" id="cnt"></div>
+</div>
+
+<div class="scr" id="s-sum">
+  <div class="box"><b id="sumt"></b><ul id="sumlist"></ul><div class="hint">برای اصلاح، روی هر کلمه بزن (درست ↔ غلط)</div></div>
+  <button class="big" id="confirm">تأیید و ادامه</button>
+</div>
+
+<div class="scr" id="s-end">
+  <div style="font-size:3rem">🏆</div><div id="win" style="font-size:1.3rem;font-weight:800"></div>
+  <div class="box"><ul id="rank"></ul></div>
+  <button class="big" id="again">بازی تازه</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.2),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var W={
+ 'حیوانات 🐘':['فیل','زرافه','میمون','پنگوئن','کانگورو','مار','عقاب','خرچنگ','قورباغه','شتر','خرگوش','دلفین','عنکبوت','گوریل','لاک‌پشت','اسب','مرغ','گربه','سگ','کوسه','پروانه','مورچه','خرس','طوطی','ماهی','کرگدن','خفاش','موش','شیر','گاو'],
+ 'شغل‌ها 👨‍🍳':['آشپز','پزشک','معلم','نقاش','خلبان','آتش‌نشان','راننده‌ی تاکسی','آرایشگر','دندان‌پزشک','کشاورز','پلیس','نانوا','عکاس','خیاط','نجار','فضانورد','قصاب','خبرنگار','نگهبان','پرستار','مکانیک','دوچرخه‌سوار پیک','ناخدا','جادوگر','دلقک'],
+ 'ورزش‌ها ⚽':['فوتبال','والیبال','شنا','کشتی','بوکس','اسکی','تنیس','بسکتبال','دوچرخه‌سواری','تیراندازی','وزنه‌برداری','پینگ‌پنگ','قایقرانی','اسب‌سواری','ژیمناستیک','کوهنوردی','گلف','بدمینتون','اسکیت','موج‌سواری'],
+ 'کارهای روزمره 🪥':['مسواک زدن','دوش گرفتن','چای ریختن','جارو کردن','سرخ کردن تخم‌مرغ','تلفن زدن','شانه زدن','اتو کردن','ظرف شستن','آب دادن به گل','خمیازه کشیدن','عطسه کردن','رانندگی','خریدن میوه','بستن بند کفش','نان بریدن','پیاده‌روی با سگ','سلفی گرفتن','چرت زدن','رقصیدن'],
+ 'اشیا و وسایل 🔨':['چتر','قیچی','دوربین','گیتار','آینه','چکش','هواپیما','ساعت','تلسکوپ','یخچال','دوچرخه','موبایل','اره','سشوار','جاروبرقی','کتری','چراغ‌قوه','ترازو','قایق','طناب'],
+ 'فیلم و سریال 🎬':['تایتانیک','شیر شاه','هری پاتر','آواتار','جوکر','اسپایدرمن','شرک','بتمن','یخ‌زده','سیندرلا','ارباب حلقه‌ها','پدرخوانده','ماتریکس','پینوکیو','علاءالدین','تام و جری','باب اسفنجی','رمبو','دایی‌جان ناپلئون','مارمولک'],
+ 'ضرب‌المثل 📜':['آب از سرچشمه گل‌آلود است','عاقل کند کاری که پشیمان نشود','کار نیکو کردن از پر کردن است','دیوار موش دارد موش هم گوش دارد','از ما بهتران','سنگ بزرگ علامت نزدن است','کلاه خودت را بگذار بالا','آب که از سر گذشت چه یک وجب چه صد وجب','هر که بامش بیش برفش بیشتر','دست پیش را بگیر نه پس را','با یک گل بهار نمی‌شود','نوش دارو بعد از مرگ سهراب']
+};
+var CATS=Object.keys(W),cfg={teams:2,time:60,rounds:2,cats:[CATS[0],CATS[1],CATS[3],CATS[4]]};
+function chips(el,vals,key,labels){el.innerHTML='';vals.forEach(function(v,i){var b=document.createElement('button');b.className='chip'+(cfg[key]===v?' on':'');b.textContent=labels?labels[i]:v;b.onclick=function(){cfg[key]=v;chips(el,vals,key,labels)};el.appendChild(b)})}
+function drawCats(){var el=$('cats');el.innerHTML='';CATS.forEach(function(c){var b=document.createElement('button');b.className='chip'+(cfg.cats.indexOf(c)>-1?' on':'');b.textContent=c;b.onclick=function(){var i=cfg.cats.indexOf(c);if(i>-1){if(cfg.cats.length>1)cfg.cats.splice(i,1)}else cfg.cats.push(c);drawCats()};el.appendChild(b)})}
+chips($('teams'),[2,3,4],'teams',['۲ تیم','۳ تیم','۴ تیم']);chips($('times'),[30,45,60,90],'time',['۳۰ ثانیه','۴۵ ثانیه','۶۰ ثانیه','۹۰ ثانیه']);chips($('rounds'),[1,2,3,5],'rounds',['۱ دور','۲ دور','۳ دور','۵ دور']);drawCats();
+function show(id){document.querySelectorAll('.scr').forEach(function(e){e.classList.toggle('on',e.id===id)})}
+var G,pool,tm,left,cur,log;
+var TN=['تیم ۱','تیم ۲','تیم ۳','تیم ۴'];
+function sh(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function scores(el,hi){el.innerHTML='';for(var i=0;i<G.n;i++){var d=document.createElement('div');d.textContent=TN[i]+': '+G.s[i];if(i===hi)d.className='cur';el.appendChild(d)}}
+function start(){
+  G={n:cfg.teams,s:Array(cfg.teams).fill(0),turn:0,total:cfg.teams*cfg.rounds};
+  pool=[];cfg.cats.forEach(function(c){W[c].forEach(function(w){pool.push({w:w,c:c})})});sh(pool);ready();
+}
+function ready(){
+  var r=Math.floor(G.turn/G.n)+1;scores($('sc1'),G.turn%G.n);
+  $('who').innerHTML='نوبت <b style="display:inline;font-size:1.3rem">'+TN[G.turn%G.n]+'</b><br>دور '+r+' از '+cfg.rounds;show('s-ready');
+}
+function nextWord(){if(!pool.length){pool=[];cfg.cats.forEach(function(c){W[c].forEach(function(w){pool.push({w:w,c:c})})});sh(pool)}cur=pool.pop();$('word').innerHTML='<div><small>'+cur.c+'</small>'+cur.w+'</div>'}
+function play(){
+  log=[];left=cfg.time;scores($('sc2'),G.turn%G.n);show('s-play');nextWord();upd();snd(660,.15);
+  clearInterval(tm);tm=setInterval(function(){left--;upd();if(left<=5&&left>0)snd(880,.08,'square',.1);if(left<=0){clearInterval(tm);snd(300,.6,'sawtooth',.25);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}summary()}},1000);
+}
+function upd(){$('timer').textContent=left;$('timer').className=left<=10?'low':'';var ok=log.filter(function(x){return x.ok}).length;$('cnt').textContent='درست: '+ok+' · رد: '+(log.length-ok)}
+function answer(ok){if(!cur||left<=0)return;log.push({w:cur.w,ok:ok});snd(ok?900:300,.1);nextWord();upd()}
+function summary(){
+  $('sumt').textContent='وقت تمام شد! '+TN[G.turn%G.n];var ul=$('sumlist');ul.innerHTML='';
+  if(!log.length){ul.innerHTML='<li><span>کلمه‌ای رد یا حدس زده نشد</span><span></span></li>'}
+  log.forEach(function(x){var li=document.createElement('li');li.className=x.ok?'y':'n';li.innerHTML='<span>'+x.w+'</span><span>'+(x.ok?'✅':'❌')+'</span>';li.onclick=function(){x.ok=!x.ok;li.className=x.ok?'y':'n';li.lastChild.textContent=x.ok?'✅':'❌'};ul.appendChild(li)});
+  show('s-sum');
+}
+$('confirm').onclick=function(){
+  var ok=log.filter(function(x){return x.ok}).length,sk=log.filter(function(x){return !x.ok}).length;
+  G.s[G.turn%G.n]+=ok-($('pen').checked?sk:0);G.turn++;
+  if(G.turn>=G.total)end();else ready();
+};
+function end(){
+  var idx=G.s.map(function(v,i){return i}).sort(function(a,b){return G.s[b]-G.s[a]});
+  var top=G.s[idx[0]],ws=idx.filter(function(i){return G.s[i]===top});
+  $('win').textContent=ws.length>1?'مساوی بین '+ws.map(function(i){return TN[i]}).join(' و '):TN[ws[0]]+' برنده شد!';
+  var ul=$('rank');ul.innerHTML='';idx.forEach(function(i,k){var li=document.createElement('li');li.innerHTML='<span>'+(k+1)+'. '+TN[i]+'</span><span>'+G.s[i]+' امتیاز</span>';ul.appendChild(li)});
+  show('s-end');snd(880,.5);
+}
+$('start').onclick=start;$('go').onclick=play;$('ok').onclick=function(){answer(true)};
+$('skip').onclick=function(){answer(false)};$('again').onclick=function(){show('s-setup')};
+})();
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

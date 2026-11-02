@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#4e342e">
+<title>Backgammon | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at top,#6d4c41,#2b1b15 80%);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:8px 6px calc(14px + env(safe-area-inset-bottom,0px));user-select:none;-webkit-user-select:none;touch-action:manipulation}
+h1{margin:4px 0 6px;font-size:1.15rem;padding-left:46px}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
+select,button{font:inherit;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;padding:6px 11px;cursor:pointer}
+select option{color:#111}button:disabled{opacity:.4}
+#info{min-height:2.6em;text-align:center;color:#ffe9a8;font-weight:700;margin:2px 6px;font-size:.92rem}
+#board{box-sizing:content-box;--w:calc(min(94vw,560px)/14);position:relative;width:calc(var(--w)*14);height:calc(var(--w)*12.6);background:#8d6e63;border:6px solid #3e2723;border-radius:10px;box-shadow:0 12px 30px #000a;direction:ltr}
+.pt{position:absolute;width:var(--w);height:calc(var(--w)*5.6);cursor:pointer}
+.pt::before{content:"";position:absolute;inset:0;background:var(--c);clip-path:polygon(0 0,100% 0,50% 100%)}
+.pt.b::before{clip-path:polygon(0 100%,100% 100%,50% 0)}
+.pt.dest::after{content:"";position:absolute;left:12%;right:12%;height:calc(var(--w)*.76);border-radius:50%;background:rgba(255,235,59,.75);box-shadow:0 0 10px #ffeb3b}
+.pt.t.dest::after{top:calc(var(--w)*.2)}.pt.b.dest::after{bottom:calc(var(--w)*.2)}
+.mid{position:absolute;left:calc(var(--w)*6);top:0;width:var(--w);height:100%;background:#4e342e}
+.off{position:absolute;right:0;top:0;width:var(--w);height:100%;background:#5d4037;cursor:pointer;border-left:3px solid #3e2723}
+.off.dest{box-shadow:inset 0 0 0 4px #ffeb3b}
+.ck{position:absolute;width:calc(var(--w)*.86);height:calc(var(--w)*.86);border-radius:50%;left:calc(var(--w)*.07);pointer-events:none;box-shadow:0 2px 3px #0008,inset 0 -3px 4px rgba(0,0,0,.25),inset 0 2px 3px rgba(255,255,255,.5);display:grid;place-items:center;font-size:calc(var(--w)*.4);font-weight:800}
+.ck.w{background:radial-gradient(circle at 35% 30%,#fff,#d7ccc8);color:#5d4037}.ck.k{background:radial-gradient(circle at 35% 30%,#78909c,#10161a);color:#cfd8dc}
+.ck.sel{outline:3px solid #ffeb3b}
+.ofc{position:absolute;left:calc(var(--w)*.1);width:calc(var(--w)*.8);height:calc(var(--w)*.28);border-radius:3px;box-shadow:0 1px 2px #0008}
+.ofc.w{background:#eceff1}.ofc.k{background:#263238;border:1px solid #607d8b}
+.dice{position:absolute;left:calc(var(--w)*7.2);top:calc(var(--w)*5.7);display:flex;gap:6px;z-index:5;pointer-events:none}
+.die{width:calc(var(--w)*1.0);height:calc(var(--w)*1.0);background:#fff;color:#222;border-radius:9px;display:grid;place-items:center;font-size:calc(var(--w)*.72);font-weight:900;box-shadow:0 3px 6px #0009}
+.die.u{opacity:.3}.die.r{animation:rl .5s}
+@keyframes rl{0%{transform:rotate(0) scale(.6)}60%{transform:rotate(300deg) scale(1.15)}100%{transform:rotate(360deg)}}
+#roll{margin-top:10px;background:#ffd54f;color:#2b2100;border:0;font-weight:800;padding:11px 30px;font-size:1.1rem}
+.cnt{display:flex;gap:14px;margin-top:6px;font-size:.82rem;opacity:.85}
+</style>
+</head>
+<body>
+<h1>🎲 Backgammon — تخته نرد</h1>
+<div class="bar">
+  <select id="mode" aria-label="حالت"><option value="cpu">با کامپیوتر</option><option value="two">دو نفره (یک گوشی)</option><option value="watch">تماشای کامپیوتر</option></select>
+  <button id="new">بازی تازه</button>
+</div>
+<div id="info"></div>
+<div id="board"></div>
+<button id="roll">🎲 تاس بنداز</button>
+<div class="cnt"><span id="c0"></span><span id="c1"></span></div>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'triangle';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.15),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var S,mode,turn,dice,usedAll,sel,phase,winner,token=0,dests=[],firsts=[];
+var NAME=function(p){return mode==='cpu'?(p===0?'تو (سفید)':'کامپیوتر (سیاه)'):mode==='watch'?(p===0?'سفید':'سیاه'):(p===0?'سفید':'سیاه')};
+var sgn=function(p){return p===0?1:-1};
+function initState(){var pts=Array(24).fill(0);
+  pts[23]=2;pts[12]=5;pts[7]=3;pts[5]=5; pts[0]=-2;pts[11]=-5;pts[16]=-3;pts[18]=-5;
+  return{pts:pts,bar:[0,0],off:[0,0]}}
+function clone(s){return{pts:s.pts.slice(),bar:s.bar.slice(),off:s.off.slice()}}
+function key(s){return s.pts.join(',')+'|'+s.bar+'|'+s.off}
+function allHome(s,p){if(s.bar[p])return false;for(var i=0;i<24;i++){if(s.pts[i]*sgn(p)>0){if(p===0&&i>5)return false;if(p===1&&i<18)return false}}return true}
+function movesFor(s,p,d){
+  var out=[],sg=sgn(p),dir=p===0?-1:1,i;
+  if(s.bar[p]>0){var to=p===0?24-d:d-1;if(s.pts[to]*sg>=-1)out.push({f:-1,t:to,d:d});return out}
+  var home=allHome(s,p);
+  for(i=0;i<24;i++){
+    if(s.pts[i]*sg<=0)continue;var to2=i+dir*d;
+    if(to2>=0&&to2<24){if(s.pts[to2]*sg>=-1)out.push({f:i,t:to2,d:d})}
+    else if(home){
+      if(p===0){if(i===d-1)out.push({f:i,t:-2,d:d});else if(i<d-1){var hi=false;for(var j=i+1;j<=5;j++)if(s.pts[j]>0)hi=true;if(!hi)out.push({f:i,t:-2,d:d})}}
+      else{if(i===24-d)out.push({f:i,t:-2,d:d});else if(i>24-d){var lo=false;for(var j2=18;j2<i;j2++)if(s.pts[j2]<0)lo=true;if(!lo)out.push({f:i,t:-2,d:d})}}
+    }
+  }
+  return out;
+}
+function apply(s,p,m){
+  var n=clone(s),sg=sgn(p);
+  if(m.f===-1)n.bar[p]--;else n.pts[m.f]-=sg;
+  if(m.t===-2)n.off[p]++;
+  else{if(n.pts[m.t]*sg===-1){n.pts[m.t]=0;n.bar[1-p]++}n.pts[m.t]+=sg}
+  return n;
+}
+function search(s,p,ds){
+  var leaves=[],seen={},maxLen=0;
+  (function rec(st,rem,seq){
+    var k=key(st)+'#'+rem.slice().sort().join('');if(seen[k]&&seen[k]>=seq.length&&seq.length>0)return;seen[k]=seq.length;
+    var any=false,tried={};
+    for(var i=0;i<rem.length;i++){
+      var d=rem[i];if(tried[d])continue;tried[d]=1;
+      var ms=movesFor(st,p,d);
+      for(var j=0;j<ms.length;j++){any=true;var r=rem.slice();r.splice(i,1);rec(apply(st,p,ms[j]),r,seq.concat([ms[j]]))}
+    }
+    if(!any){if(seq.length>maxLen)maxLen=seq.length;leaves.push({seq:seq,st:st})}
+  })(s,ds,[]);
+  leaves=leaves.filter(function(l){return l.seq.length===maxLen});
+  if(maxLen===1&&ds.length===2&&ds[0]!==ds[1]){var big=Math.max(ds[0],ds[1]),lb=leaves.filter(function(l){return l.seq[0].d===big});if(lb.length)leaves=lb}
+  return{len:maxLen,leaves:leaves};
+}
+function pip(s,p){var t=s.bar[p]*25;for(var i=0;i<24;i++){var c=s.pts[i]*sgn(p);if(c>0)t+=c*(p===0?i+1:24-i)}return t}
+function evalS(s,p){
+  var o=1-p,sg=sgn(p),sc=(pip(s,o)-pip(s,p))+(s.bar[o]-s.bar[p])*14+(s.off[p]-s.off[o])*10,blot=0,made=0;
+  for(var i=0;i<24;i++){var c=s.pts[i]*sg;if(c===1)blot++;if(c>=2)made++}
+  var ob=0;for(i=0;i<24;i++){if(s.pts[i]*sg===-1)ob++}
+  return sc-blot*(s.bar[o]?4:7)+made*3+ob*3;
+}
+/* ---------- رابط ---------- */
+function cw(){return $('board').clientWidth/14}
+function build(){
+  var b=$('board');b.innerHTML='';
+  for(var i=0;i<24;i++){
+    var top=i>=12,col=top?(i<18?i-12:i-12+1):(i>=6?11-i:11-i+1);
+    // سطر بالا: idx12..17 | میله | 18..23 ؛ سطر پایین: 11..6 | میله | 5..0
+    var d=document.createElement('div');d.className='pt '+(top?'t':'b');d.dataset.i=i;
+    d.style.left='calc(var(--w)*'+col+')';d.style[top?'top':'bottom']='0';
+    d.style.setProperty('--c',(i%2===(top?0:1))?'#c9a27a':'#7b2d26');
+    d.addEventListener('click',function(e){tapPoint(+this.dataset.i)});b.appendChild(d);
+  }
+  var m=document.createElement('div');m.className='mid';m.id='mid';m.addEventListener('click',function(){tapBar()});b.appendChild(m);
+  var o=document.createElement('div');o.className='off';o.id='offc';o.addEventListener('click',function(){tapOff()});b.appendChild(o);
+  var dc=document.createElement('div');dc.className='dice';dc.id='dice';b.appendChild(dc);
+  var l=document.createElement('div');l.id='lay';l.style.cssText='position:absolute;inset:0;pointer-events:none';b.appendChild(l);
+}
+function render(){
+  var w=cw(),lay=$('lay'),H=w*5.6;lay.innerHTML='';
+  var D={};dests.forEach(function(x){D[x]=1});
+  document.querySelectorAll('.pt').forEach(function(e){e.classList.toggle('dest',!!D[e.dataset.i])});
+  $('offc').classList.toggle('dest',!!D[-2]);
+  function ck(cls,x,y,txt,selc){var c=document.createElement('div');c.className='ck '+cls+(selc?' sel':'');c.style.left=x+'px';c.style.top=y+'px';c.textContent=txt||'';lay.appendChild(c)}
+  for(var i=0;i<24;i++){
+    var n=Math.abs(S.pts[i]);if(!n)continue;var cls=S.pts[i]>0?'w':'k',top=i>=12,col=top?(i<18?i-12:i-12+1):(i>=6?11-i:11-i+1);
+    var sz=w*.86,step=n*sz>H?(H-sz)/(n-1):sz;
+    for(var k=0;k<n;k++){var y=top?k*step:(w*12.6)-sz-k*step+0;// پایین
+      if(!top)y=(w*12.6)-sz-k*step;
+      ck(cls,col*w+w*.07,y,(k===n-1&&n>5&&step<sz)?n:'',sel===i&&k===n-1)}
+  }
+  // میله
+  var mx=6*w+w*.07,mh=w*12.6;
+  for(var p=0;p<2;p++)for(var k2=0;k2<S.bar[p];k2++){var yy=p===0?mh/2+w*.9+k2*w*.7:mh/2-w*.9-w*.86-k2*w*.7;ck(p===0?'w':'k',mx,yy,'',sel===-1&&p===turn&&k2===S.bar[p]-1)}
+  // خارج‌شده‌ها
+  for(var q=0;q<2;q++)for(var k3=0;k3<S.off[q];k3++){var oy=q===0?(mh-(k3+1)*w*.3):k3*w*.3;var e=document.createElement('div');e.className='ofc '+(q===0?'w':'k');e.style.left=(13*w+w*.1)+'px';e.style.top=oy+'px';lay.appendChild(e)}
+  // تاس
+  var dc=$('dice');dc.innerHTML='';
+  if(dice&&dice.all){dice.all.forEach(function(d,i){var e=document.createElement('div');e.className='die'+(dice.used[i]?' u':'')+(dice.fresh?' r':'');e.textContent=d;dc.appendChild(e)});dice.fresh=false}
+  $('c0').textContent='سفید: '+S.off[0]+'/15 بیرون · pip '+pip(S,0);$('c1').textContent='سیاه: '+S.off[1]+'/15 بیرون · pip '+pip(S,1);
+}
+function isHuman(p){return mode==='two'||(mode==='cpu'&&p===0)}
+function rem(){return dice.all.filter(function(_,i){return !dice.used[i]})}
+function newGame(){
+  token++;mode=$('mode').value;S=initState();winner=-1;dice=null;sel=null;dests=[];firsts=[];turn=Math.random()<.5?0:1;phase='roll';
+  build();render();info('قرعه: '+NAME(turn)+' اول بازی می‌کند.');next();
+}
+function info(t){$('info').textContent=t}
+function next(){
+  var my=token;render();$('roll').style.display='none';
+  if(winner>-1)return;
+  if(isHuman(turn)){phase='roll';$('roll').style.display='';info(NAME(turn)+': تاس بنداز!');}
+  else{phase='cpu';info(NAME(turn)+' در حال بازی…');setTimeout(function(){if(my===token)doRoll()},800)}
+}
+function doRoll(){
+  var my=token,a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6),all=a===b?[a,a,a,a]:[a,b];
+  dice={all:all,used:all.map(function(){return false}),fresh:true};snd(300,.1,'square',.1);render();$('roll').style.display='none';
+  var r=search(S,turn,all.slice());
+  if(r.len===0){info(NAME(turn)+' حرکتی ندارد و رد می‌شود. (تاس '+all.join('-')+')');setTimeout(function(){if(my===token)endTurn()},1500);return}
+  if(isHuman(turn)){phase='move';info(NAME(turn)+': مهره‌ای را انتخاب کن.');updFirsts()}
+  else{
+    var best=null,bv=-1e9;r.leaves.forEach(function(l){var v=evalS(l.st,turn)+Math.random()*1.5;if(v>bv){bv=v;best=l}});
+    phase='cpu';var i=0;(function step(){if(my!==token)return;if(i>=best.seq.length){setTimeout(function(){if(my===token)endTurn()},500);return}
+      var m=best.seq[i++];play(m);if(winner>-1)return;setTimeout(step,650)})();
+  }
+}
+function updFirsts(){
+  var r=search(S,turn,rem());firsts=r.len?r.leaves.map(function(l){return l.seq[0]}):[];
+  var seen={};firsts=firsts.filter(function(m){var k=m.f+'>'+m.t+'/'+m.d;if(seen[k])return false;return seen[k]=true});
+  sel=null;dests=[];render();
+}
+function play(m){
+  S=apply(S,turn,m);var idx=-1;for(var i=0;i<dice.all.length;i++)if(!dice.used[i]&&dice.all[i]===m.d){idx=i;break}
+  if(idx>-1)dice.used[idx]=true;snd(m.t===-2?420:560,.09);
+  if(S.off[turn]===15){winner=turn;sel=null;dests=[];render();info('🏆 '+NAME(turn)+' برنده شد!');snd(880,.5,'sine',.25);return}
+  sel=null;dests=[];render();
+}
+function afterHumanMove(){
+  var r=search(S,turn,rem());
+  if(rem().length===0||r.len===0){setTimeout(endTurn,500);return}
+  updFirsts();
+}
+function endTurn(){if(winner>-1)return;turn=1-turn;dice=null;sel=null;dests=[];firsts=[];next()}
+function pick(f){ // انتخاب مبدأ
+  if(phase!=='move'||!isHuman(turn))return;
+  var m=firsts.filter(function(x){return x.f===f});
+  if(!m.length){return}
+  sel=f;dests=m.map(function(x){return x.t});render();
+}
+function tapPoint(i){
+  if(phase!=='move'||!isHuman(turn))return;
+  if(sel!==null&&dests.indexOf(i)>-1){go(i);return}
+  if(S.pts[i]*sgn(turn)>0)pick(i);else{sel=null;dests=[];render()}
+}
+function tapBar(){if(phase==='move'&&isHuman(turn)&&S.bar[turn]>0)pick(-1)}
+function tapOff(){if(phase==='move'&&isHuman(turn)&&sel!==null&&dests.indexOf(-2)>-1)go(-2)}
+function go(t){
+  var c=firsts.filter(function(x){return x.f===sel&&x.t===t}).sort(function(a,b){return a.d-b.d});if(!c.length)return;
+  play(c[0]);if(winner>-1)return;afterHumanMove();
+}
+$('roll').onclick=function(){if(phase==='roll')doRoll()};
+$('new').onclick=newGame;$('mode').onchange=newGame;
+window.__bg={state:function(){return S},winner:function(){return winner}};
+newGame();
+})();
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

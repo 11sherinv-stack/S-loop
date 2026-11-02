@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#7b1fa2">
+<title>Bingo | S Loop</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:linear-gradient(160deg,#8e24aa,#311b92);color:#fff;font-family:Vazirmatn,Tahoma,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:8px 8px calc(14px + env(safe-area-inset-bottom,0px));user-select:none;-webkit-user-select:none}
+h1{margin:4px 0 6px;font-size:1.15rem;padding-left:46px}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px}
+select,button{font:inherit;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.14);color:#fff;padding:6px 11px;cursor:pointer}
+select option{color:#111}
+#call{display:flex;align-items:center;gap:10px;margin:4px 0}
+#ball{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffd54f 55%,#ff8f00);color:#3e2723;display:grid;place-items:center;font-weight:900;box-shadow:0 6px 14px #0007;text-align:center;line-height:1}
+#ball small{display:block;font-size:.75rem}#ball b{font-size:1.7rem}
+#hist{display:flex;gap:4px;flex-wrap:wrap;max-width:240px;direction:ltr}
+#hist i{font-style:normal;background:rgba(255,255,255,.18);border-radius:8px;padding:1px 6px;font-size:.75rem}
+#info{min-height:1.6em;text-align:center;color:#ffe9a8;font-weight:700;margin:2px 4px}
+.card{background:#fff;color:#311b92;border-radius:14px;padding:6px;box-shadow:0 8px 20px #0006;direction:ltr}
+.card.me{width:min(94vw,360px)}
+.card .nm{font-weight:800;font-size:.85rem;text-align:center;margin-bottom:3px}
+.g{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.g div{aspect-ratio:1;border-radius:8px;background:#ede7f6;display:grid;place-items:center;font-weight:800;font-size:1.05rem}
+.g .h{background:#7b1fa2;color:#fff;font-size:.95rem;aspect-ratio:auto;padding:3px 0}
+.g .m{background:#ff7043;color:#fff;box-shadow:inset 0 0 0 3px #ffab91}
+.g .c:not(.m){outline:3px solid #ffd54f;outline-offset:-3px;cursor:pointer}
+.g .f{background:#ffd54f;color:#3e2723}
+.g .w{animation:pl .7s infinite alternate;background:#00c853!important;color:#fff}
+@keyframes pl{to{transform:scale(1.08)}}
+.others{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.others .card{width:min(44vw,170px);padding:4px}.others .g div{font-size:.62rem;border-radius:4px}.others .g .h{font-size:.6rem}
+.others .card.win{outline:4px solid #00e676}
+.row{display:flex;gap:8px;margin-top:10px}
+#bingo{background:#00c853;border:0;font-weight:900;font-size:1.25rem;padding:12px 34px}
+.cardwrap{position:relative}
+</style>
+</head>
+<body>
+<h1>🎱 Bingo — بینگو</h1>
+<div class="bar">
+  <select id="np" aria-label="تعداد بازیکن"><option value="2">۲ نفره</option><option value="3">۳ نفره</option><option value="4" selected>۴ نفره</option></select>
+  <select id="sp" aria-label="سرعت"><option value="3500">کند</option><option value="2300" selected>متوسط</option><option value="1300">تند</option></select>
+  <label style="display:flex;align-items:center;gap:4px;font-size:.85rem"><input type="checkbox" id="auto"> علامت‌گذاری خودکار</label>
+  <button id="new">بازی تازه</button>
+</div>
+<div id="call"><div id="ball"><small>-</small><b>--</b></div><div id="hist"></div></div>
+<div id="info"></div>
+<div class="card me"><div class="nm">کارت تو</div><div class="g" id="g0"></div></div>
+<div class="row"><button id="bingo">BINGO!</button><button id="pause">⏸</button></div>
+<div class="others" id="oth"></div>
+<script>
+(function(){
+'use strict';
+var $=function(i){return document.getElementById(i)};
+var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
+var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.15),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+var L='BINGO',N,players,pool,called,tm,over,paused,NAMES=['تو','سارا','علی','نگار'];
+function sh(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
+function mkCard(){var c=[];for(var col=0;col<5;col++){var r=[];for(var i=1;i<=15;i++)r.push(col*15+i);c.push(sh(r).slice(0,5))}
+  var g=[];for(var r2=0;r2<5;r2++){g[r2]=[];for(var c2=0;c2<5;c2++)g[r2][c2]=c[c2][r2]}g[2][2]=0;return g}
+var LINES=(function(){var l=[],i,j;for(i=0;i<5;i++){var a=[],b=[];for(j=0;j<5;j++){a.push([i,j]);b.push([j,i])}l.push(a,b)}
+  var d1=[],d2=[];for(i=0;i<5;i++){d1.push([i,i]);d2.push([i,4-i])}l.push(d1,d2);return l})();
+function hasLine(p){for(var k=0;k<LINES.length;k++){if(LINES[k].every(function(x){return x[0]===2&&x[1]===2||p.mark[x[0]][x[1]]}))return LINES[k]}return null}
+function newGame(){
+  clearTimeout(tm);N=+$('np').value;over=false;paused=false;called=[];pool=sh(Array.from({length:75},function(_,i){return i+1}));
+  players=[];for(var i=0;i<N;i++){var m=[];for(var r=0;r<5;r++)m.push([false,false,false,false,false]);players.push({name:NAMES[i],card:mkCard(),mark:m,cpu:i>0})}
+  $('hist').innerHTML='';$('ball').innerHTML='<small>-</small><b>--</b>';$('info').textContent='آماده؟ اعداد یکی‌یکی خوانده می‌شوند. عدد خوانده‌شده روی کارتت را لمس کن!';$('pause').textContent='⏸';
+  render();tm=setTimeout(draw,1500);
+}
+function render(){
+  var html=function(p,small,win){var h='';for(var c=0;c<5;c++)h+='<div class="h">'+L[c]+'</div>';
+    for(var r=0;r<5;r++)for(var c2=0;c2<5;c2++){var v=p.card[r][c2],cl='';
+      if(v===0)cl='f';else if(p.mark[r][c2])cl='m';else if(!small&&called.indexOf(v)>-1)cl='c';
+      if(win&&win.some(function(x){return x[0]===r&&x[1]===c2}))cl+=' w';
+      h+='<div class="'+cl+'" data-r="'+r+'" data-c="'+c2+'">'+(v===0?'★':v)+'</div>'}return h};
+  $('g0').innerHTML=html(players[0],false,players[0].win);
+  var o=$('oth');o.innerHTML='';
+  for(var i=1;i<N;i++){var d=document.createElement('div');d.className='card'+(players[i].win?' win':'');d.innerHTML='<div class="nm">'+players[i].name+'</div><div class="g">'+html(players[i],true,players[i].win)+'</div>';o.appendChild(d)}
+}
+function mark(p,n){for(var r=0;r<5;r++)for(var c=0;c<5;c++)if(p.card[r][c]===n)p.mark[r][c]=true}
+function draw(){
+  if(over||paused)return;
+  if(!pool.length){$('info').textContent='اعداد تمام شد! مساوی.';over=true;return}
+  var n=pool.shift();called.push(n);var col=Math.floor((n-1)/15);
+  $('ball').innerHTML='<small>'+L[col]+'</small><b>'+n+'</b>';
+  var h=document.createElement('i');h.textContent=L[col]+n;$('hist').insertBefore(h,$('hist').firstChild);if($('hist').children.length>14)$('hist').removeChild($('hist').lastChild);
+  snd(520+col*60,.12,'triangle');
+  players.forEach(function(p,i){if(p.cpu||$('auto').checked)mark(p,n)});
+  render();
+  // کامپیوترها بینگو را اعلام می‌کنند
+  var winners=[];
+  players.forEach(function(p,i){if(p.cpu){var l=hasLine(p);if(l){p.win=l;winners.push(i)}}else if($('auto').checked){var l2=hasLine(p);if(l2){p.win=l2;winners.push(i)}}});
+  if(winners.length){finish(winners);return}
+  tm=setTimeout(draw,+$('sp').value);
+}
+function finish(ws){over=true;clearTimeout(tm);render();
+  var names=ws.map(function(i){return players[i].name}).join(' و ');
+  $('info').textContent=ws.indexOf(0)>-1?'🎉 بینگو! تو بردی!':'🏁 '+names+' «بینگو» گفت و برد!';snd(ws.indexOf(0)>-1?880:300,.5,'sine',.25)}
+$('g0').addEventListener('click',function(e){
+  var d=e.target.closest('[data-r]');if(!d||over)return;var r=+d.dataset.r,c=+d.dataset.c,v=players[0].card[r][c];
+  if(v===0||players[0].mark[r][c])return;
+  if(called.indexOf(v)<0){$('info').textContent='این عدد هنوز خوانده نشده!';snd(160,.15,'sawtooth');return}
+  players[0].mark[r][c]=true;snd(700,.06);render();
+});
+$('bingo').onclick=function(){
+  if(over)return;var l=hasLine(players[0]);
+  if(l){players[0].win=l;finish([0])}
+  else{$('info').textContent='هنوز خطی کامل نشده! ❌ (یک ردیف، ستون یا قطر کامل لازم است)';snd(160,.3,'sawtooth')}
+};
+$('pause').onclick=function(){paused=!paused;$('pause').textContent=paused?'▶':'⏸';if(!paused&&!over)tm=setTimeout(draw,600);else clearTimeout(tm)};
+$('new').onclick=newGame;$('np').onchange=newGame;
+newGame();
+})();
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

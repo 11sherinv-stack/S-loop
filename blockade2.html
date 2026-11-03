@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Blockade 2 — بازی استراتژیک دو نفره‌ی «سد را بشکن»، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Blockade 2</title>
+<style>
+:root{--bg:#e9ecf2;--ink:#1c2230;--muted:#667085;--btn:#e8742a;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--ink:#e8ecf3;--muted:#99a3b5;--btn:#ff9650;--btnink:#2a1000}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;padding:6px;user-select:none;-webkit-user-select:none;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:6px 0 2px;font-size:1.1rem}
+.msg{min-height:1.7em;text-align:center;font-size:.92rem;margin:2px 0 4px}
+.wrap{position:relative;width:min(96vw,420px)}
+canvas{display:block;width:100%;aspect-ratio:360/470;border-radius:12px;touch-action:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+button{font:inherit;border:0;background:var(--btn);color:var(--btnink);border-radius:10px;padding:9px 16px;cursor:pointer}
+button.al{background:rgba(120,130,150,.22);color:var(--ink)}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.end{position:absolute;inset:0;background:rgba(5,10,20,.78);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;border-radius:12px;text-align:center}
+.end h2{margin:0;font-size:1.6rem}
+.hint{color:var(--muted);font-size:.76rem;text-align:center;max-width:420px;line-height:1.8}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🚧 Blockade 2</h1>
+<div class="msg" id="msg" role="status"></div>
+<div class="wrap"><canvas id="c" width="360" height="470"></canvas>
+<div class="end" id="end"><h2 id="eh"></h2><p id="ep"></p><button id="eb">بازی جدید</button></div></div>
+<div class="bar"><button class="al" id="ori">دیوار: افقی ▬</button><button class="al" id="skip" disabled>رد کردن دیوار</button><button class="al" id="nw">⟲ بازی جدید</button></div>
+<div class="hint">اول یک مهره‌ی نارنجی را انتخاب کن و تا ۲ خانه حرکتش بده، بعد (اگر خواستی) یک دیوار سبز بگذار. هر مهره‌ی تو که به یکی از دو خانه‌ی شروع قرمزها برسد، بازی را می‌بری. راه همه را نمی‌شود کامل بست.</div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const R=11,C=9,CS=36,MX=18,MY=50,WALLS=9;
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.1){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+/* بازیکن 0 = تو (نارنجی، پایین)، بازیکن 1 = کامپیوتر (قرمز، بالا) */
+const START=[[[9,2],[9,6]],[[1,2],[1,6]]];
+const GOAL=[START[1],START[0]];
+let pawns,hw,vw,left,phase,turn,sel,reach,ori='H',prev=null,over=false,wallsList,anim=null,wins=[0,0];
+const key=(r,c)=>r*C+c;
+function newGame(){
+  pawns=[START[0].map(p=>[...p]),START[1].map(p=>[...p])];
+  hw=Array.from({length:R+1},()=>Array(C+1).fill(0));vw=Array.from({length:R+1},()=>Array(C+1).fill(0));
+  wallsList=[];left=[WALLS,WALLS];phase='move';turn=0;sel=-1;reach=[];prev=null;over=false;anim=null;
+  $('end').style.display='none';say('نوبت توست: یک مهره‌ی نارنجی را انتخاب کن');ui();
+}
+function say(t){$('msg').textContent=t}
+function ui(){$('skip').disabled=!(phase==='wall'&&turn===0&&!over);$('ori').textContent='دیوار: '+(ori==='H'?'افقی ▬':'عمودی ▮')}
+/* حرکت بین خانه‌ها */
+function blocked(r1,c1,r2,c2){
+  if(c1===c2){const i=Math.max(r1,r2);return !!(hw[i][c1]||hw[i][c1+1])}
+  const j=Math.max(c1,c2);return !!(vw[r1][j]||vw[r1+1][j]);
+}
+function nbrs(r,c){const o=[];[[1,0],[-1,0],[0,1],[0,-1]].forEach(([a,b])=>{const rr=r+a,cc=c+b;if(rr>=0&&rr<R&&cc>=0&&cc<C&&!blocked(r,c,rr,cc))o.push([rr,cc])});return o}
+function occupied(r,c){return pawns.some(pl=>pl.some(p=>p[0]===r&&p[1]===c))}
+function reachable(p){
+  const out=[],seen=new Set([key(p[0],p[1])]);let fr=[p];
+  for(let d=1;d<=2;d++){const nx=[];fr.forEach(q=>nbrs(q[0],q[1]).forEach(n=>{const k=key(n[0],n[1]);if(seen.has(k)||occupied(n[0],n[1]))return;seen.add(k);nx.push(n);out.push(n)}));fr=nx}
+  return out;
+}
+/* فاصله تا هدف (بدون در نظر گرفتن مهره‌ها) */
+function distMap(pl){
+  const d=new Array(R*C).fill(-1);let fr=GOAL[pl].map(g=>[g[0],g[1]]);fr.forEach(g=>d[key(g[0],g[1])]=0);
+  while(fr.length){const nx=[];fr.forEach(q=>nbrs(q[0],q[1]).forEach(n=>{const k=key(n[0],n[1]);if(d[k]<0){d[k]=d[key(q[0],q[1])]+1;nx.push(n)}}));fr=nx}
+  return d;
+}
+function best(pl){const d=distMap(pl);let m=1e9;pawns[pl].forEach(p=>{const v=d[key(p[0],p[1])];if(v>=0&&v<m)m=v});return m}
+/* دیوارها */
+function wallOK(o,i,j){
+  if(i<1||i>R-1||j<1||j>C-1)return false;
+  if(o==='H'){if(hw[i][j]||hw[i][j-1]||hw[i][j+1]||vw[i][j])return false}
+  else{if(vw[i][j]||vw[i-1][j]||vw[i+1][j]||hw[i][j])return false}
+  (o==='H'?hw:vw)[i][j]=1;
+  const ok=best(0)<1e9&&best(1)<1e9;
+  (o==='H'?hw:vw)[i][j]=0;return ok;
+}
+function addWall(o,i,j,pl){(o==='H'?hw:vw)[i][j]=1;wallsList.push({o,i,j,pl});left[pl]--}
+function won(pl){return pawns[pl].some(p=>GOAL[pl].some(g=>g[0]===p[0]&&g[1]===p[1]))}
+/* نوبت تو */
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*360/r.width,(e.clientY-r.top)*470/r.height,e.pointerType==='touch']}
+function cellAt(px,py){const c=Math.floor((px-MX)/CS),r=Math.floor((py-MY)/CS);return(r>=0&&r<R&&c>=0&&c<C)?[r,c]:null}
+function ixAt(px,py,touch){const j=Math.round((px-MX)/CS),i=Math.round((py-(touch?44:0)-MY)/CS);return[Math.max(1,Math.min(R-1,i)),Math.max(1,Math.min(C-1,j))]}
+cv.addEventListener('pointerdown',e=>{
+  if(over||turn!==0||anim)return;e.preventDefault();const[px,py,t]=pos(e);
+  if(phase==='move'){
+    const c=cellAt(px,py);if(!c)return;
+    const k=pawns[0].findIndex(p=>p[0]===c[0]&&p[1]===c[1]);
+    if(k>=0){sel=k;reach=reachable(pawns[0][k]);beep(500,.04);say(reach.length?'یک خانه‌ی روشن را بزن':'این مهره گیر کرده؛ مهره‌ی دیگر را انتخاب کن');return}
+    if(sel>=0&&reach.some(r=>r[0]===c[0]&&r[1]===c[1]))doMove(0,sel,c);
+  }else if(phase==='wall'){
+    const[i,j]=ixAt(px,py,t);prev={o:ori,i,j};try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  }
+});
+cv.addEventListener('pointermove',e=>{if(phase==='wall'&&turn===0&&prev&&!over){const[px,py,t]=pos(e);const[i,j]=ixAt(px,py,t);prev={o:ori,i,j}}});
+cv.addEventListener('pointerup',e=>{
+  if(phase!=='wall'||turn!==0||!prev||over)return;
+  const p=prev;prev=null;
+  if(left[0]>0&&wallOK(p.o,p.i,p.j)){addWall(p.o,p.i,p.j,0);beep(260,.08,'square',.06);endTurn()}
+  else{beep(120,.08,'sawtooth',.05);say('اینجا نمی‌شود دیوار گذاشت (یا راه کسی را کامل می‌بندد)')}
+});
+cv.addEventListener('pointercancel',()=>{prev=null});
+$('ori').onclick=()=>{ori=ori==='H'?'V':'H';ui()};
+$('skip').onclick=()=>{if(phase==='wall'&&turn===0)endTurn()};
+$('nw').onclick=newGame;$('eb').onclick=newGame;
+function doMove(pl,k,dest){
+  const p=pawns[pl][k],from=[p[0],p[1]];
+  anim={pl,k,from,to:dest,t:0};sel=-1;reach=[];
+  const fin=()=>{p[0]=dest[0];p[1]=dest[1];anim=null;beep(380,.07);
+    if(won(pl))return finish(pl);
+    if(pl===0){phase='wall';if(left[0]>0){say('حالا یک دیوار بگذار (بکش و رها کن) یا رد کن')}else{say('دیوارت تمام شده');setTimeout(endTurn,500)}ui()}
+  };
+  anim.fin=fin;
+}
+function endTurn(){
+  phase='move';turn=1-turn;ui();
+  if(turn===1){say('کامپیوتر فکر می‌کند…');setTimeout(aiTurn,700)}else say('نوبت توست: یک مهره‌ی نارنجی را انتخاب کن');
+}
+function finish(pl){
+  over=true;wins[pl]++;
+  $('eh').textContent=pl===0?'🏆 تو بردی!':'کامپیوتر برد';
+  $('ep').textContent='برد تو: '+fa(wins[0])+' — برد کامپیوتر: '+fa(wins[1]);
+  setTimeout(()=>{$('end').style.display='flex';beep(pl===0?760:180,.35)},500);ui();
+}
+/* کامپیوتر */
+function aiMove(){
+  const dm=distMap(1);let bestS=1e9,cands=[];
+  pawns[1].forEach((p,k)=>{reachable(p).forEach(n=>{
+    let s=dm[key(n[0],n[1])];if(s<0)s=99;
+    s+=Math.random()*.4;
+    // مهره‌ی عقب‌تر را جلو ببر
+    if(s<bestS-1e-9){bestS=s;cands=[[k,n]]}else if(Math.abs(s-bestS)<1e-9)cands.push([k,n]);
+  })});
+  return cands.length?cands[Math.floor(Math.random()*cands.length)]:null;
+}
+function aiWall(){
+  if(left[1]<=0)return null;
+  const my=best(1),op=best(0),base=op-my;let bestG=0,bw=null;
+  for(const o of['H','V'])for(let i=1;i<R;i++)for(let j=1;j<C;j++){
+    if(!wallOK(o,i,j))continue;
+    (o==='H'?hw:vw)[i][j]=1;
+    const g=(best(0)-best(1))-base;
+    (o==='H'?hw:vw)[i][j]=0;
+    if(g>bestG||(g===bestG&&g>0&&Math.random()<.3)){bestG=g;bw=[o,i,j]}
+  }
+  const urgent=op<=3;
+  return bw&&(bestG>=2||(bestG>=1&&(urgent||left[1]>4)))?bw:null;
+}
+function aiTurn(){
+  if(over)return;
+  const m=aiMove();
+  if(!m){endTurn();return}
+  doMove(1,m[0],m[1]);
+  const wait=()=>{if(anim)return setTimeout(wait,60);
+    if(over)return;
+    const w=aiWall();if(w)addWall(w[0],w[1],w[2],1);
+    setTimeout(()=>endTurn(),w?350:100);
+  };setTimeout(wait,80);
+}
+/* رسم */
+function cyl(cx,cy,col,hi){
+  const w=17,h=22;
+  x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(cx+2,cy+h/2+1,w/2+2,5,0,0,7);x.fill();
+  const g=x.createLinearGradient(cx-w/2,0,cx+w/2,0);g.addColorStop(0,shade(col,-.3));g.addColorStop(.45,col);g.addColorStop(1,shade(col,-.4));
+  x.fillStyle=g;x.beginPath();x.moveTo(cx-w/2,cy-h/2);x.lineTo(cx-w/2,cy+h/2);x.ellipse(cx,cy+h/2,w/2,4.5,0,Math.PI,0,true);x.lineTo(cx+w/2,cy-h/2);x.closePath();x.fill();
+  x.fillStyle=shade(col,.25);x.beginPath();x.ellipse(cx,cy-h/2,w/2,4.5,0,0,7);x.fill();
+  if(hi){x.strokeStyle='#fff';x.lineWidth=2.5;x.beginPath();x.ellipse(cx,cy-h/2,w/2+2,6,0,0,7);x.stroke()}
+}
+function shade(h,a){const n=parseInt(h.slice(1),16);const f=v=>Math.max(0,Math.min(255,Math.round(v+v*a)));return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`}
+const cx=c=>MX+c*CS+CS/2,cy=r=>MY+r*CS+CS/2;
+function wallRect(o,i,j){return o==='H'?[MX+(j-1)*CS+2,MY+i*CS-3,CS*2-4,6]:[MX+j*CS-3,MY+(i-1)*CS+2,6,CS*2-4]}
+function drawWall(o,i,j,col,a=1){const r=wallRect(o,i,j);x.globalAlpha=a;x.fillStyle=col;x.fillRect(...r);x.fillStyle='rgba(255,255,255,.28)';x.fillRect(r[0],r[1],r[2],o==='H'?2:r[3]);x.globalAlpha=1}
+function draw(){
+  x.fillStyle='#10141d';x.fillRect(0,0,360,470);
+  // بالا: دیوارهای باقی‌مانده
+  x.textBaseline='middle';x.font='bold 13px Tahoma,sans-serif';
+  x.fillStyle='#ff6f61';x.textAlign='right';x.fillText('کامپیوتر: '+fa(left[1])+' دیوار',350,16);
+  x.fillStyle='#ffa45c';x.fillText('تو: '+fa(left[0])+' دیوار',350,36);
+  for(let k=0;k<left[1];k++){x.fillStyle='#5b5f8f';x.fillRect(14+k*13,10,9,12)}
+  for(let k=0;k<left[0];k++){x.fillStyle='#3fae5a';x.fillRect(14+k*13,30,9,12)}
+  // تخته
+  x.fillStyle='#1c3b63';x.beginPath();x.roundRect(MX-8,MY-8,C*CS+16,R*CS+16,8);x.fill();
+  for(let r=0;r<R;r++)for(let c=0;c<C;c++){x.fillStyle=(r+c)%2?'#233f69':'#1f3a62';x.fillRect(MX+c*CS+1,MY+r*CS+1,CS-2,CS-2)}
+  // خانه‌های شروع/هدف
+  START.forEach((ps,pl)=>ps.forEach(p=>{x.strokeStyle=pl?'#ff6f61':'#ffa45c';x.lineWidth=2.5;x.setLineDash([4,3]);x.strokeRect(MX+p[1]*CS+4,MY+p[0]*CS+4,CS-8,CS-8);x.setLineDash([])}));
+  // خانه‌های قابل رفتن
+  reach.forEach(n=>{x.fillStyle='rgba(255,220,120,.35)';x.fillRect(MX+n[1]*CS+1,MY+n[0]*CS+1,CS-2,CS-2);x.fillStyle='#ffe08a';x.beginPath();x.arc(cx(n[1]),cy(n[0]),4,0,7);x.fill()});
+  // دیوارها
+  wallsList.forEach(w=>drawWall(w.o,w.i,w.j,w.pl?'#6b6fb5':'#3fae5a'));
+  if(prev&&phase==='wall'&&turn===0){const ok=left[0]>0&&wallOK(prev.o,prev.i,prev.j);drawWall(prev.o,prev.i,prev.j,ok?'#7be08f':'#ff5252',.8)}
+  // مهره‌ها (به ترتیب ردیف برای عمق)
+  const all=[];pawns.forEach((ps,pl)=>ps.forEach((p,k)=>all.push({pl,k,r:p[0],c:p[1]})));
+  all.sort((a,b)=>a.r-b.r);
+  all.forEach(o=>{let px=cx(o.c),py=cy(o.r);
+    if(anim&&anim.pl===o.pl&&anim.k===o.k){const t=Math.min(1,anim.t);px=cx(anim.from[1])+(cx(anim.to[1])-cx(anim.from[1]))*t;py=cy(anim.from[0])+(cy(anim.to[0])-cy(anim.from[0]))*t}
+    cyl(px,py-2,o.pl?'#e53935':'#f08a24',o.pl===0&&sel===o.k&&turn===0)});
+}
+let last=0;
+function loop(t){
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  if(anim){anim.t+=dt/.22;if(anim.t>=1){const f=anim.fin;anim.t=1;draw();f()}}
+  draw();requestAnimationFrame(loop);
+}
+if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+if(!x.setLineDash)x.setLineDash=()=>{};
+newGame();requestAnimationFrame(loop);
+window.__b2={get pawns(){return pawns},reachable,wallOK,best,addWall,won,aiMove,aiWall,doMove,get anim(){return anim},get over(){return over},get left(){return left}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

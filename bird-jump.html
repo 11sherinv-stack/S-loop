@@ -27,7 +27,7 @@ var ac=null;function A(){try{if(!ac){var X=window.AudioContext||window.webkitAud
 function tone(f,f2,d,ty,v){var c=A();if(!c)return;var t=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t+d);g.gain.setValueAtTime(GV*(v||.2),t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.02)}
 
 /* ---------- پرنده‌ی Happy Bird ---------- */
-var BW=46,BH=64,BS=.15,FEET=187*BS;
+var BS=.19,BW=Math.round(300*BS),BH=Math.round(423*BS),FEET=187*BS;
 function drawHappy(cx,cy,t,flapAmp,rot,sx,sy){
   ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.scale(BS*sx,BS*sy);ctx.lineJoin='round';ctx.lineCap='round';
   [-60,60].forEach(function(lx){ctx.beginPath();ctx.moveTo(lx,55);ctx.lineTo(lx,140);ctx.moveTo(lx,140);ctx.lineTo(lx-28,172);ctx.moveTo(lx,140);ctx.lineTo(lx,180);ctx.moveTo(lx,140);ctx.lineTo(lx+28,172);ctx.strokeStyle='#e8742a';ctx.lineWidth=14;ctx.stroke()});
@@ -200,7 +200,7 @@ function draw(){
     else if(tiltHint()){ctx.fillText('گوشی را به چپ و راست کج کن',W/2,H/2-20);ctx.fillText('پرنده خودش می‌پرد؛ روی سکوها فرود بیا!',W/2,H/2+8)}
     else{ctx.fillText('انگشتت را به چپ و راست بکش',W/2,H/2-20);ctx.fillText('پرنده خودش می‌پرد؛ روی سکوها فرود بیا!',W/2,H/2+8)}
     ctx.fillStyle='#ffeb3b';ctx.font='bold 21px Tahoma,sans-serif';ctx.fillText('برای شروع لمس کن',W/2,H/2+70);
-    drawHappy(W/2,H/2-172+Math.sin(at*5)*5,at,20,0,1.5,1.5);
+    drawHappy(W/2,H/2-175+Math.sin(at*5)*5,at,20,0,1.15,1.15);
   }
 }
 var last=0;

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Blockade Puzzle — پازل بلوک‌های لغزان، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Blockade Puzzle</title>
+<style>
+:root{--bg:#eef0f4;--ink:#1c2230;--muted:#667085;--btn:#14a89b;--btnink:#fff;--card:#fff;--line:#d0d5dd;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171d;--ink:#e8ecf3;--muted:#99a3b5;--btn:#2fd5c3;--btnink:#08201d;--card:#1f242d;--line:#343b48}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:8px;user-select:none;-webkit-user-select:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:6px 0;font-size:1.15rem}
+button{font:inherit;border:0;background:var(--btn);color:var(--btnink);border-radius:10px;padding:9px 16px;cursor:pointer}
+button.al{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.lv{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:min(94vw,420px);margin-top:8px}
+.lv button{padding:8px 0;background:var(--card);color:var(--ink);border:1px solid var(--line);line-height:1.3}
+.lv button small{display:block;color:#f5a623;font-size:.7rem;min-height:1em}
+.lv button.lock{opacity:.45}
+.bar{display:flex;gap:10px;align-items:center;justify-content:space-between;width:min(94vw,420px);margin:6px 0}
+.st{color:var(--muted);font-size:.9rem}
+.bw{position:relative;touch-action:none}
+canvas{display:block;width:min(94vw,420px);aspect-ratio:1;touch-action:none;border-radius:14px}
+.msg{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(10,12,18,.72);color:#fff;border-radius:14px;text-align:center}
+.msg h2{margin:0}.msg .row{display:flex;gap:8px}
+.hint{color:var(--muted);font-size:.78rem;margin-top:8px;text-align:center}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🚧 Blockade Puzzle</h1>
+<div id="menu"><div class="hint">بلوک قرمز را از مسیر بیرون ببر! مرحله را انتخاب کن</div><div class="lv" id="lv"></div></div>
+<div id="game" hidden>
+  <div class="bar"><button class="al" id="bk">☰ مرحله‌ها</button><span class="st" id="info"></span><span><button class="al" id="un">↩︎</button> <button class="al" id="rs">⟲</button> <button class="al" id="hn">💡</button></span></div>
+  <div class="bw"><canvas id="c" width="420" height="420"></canvas>
+  <div class="msg" id="win"><h2 id="wt">آفرین!</h2><div id="ws" style="font-size:1.6rem"></div><div id="wm"></div><div class="row"><button id="nx">مرحله‌ی بعد</button><button class="al" id="rp">دوباره</button></div></div></div>
+  <div class="hint">بلوک‌ها را بکش · خروجی سمت راست ردیف سوم است</div>
+</div>
+<script>
+const LEVELS=[".I.....I.CC.HAAF..HGGF...EEJDD.BBJ..", "..EE.FDD.HHFJAABG.J..BG.JIIB..CCC...", "C.II..C..F.E.AAF.E..HHJKGGDLJKBBDLJ.", "....FFDD.GJ.AA.GJ....BB.ICCC.EIHHH.E", "...CC..GG.EFAA..EF....HHDDD...BB....", "EEJK.B..JKFBAA.CFHDD.C.H...GG.....II", "...EE.GGC.D.AACID.BB.IKKJLFHH.JLF...", ".GGDD..CCC.BAA..HB..J.H.EEJ.FFIIJ.KK", "FGG.KKF....HF.AA.H.I.CCHEIDB..E.DBJJ", "...BB.II.D..FAADKGF.HHKG.EEE.GJJ..CC", "D.BB..DJJJ.F.AA..F...IIF.GHHCC.GEEE.", ".H.CEE.H.C..AAD.GB.JD.GB.JD.GI...FFI", "...CC.EE.HB..AAHB..GIIB..GFF...GDDD.", "...FF.GGCCLLJAA..EJ..DMEBIHDMEBIHDKK", "GG..BJ.EE.BJF.AA.JFKHH...K.DCC...DII", "FFF.II.DD.EKAA..EKLM.GGBLMCCCBLHHJJJ", "..CFJJ..CFDEAA..DE..III.GGHBBBKKH...", ".CC.IF..LLIF.DAAEH.DGGEH.D.JEH.KKJBB", "..BBB....IICAAF..C..FD.C.GGDEE....HH", "FFIIIDJJ.EED.AA.H...KKH...BGGGCCB...", "BB.DDDHH..KI..AAKIEEFJJC..FGGC.LL...", "..B.HH..BE..AABE..II.EJJ.G.CCD.G.FFD", "G.C...G.C..IAACF.IDHHFBID...B.DEEE..", "..ICBBLLIC.FAAI..FKDD.JGKMHHJGKMEEE.", ".GG..DFF.J.D.AAJBDCHEEB.CHK.B.CHK.II", "II.BB...KKKE.GAAHE.GD.HE..DFJJCC.F..", "IKEEGCIK..GCAA.DG.L.FD..L.FJHHBB.JMM", "KGGGEEK.BB.DAACMID..CMIF..CHHFJJLL.F", "....H...DJHFAADJCFGID.CFGI.EE..BB...", "JFFB..J.EBGGAAE.H...C.H...C.IK..DDIK", "KKDD...LLC.JAAEC.JI.E.GGI.EFFB...HHB", ".DGG...D.JH.AAFJH.KKFIB.C.EIB.C.E.B.", "....LCH.FFLCHDAAKE.DJ.KE.DJIIEGG.BB.", "..JFHH..JFB.AAL.BEDIL..EDIGGGED.KKCC", "..BJJK..B.EKHAA.EKHDDDIIH.FFCC...GG.", ".GGFJJ.IIFB.AA..BK.HHHBKECMD..ECMDLL", "FIICCCFEEHB..AAHB.GG..KK..JDDD..J.LL", "H...KKH.B.F.AAB.FDIICC.DEEEJJDGGG...", "BBBIIE..GD.EAAGDF.C.G.F.C.LL.HKKJJ.H", "GGGC..EE.CB..JAAB..JHHB.F.KII.F.K.DD"];
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const N=6,CS=70,GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.1){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+/* پیشرفت */
+let prog={};try{prog=JSON.parse(localStorage.getItem('sl-blockade')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('sl-blockade',JSON.stringify(prog))}catch(e){}};
+/* مدل */
+function parse(str){
+  const m={};for(let i=0;i<36;i++){const ch=str[i];if(ch!=='.'){(m[ch]=m[ch]||[]).push(i)}}
+  const cars=Object.keys(m).sort((a,b)=>a==='A'?-1:b==='A'?1:a<b?-1:1).map(ch=>{const c=m[ch],h=Math.floor(c[0]/6)===Math.floor(c[1]/6);return{id:ch,h,len:c.length,r:Math.floor(c[0]/6),c:c[0]%6}});
+  return cars;
+}
+const enc=cars=>cars.map(c=>c.h?c.c:c.r).join('');
+function grid(cars,skip=-1){const g=Array(36).fill(-1);cars.forEach((c,i)=>{if(i===skip)return;for(let k=0;k<c.len;k++)g[c.h?c.r*6+c.c+k:(c.r+k)*6+c.c]=i});return g}
+function solve(cars0){ // BFS → {moves, path:[[idx,newPos]]}
+  const n=cars0.length,h=cars0.map(c=>c.h),len=cars0.map(c=>c.len),fix=cars0.map(c=>c.h?c.r:c.c);
+  const start=cars0.map(c=>c.h?c.c:c.r);
+  const key=a=>a.join(',');const seen=new Map([[key(start),null]]);let q=[start];
+  while(q.length){
+    const nq=[];
+    for(const s of q){
+      if(s[0]===N-len[0]){ // بازسازی مسیر
+        const path=[];let k=key(s);while(seen.get(k)){const p=seen.get(k);path.push(p.mv);k=p.from}
+        return path.reverse();
+      }
+      const g=Array(36).fill(-1);
+      for(let i=0;i<n;i++)for(let k=0;k<len[i];k++)g[h[i]?fix[i]*6+s[i]+k:(s[i]+k)*6+fix[i]]=i;
+      for(let i=0;i<n;i++){
+        const at=p=>h[i]?g[fix[i]*6+p]:g[p*6+fix[i]];
+        for(let p=s[i]+len[i];p<N&&at(p)===-1;p++){const t=s.slice();t[i]=p-len[i]+1;const kk=key(t);if(!seen.has(kk)){seen.set(kk,{from:key(s),mv:[i,t[i]]});nq.push(t)}}
+        for(let p=s[i]-1;p>=0&&at(p)===-1;p--){const t=s.slice();t[i]=p;const kk=key(t);if(!seen.has(kk)){seen.set(kk,{from:key(s),mv:[i,t[i]]});nq.push(t)}}
+      }
+    }
+    q=nq;
+  }
+  return null;
+}
+/* حالت بازی */
+const COL=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00acc1','#6d4c41','#fdd835','#ec407a','#7cb342','#5c6bc0','#26a69a','#ff7043','#9e9d24'];
+let lvl=0,cars,undo,moves,opt,drag=null,done=false,anim=null;
+function openMenu(){$('game').hidden=true;$('menu').hidden=false;renderMenu()}
+function renderMenu(){
+  $('lv').innerHTML=LEVELS.map((s,i)=>{const unlocked=i===0||prog[i-1]||prog[i];const st=prog[i]||0;
+    return `<button data-i="${i}" class="${unlocked?'':'lock'}" ${unlocked?'':'disabled'}>${fa(i+1)}<small>${st?'★'.repeat(st)+'☆'.repeat(3-st):(unlocked?'':'🔒')}</small></button>`}).join('');
+}
+$('lv').onclick=e=>{const b=e.target.closest('button');if(b&&!b.disabled)start(+b.dataset.i)};
+function start(i){
+  lvl=i;cars=parse(LEVELS[i]);undo=[];moves=0;done=false;anim=null;
+  const p=solve(cars);opt=p?p.length:0;
+  $('menu').hidden=true;$('game').hidden=false;$('win').style.display='none';upd();
+}
+function upd(){$('info').textContent='مرحله '+fa(lvl+1)+' · حرکت: '+fa(moves)+' · بهترین: '+fa(opt)}
+function maxRange(i){ // حداقل و حداکثر موقعیت ممکن
+  const c=cars[i],g=grid(cars,i),f=c.h?c.r:c.c,cur=c.h?c.c:c.r;let lo=cur,hi=cur;
+  const at=p=>c.h?g[f*6+p]:g[p*6+f];
+  while(lo-1>=0&&at(lo-1)===-1)lo--;
+  while(hi+c.len<N&&at(hi+c.len)===-1)hi++;
+  return[lo,hi];
+}
+function draw(){
+  const W=420;x.clearRect(0,0,W,W);
+  x.fillStyle='#8d6e63';x.beginPath();x.roundRect(0,0,W,W,14);x.fill();
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){x.fillStyle='#d7b98e';x.fillRect(c*CS+3,r*CS+3,CS-6,CS-6)}
+  // خروجی
+  x.fillStyle='#43a047';x.fillRect(W-8,2*CS+10,8,CS-20);
+  cars.forEach((c,i)=>{
+    let px=c.c*CS,py=c.r*CS;
+    if(drag&&drag.i===i){if(c.h)px=drag.pos*CS;else py=drag.pos*CS}
+    if(anim&&anim.i===i){if(c.h)px=anim.pos*CS;else py=anim.pos*CS}
+    const w=c.h?c.len*CS:CS,h=c.h?CS:c.len*CS,col=i===0?COL[0]:COL[1+(i-1)%(COL.length-1)];
+    x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.roundRect(px+6,py+8,w-8,h-8,12);x.fill();
+    const g=x.createLinearGradient(px,py,px,py+h);g.addColorStop(0,col);g.addColorStop(1,shade(col,-.25));
+    x.fillStyle=g;x.beginPath();x.roundRect(px+5,py+5,w-10,h-10,12);x.fill();
+    x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=2;x.beginPath();x.roundRect(px+8,py+8,w-16,h-16,9);x.stroke();
+    if(i===0){x.fillStyle='#fff';x.font='bold 26px Tahoma,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('→',px+w/2,py+h/2)}
+  });
+}
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(v+v*a)));return `rgb(${f(r)},${f(g)},${f(b)})`}
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*420/r.width,(e.clientY-r.top)*420/r.height]}
+cv.addEventListener('pointerdown',e=>{
+  if(done||anim)return;e.preventDefault();const[px,py]=pos(e);const g=grid(cars);const i=g[Math.floor(py/CS)*6+Math.floor(px/CS)];if(i<0)return;
+  const c=cars[i],[lo,hi]=maxRange(i);
+  drag={i,lo,hi,start:c.h?c.c:c.r,off:(c.h?px:py)/CS-(c.h?c.c:c.r),pos:c.h?c.c:c.r};try{cv.setPointerCapture(e.pointerId)}catch(_){}
+});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const[px,py]=pos(e),c=cars[drag.i];const v=(c.h?px:py)/CS-drag.off;drag.pos=Math.max(drag.lo,Math.min(drag.hi,v))});
+function endDrag(){
+  if(!drag)return;const c=cars[drag.i],t=Math.round(drag.pos),from=drag.start;drag.pos=t;
+  const i=drag.i;drag=null;
+  if(t!==from)commit(i,t,from);
+}
+function commit(i,t,from){
+  undo.push([i,from]);if(cars[i].h)cars[i].c=t;else cars[i].r=t;moves++;beep(300+Math.random()*80,.05);upd();
+  if(i===0&&cars[0].c===N-cars[0].len)win();
+}
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',()=>{drag=null});
+function win(){
+  done=true;beep(660,.15);setTimeout(()=>beep(880,.2),150);
+  const st=moves<=opt?3:moves<=Math.ceil(opt*1.5)?2:1;
+  if((prog[lvl]||0)<st){prog[lvl]=st;save()}
+  // قرمز از خروجی بیرون برود
+  const c=cars[0];let p=c.c;const t0=performance.now();
+  anim={i:0,pos:p};
+  const step=t=>{const k=Math.min(1,(t-t0)/450);anim.pos=p+k*2.2;if(k<1)requestAnimationFrame(step);else{anim=null;showWin(st)}};requestAnimationFrame(step);
+}
+function showWin(st){
+  $('ws').textContent='★'.repeat(st)+'☆'.repeat(3-st);$('wm').textContent='حرکت: '+fa(moves)+' · کمترین ممکن: '+fa(opt);
+  $('nx').style.display=lvl+1<LEVELS.length?'':'none';$('win').style.display='flex';
+}
+$('nx').onclick=()=>start(lvl+1);$('rp').onclick=()=>start(lvl);$('rs').onclick=()=>start(lvl);$('bk').onclick=openMenu;
+$('un').onclick=()=>{if(done||anim||!undo.length)return;const[i,p]=undo.pop();if(cars[i].h)cars[i].c=p;else cars[i].r=p;moves=Math.max(0,moves-1);upd()};
+$('hn').onclick=()=>{
+  if(done||anim)return;const p=solve(cars);if(!p||!p.length)return;
+  const[i,t]=p[0],c=cars[i],from=c.h?c.c:c.r;const t0=performance.now();anim={i,pos:from};
+  const step=n=>{const k=Math.min(1,(n-t0)/300);anim.pos=from+(t-from)*k;if(k<1)requestAnimationFrame(step);else{anim=null;commit(i,t,from)}};requestAnimationFrame(step);
+};
+if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+function loop(){if(!$('game').hidden)draw();requestAnimationFrame(loop)}
+renderMenu();loop();
+window.__bl={LEVELS,parse,solve};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

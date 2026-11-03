@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="مینی‌گلف — ۹ حفره، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mini Golf</title>
+<style>
+:root{--bg:#cfe8c6;--ink:#10260f;--btn:#2e7d32;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13200f;--ink:#e6f2df;--btn:#66bb6a;--btnink:#0b1d0c}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.wrap{position:relative;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{display:block;height:min(100%,700px);aspect-ratio:360/560;max-width:100vw;touch-action:none;border-radius:12px}
+.ov{position:absolute;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(8,20,8,.8);color:#fff;border-radius:12px;text-align:center;padding:14px;height:min(100%,700px);aspect-ratio:360/560;max-width:100vw}
+.ov h2{margin:0;font-size:1.5rem}.ov p{margin:0;line-height:1.8}
+.ov table{border-collapse:collapse;font-size:.85rem}.ov td,.ov th{padding:2px 7px;border-bottom:1px solid #fff3}
+button{font:inherit;border:0;background:var(--btn);color:var(--btnink);border-radius:10px;padding:10px 24px;cursor:pointer}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.hint{font-size:.75rem;opacity:.7;margin:4px 0 6px}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>⛳ Mini Golf</h1>
+<div class="wrap"><canvas id="c" width="360" height="560"></canvas>
+<div class="ov" id="ov"><h2 id="oh"></h2><p id="op"></p><div id="ot"></div><button id="ob"></button></div></div>
+<div class="hint">انگشتت را عقب بکش و رها کن تا توپ شلیک شود</div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const W=360,H=560,BR=7,CUP=11;
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.1){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const R=(a,b,w,h)=>[a,b,w,h];
+/* حفره‌ها: poly=زمین، walls=مانع‌های مستطیلی، sand/water=مستطیل، mills=آسیاب، sliders=بلوک متحرک */
+const HOLES=[
+ {par:2,poly:[[100,60],[260,60],[260,500],[100,500]],tee:[180,460],cup:[180,100]},
+ {par:3,poly:[[40,60],[320,60],[320,200],[200,200],[200,500],[40,500]],tee:[120,460],cup:[280,130]},
+ {par:3,poly:[[60,60],[300,60],[300,500],[60,500]],tee:[180,460],cup:[180,100],walls:[R(60,230,120,22),R(180,340,120,22)]},
+ {par:3,poly:[[100,60],[260,60],[260,500],[100,500]],tee:[180,460],cup:[180,100],sand:[R(100,220,160,100)]},
+ {par:3,poly:[[60,60],[300,60],[300,500],[60,500]],tee:[180,460],cup:[180,100],water:[R(60,250,95,50),R(205,250,95,50)]},
+ {par:3,poly:[[80,60],[280,60],[280,500],[80,500]],tee:[180,460],cup:[180,100],mills:[{x:180,y:280,len:62,sp:1.7}]},
+ {par:4,poly:[[40,60],[160,60],[160,380],[200,380],[200,60],[320,60],[320,500],[40,500]],tee:[100,110],cup:[260,110]},
+ {par:3,poly:[[60,60],[300,60],[300,500],[60,500]],tee:[180,460],cup:[180,100],sliders:[{y:190,w:80,h:18,x0:60,x1:300,sp:70,ph:0},{y:320,w:80,h:18,x0:60,x1:300,sp:-70,ph:1}]},
+ {par:4,poly:[[50,60],[310,60],[310,500],[50,500]],tee:[180,460],cup:[180,100],water:[R(50,360,70,50)],sand:[R(200,300,110,70)],mills:[{x:180,y:190,len:56,sp:-2.1}],walls:[R(120,410,120,16)]}
+];
+const NAME=['','ایگل','بردی','پار','بوگی','دبل بوگی'];
+let hi=0,ball,vel,strokes,total=[],state='aim',aim=null,tm=0,last=0,sink=null,lastPos,msg='',msgT=0,segs,over=false;
+let best=0;try{best=+localStorage.getItem('sl-minigolf-best')||0}catch(e){}
+function rectPoly(r){const[a,b,w,h]=r;return[[a,b],[a+w,b],[a+w,b+h],[a,b+h]]}
+function loadHole(i){
+  hi=i;const h=HOLES[i];ball={x:h.tee[0],y:h.tee[1]};vel={x:0,y:0};strokes=0;state='aim';sink=null;lastPos={...ball};aim=null;tm=0;
+  segs=[];const addPoly=p=>p.forEach((q,k)=>{const n=p[(k+1)%p.length];segs.push([q[0],q[1],n[0],n[1]])});
+  addPoly(h.poly);(h.walls||[]).forEach(r=>addPoly(rectPoly(r)));
+}
+function allSegs(){
+  const h=HOLES[hi],out=segs.slice();
+  (h.mills||[]).forEach(m=>{const a=tm*m.sp;for(const k of[0,1]){const s=k?Math.PI/2:0;const dx=Math.cos(a+s)*m.len,dy=Math.sin(a+s)*m.len;out.push([m.x-dx,m.y-dy,m.x+dx,m.y+dy])}});
+  (h.sliders||[]).forEach(s=>{const r=sliderRect(s);const p=rectPoly(r);p.forEach((q,k)=>{const n=p[(k+1)%4];out.push([q[0],q[1],n[0],n[1]])})});
+  return out;
+}
+function sliderRect(s){const span=s.x1-s.x0-s.w,per=Math.abs(span/s.sp)*2;let u=((tm+s.ph*per/2)%per)/per;u=u<.5?u*2:2-u*2;return[s.x0+u*span,s.y,s.w,s.h]}
+function inRect(r,px,py){return px>=r[0]&&px<=r[0]+r[2]&&py>=r[1]&&py<=r[1]+r[3]}
+function closest(s,px,py){const dx=s[2]-s[0],dy=s[3]-s[1],l2=dx*dx+dy*dy;let t=l2?((px-s[0])*dx+(py-s[1])*dy)/l2:0;t=Math.max(0,Math.min(1,t));return[s[0]+t*dx,s[1]+t*dy]}
+function step(dt){
+  const h=HOLES[hi];
+  const sub=5,d=dt/sub;
+  for(let k=0;k<sub;k++){
+    let fr=1.1;if((h.sand||[]).some(r=>inRect(r,ball.x,ball.y)))fr=5.5;
+    const f=Math.exp(-fr*d);vel.x*=f;vel.y*=f;
+    ball.x+=vel.x*d;ball.y+=vel.y*d;
+    const sg=allSegs();
+    for(const s of sg){
+      const[cx,cy]=closest(s,ball.x,ball.y);let dx=ball.x-cx,dy=ball.y-cy,dd=Math.hypot(dx,dy);
+      if(dd<BR){
+        if(dd<1e-6){dx=0;dy=-1;dd=1}
+        const nx=dx/dd,ny=dy/dd;ball.x=cx+nx*BR;ball.y=cy+ny*BR;
+        const vn=vel.x*nx+vel.y*ny;
+        if(vn<0){vel.x-=1.85*vn*nx;vel.y-=1.85*vn*ny;if(-vn>60)beep(180+Math.random()*60,.04,'square',.04)}
+      }
+    }
+    // حرکت بلوک‌ها ممکن است توپ را داخل خود بگیرد
+    (h.sliders||[]).forEach(s=>{const r=sliderRect(s);if(inRect([r[0]+2,r[1]+2,r[2]-4,r[3]-4],ball.x,ball.y)){ball.y+=ball.y<r[1]+r[3]/2?-3:3}});
+    // آب
+    if((h.water||[]).some(r=>inRect(r,ball.x,ball.y))){
+      beep(200,.3,'sine',.12);strokes++;ball={...lastPos};vel={x:0,y:0};state='aim';flash('توی آب افتاد! +۱ ضربه');return;
+    }
+    // سوراخ
+    const dc=Math.hypot(ball.x-h.cup[0],ball.y-h.cup[1]),sp=Math.hypot(vel.x,vel.y);
+    if(dc<CUP+2&&sp<380){state='sink';sink={t:0,x:ball.x,y:ball.y};vel={x:0,y:0};beep(520,.12);setTimeout(()=>beep(780,.2),120);return}
+    if(dc<26&&sp<260){const g=40*d/Math.max(dc,6);vel.x+=(h.cup[0]-ball.x)*g;vel.y+=(h.cup[1]-ball.y)*g}
+  }
+  if(Math.hypot(vel.x,vel.y)<9){vel={x:0,y:0};state='aim'}
+}
+function flash(t){msg=t;msgT=2}
+function shoot(dx,dy){
+  const L=Math.min(140,Math.hypot(dx,dy));if(L<8){return}
+  const sp=L/140*820,a=Math.atan2(dy,dx);vel={x:Math.cos(a)*sp,y:Math.sin(a)*sp};
+  lastPos={x:ball.x,y:ball.y};strokes++;state='roll';beep(260+L,.08,'square',.07);
+}
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();if(state!=='aim'||over)return;const[px,py]=pos(e);aim={sx:px,sy:py,x:px,y:py};try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+cv.addEventListener('pointermove',e=>{if(aim){[aim.x,aim.y]=pos(e)}});
+cv.addEventListener('pointerup',e=>{if(!aim)return;const a=aim;aim=null;if(state==='aim')shoot(a.sx-a.x,a.sy-a.y)});
+cv.addEventListener('pointercancel',()=>{aim=null});
+function holeDone(){
+  const par=HOLES[hi].par,st=strokes;total[hi]=st;
+  const diff=st===1?-3:Math.max(-2,Math.min(2,st-par));
+  const nm=st===1?'هول این وان! 🎉':NAME[diff+3]||'+'+diff;
+  if(hi<HOLES.length-1){showOv('حفره '+fa(hi+1),(nm+' — '+fa(st)+' ضربه (پار '+fa(par)+')'),'','حفره‌ی بعد',()=>{hideOv();loadHole(hi+1)})}
+  else{
+    const tot=total.reduce((a,b)=>a+b,0),pp=HOLES.reduce((a,h)=>a+h.par,0);
+    if(!best||tot<best){best=tot;try{localStorage.setItem('sl-minigolf-best',best)}catch(e){}}
+    let t='<table><tr><th>حفره</th><th>پار</th><th>ضربه</th></tr>'+HOLES.map((h,i)=>`<tr><td>${fa(i+1)}</td><td>${fa(h.par)}</td><td>${fa(total[i])}</td></tr>`).join('')+`<tr><th>جمع</th><th>${fa(pp)}</th><th>${fa(tot)}</th></tr></table>`;
+    showOv('پایان بازی!','بهترین مجموع: '+fa(best),t,'دوباره',()=>{hideOv();total=[];loadHole(0)});
+  }
+}
+function showOv(h,p,t,b,fn){over=true;$('oh').textContent=h;$('op').textContent=p;$('ot').innerHTML=t;$('ob').textContent=b;$('ob').onclick=()=>{over=false;fn()};$('ov').style.display='flex'}
+function hideOv(){$('ov').style.display='none'}
+/* رسم */
+function poly(p){x.beginPath();p.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));x.closePath()}
+function draw(){
+  const h=HOLES[hi];
+  x.fillStyle='#2f6b2c';x.fillRect(0,0,W,H);
+  for(let y=0;y<H;y+=28){x.fillStyle=(y/28)%2?'rgba(0,0,0,.05)':'rgba(255,255,255,.04)';x.fillRect(0,y,W,28)}
+  // زمین
+  poly(h.poly);x.fillStyle='#7bc96f';x.fill();
+  x.save();poly(h.poly);x.clip();
+  for(let y=0;y<H;y+=24){x.fillStyle=(y/24)%2?'rgba(255,255,255,.06)':'rgba(0,0,0,.03)';x.fillRect(0,y,W,24)}
+  (h.sand||[]).forEach(r=>{x.fillStyle='#e6cf96';x.fillRect(...r);x.fillStyle='rgba(160,120,50,.25)';for(let i=0;i<22;i++){x.fillRect(r[0]+((i*37)%r[2]),r[1]+((i*53)%r[3]),2,2)}});
+  (h.water||[]).forEach(r=>{x.fillStyle='#3d8fe0';x.fillRect(...r);x.strokeStyle='rgba(255,255,255,.5)';x.lineWidth=1.5;for(let yy=r[1]+10;yy<r[1]+r[3];yy+=14){x.beginPath();for(let xx=r[0];xx<=r[0]+r[2];xx+=6)x.lineTo(xx,yy+Math.sin(xx*.2+tm*3)*2);x.stroke()}});
+  x.restore();
+  // دیوارها
+  x.lineJoin='round';x.lineCap='round';x.strokeStyle='#6d4524';x.lineWidth=7;poly(h.poly);x.stroke();
+  x.strokeStyle='#a9733d';x.lineWidth=3;poly(h.poly);x.stroke();
+  (h.walls||[]).forEach(r=>{x.fillStyle='#8a5a2c';x.fillRect(...r);x.strokeStyle='#5a3718';x.lineWidth=2;x.strokeRect(...r)});
+  (h.sliders||[]).forEach(s=>{const r=sliderRect(s);x.fillStyle='#c2412d';x.fillRect(...r);x.strokeStyle='#7a1f12';x.lineWidth=2;x.strokeRect(...r)});
+  (h.mills||[]).forEach(m=>{const a=tm*m.sp;x.strokeStyle='#d9d3c4';x.lineWidth=8;for(const k of[0,1]){const s=k?Math.PI/2:0,dx=Math.cos(a+s)*m.len,dy=Math.sin(a+s)*m.len;x.beginPath();x.moveTo(m.x-dx,m.y-dy);x.lineTo(m.x+dx,m.y+dy);x.stroke()}x.fillStyle='#8a5a2c';x.beginPath();x.arc(m.x,m.y,9,0,7);x.fill()});
+  // سوراخ + پرچم
+  x.fillStyle='#111';x.beginPath();x.arc(h.cup[0],h.cup[1],CUP,0,7);x.fill();
+  x.strokeStyle='#eee';x.lineWidth=2;x.beginPath();x.moveTo(h.cup[0],h.cup[1]);x.lineTo(h.cup[0],h.cup[1]-34);x.stroke();
+  x.fillStyle='#e53935';x.beginPath();x.moveTo(h.cup[0],h.cup[1]-34);x.lineTo(h.cup[0]+18,h.cup[1]-28);x.lineTo(h.cup[0],h.cup[1]-22);x.fill();
+  // توپ
+  if(state!=='sink'){
+    x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.ellipse(ball.x+2,ball.y+3,BR,BR*.8,0,0,7);x.fill();
+    x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,BR,0,7);x.fill();x.strokeStyle='#bbb';x.lineWidth=1;x.stroke();
+  }else if(sink){const k=Math.max(0,1-sink.t*3);x.fillStyle='#fff';x.beginPath();x.arc(h.cup[0],h.cup[1],BR*k,0,7);x.fill()}
+  // نشانه‌گیری
+  if(aim&&state==='aim'){
+    const dx=aim.sx-aim.x,dy=aim.sy-aim.y,L=Math.min(140,Math.hypot(dx,dy));
+    if(L>8){const a=Math.atan2(dy,dx);
+      x.strokeStyle='rgba(255,255,255,.85)';x.lineWidth=3;x.setLineDash([2,8]);x.beginPath();x.moveTo(ball.x,ball.y);x.lineTo(ball.x+Math.cos(a)*L*1.3,ball.y+Math.sin(a)*L*1.3);x.stroke();x.setLineDash([]);
+      x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=5;x.beginPath();x.moveTo(ball.x,ball.y);x.lineTo(ball.x-Math.cos(a)*L*.5,ball.y-Math.sin(a)*L*.5);x.stroke();
+      x.strokeStyle=`hsl(${120-L/140*120},85%,50%)`;x.lineWidth=3;x.beginPath();x.moveTo(ball.x,ball.y);x.lineTo(ball.x-Math.cos(a)*L*.5,ball.y-Math.sin(a)*L*.5);x.stroke();
+    }
+  }
+  // نوار بالا
+  x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 14px Tahoma,sans-serif';x.textBaseline='middle';
+  x.textAlign='right';x.fillText('حفره '+fa(hi+1)+' / '+fa(HOLES.length),W-10,17);
+  x.textAlign='center';x.fillText('پار '+fa(h.par),W/2,17);
+  x.textAlign='left';x.fillText('ضربه: '+fa(strokes),10,17);
+  if(msgT>0){x.globalAlpha=Math.min(1,msgT);x.fillStyle='rgba(0,0,0,.6)';x.fillRect(40,H/2-20,W-80,40);x.fillStyle='#fff';x.textAlign='center';x.fillText(msg,W/2,H/2);x.globalAlpha=1}
+}
+function loop(t){
+  const dt=Math.min(.033,(t-last)/1000||0);last=t;tm+=dt;msgT=Math.max(0,msgT-dt);
+  if(state==='roll')step(dt);
+  else if(state==='aim'&&HOLES[hi].sliders){/* بلوک‌ها حرکت می‌کنند */}
+  if(state==='sink'){sink.t+=dt;if(sink.t>.5){state='done';holeDone()}}
+  if(state==='roll'&&strokes>=9){flash('حداکثر ضربه!');state='sink';sink={t:0}}
+  draw();requestAnimationFrame(loop);
+}
+if(!x.setLineDash)x.setLineDash=()=>{};
+loadHole(0);requestAnimationFrame(loop);
+window.__mg={HOLES,loadHole,step,shoot,get ball(){return ball},get state(){return state},get vel(){return vel}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

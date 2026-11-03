@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Obby Run — مسیر مانع‌دار و پرش، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Obby Run</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0f1630;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.pad{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:12px;z-index:20}
+.pad button{width:74px;height:74px;border-radius:18px;border:2px solid rgba(255,255,255,.65);background:rgba(0,0,0,.4);color:#fff;font-size:30px;touch-action:none;cursor:pointer}
+.pad button:active,.pad button.dn{background:rgba(255,255,255,.35)}
+#pl{left:12px}#pr{right:12px}
+.ov{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(8,12,30,.82);color:#fff;text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.7rem}.ov p{margin:0;line-height:1.9}
+.ov button{font:inherit;border:0;border-radius:12px;padding:12px 28px;background:#ffb300;color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="pad" id="pl"><button id="bl" aria-label="چپ">◀</button><button id="br" aria-label="راست">▶</button></div>
+<div class="pad" id="pr"><button id="bj" aria-label="پرش">⬆</button></div>
+<div class="ov" id="ov"><h2 id="oh"></h2><p id="op"></p><button id="ob"></button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const STAGES=6,GRAV=1900,JUMP=690,SPEED=245,KILLY=640;
+const THEMES=[['#26c6da','#00838f'],['#ab47bc','#6a1b9a'],['#ffa726','#e65100'],['#66bb6a','#2e7d32'],['#ef5350','#b71c1c'],['#ffee58','#f9a825']];
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+/* تولید مرحله: فاصله‌ها همیشه با پرش قابل عبورند */
+function gen(stage){
+  const R=rng(stage*7919+13),rnd=(a,b)=>a+R()*(b-a);
+  const P=[],cps=[];let xx=0,y=320;
+  P.push({x:-80,y,w:320,h:24,t:'s'});xx=240;cps.push({x:60,y:y});
+  const n=16+stage*3;let sinceCP=0,prevMv=false,prevV=false;
+  for(let k=0;k<n;k++){
+    const maxGap=Math.min(112,84+stage*6);let gap=rnd(58,maxGap);
+    const y0=y;y=Math.max(180,Math.min(430,y+rnd(-60,50)));
+    gap=Math.min(gap,maxGap-Math.max(0,y0-y)*.9);
+    const r=R(),mv=!prevMv&&stage>=1&&r<.2+stage*.02,va=!mv&&!prevMv&&!prevV&&stage>=2&&r>.82;prevMv=mv;prevV=va;
+    sinceCP++;
+    if(mv){
+      gap=Math.max(40,gap-10);const A=rnd(60,110),w=84,L=xx+gap;
+      P.push({x:L,y,w,h:24,t:'m',ox:L,amp:A,sp:rnd(.7,1.15),ph:rnd(0,6.28)});xx=L+A+w;
+    }else if(va){
+      const w=rnd(90,130);P.push({x:xx+gap,y,w,h:24,t:'v',gone:0,touch:0});xx=xx+gap+w;
+    }else{
+      const w=Math.max(66,rnd(80,160)-stage*6);
+      if(sinceCP>=7){P.push({x:xx+gap,y,w:170,h:24,t:'s',cp:true});cps.push({x:xx+gap+60,y});xx=xx+gap+170;sinceCP=0}
+      else{P.push({x:xx+gap,y,w,h:24,t:'s'});xx=xx+gap+w}
+    }
+  }
+  const gap=rnd(70,110);P.push({x:xx+gap,y,w:240,h:24,t:'f'});
+  return{P,cps,endX:xx+gap+240};
+}
+let stage=0,L,player,cam=0,deaths=0,time=0,cp,over=false,paused=true,msg='',msgT=0,tm=0,best=0,fin=0,stageTime=0,coyote=0,buf=0,trail=[];
+try{best=+localStorage.getItem('sl-obby-best')||0}catch(e){}
+function load(s){
+  stage=s;L=gen(s);cp=L.cps[0];player={x:cp.x,y:cp.y-44,w:22,h:40,vx:0,vy:0,on:null,face:1,anim:0};cam=player.x-140;fin=0;stageTime=0;
+}
+function respawn(){beep(150,.25,'sawtooth',.08);deaths++;player.x=cp.x;player.y=cp.y-44;player.vx=player.vy=0;player.on=null;L.P.forEach(p=>{if(p.t==='v'){p.gone=0;p.touch=0}})}
+const keys={},btn={l:false,r:false,j:false};
+function updPlat(dt){
+  L.P.forEach(p=>{
+    p.dx=0;
+    if(p.t==='m'){const nx=p.ox+(Math.sin(tm*p.sp*2+p.ph)*.5+.5)*p.amp;p.dx=nx-p.x;p.x=nx}
+    if(p.t==='v'){if(p.gone>0){p.gone-=dt;if(p.gone<=0){p.touch=0;p.gone=0}}else if(p.touch>0){p.touch+=dt;if(p.touch>.7){p.gone=2.2;p.touch=0}}}
+  });
+}
+const solid=p=>!(p.t==='v'&&p.gone>0);
+function step(dt){
+  tm+=dt;updPlat(dt);if(over)return;
+  stageTime+=dt;time+=dt;
+  const p=player,l=btn.l||keys.ArrowLeft||keys.a,r=btn.r||keys.ArrowRight||keys.d,j=btn.j||keys.ArrowUp||keys.w||keys[' '];
+  let dir=(r?1:0)-(l?1:0);
+  p.vx+=(dir*SPEED-p.vx)*Math.min(1,(p.on?16:9)*dt);if(dir)p.face=dir;
+  if(p.on)p.x+=p.on.dx||0;
+  // پرش با بافر و کایوتی
+  coyote=p.on?.1:Math.max(0,coyote-dt);
+  if(j&&!jHeld){buf=.12}jHeld=!!j;buf=Math.max(0,buf-dt);
+  if(buf>0&&(p.on||coyote>0)){p.vy=-JUMP;p.on=null;coyote=0;buf=0;beep(520,.08,'triangle',.06)}
+  if(!j&&p.vy<-260)p.vy+=GRAV*dt*.9; // پرش کوتاه‌تر با رها کردن
+  p.vy=Math.min(900,p.vy+GRAV*dt);
+  // افقی
+  p.x+=p.vx*dt;
+  for(const q of L.P){if(!solid(q))continue;
+    if(p.x+p.w>q.x&&p.x<q.x+q.w&&p.y+p.h>q.y+4&&p.y<q.y+q.h){
+      if(p.vx>0)p.x=q.x-p.w;else if(p.vx<0)p.x=q.x+q.w;else p.x=p.x+p.w/2<q.x+q.w/2?q.x-p.w:q.x+q.w;p.vx=0}}
+  // عمودی
+  const oldBottom=p.y+p.h;p.y+=p.vy*dt;p.on=null;
+  for(const q of L.P){if(!solid(q))continue;
+    if(p.x+p.w>q.x+1&&p.x<q.x+q.w-1&&p.y+p.h>q.y&&p.y<q.y+q.h){
+      if(p.vy>=0&&oldBottom<=q.y+10+Math.abs(q.dx||0)){p.y=q.y-p.h;p.vy=0;p.on=q;if(q.t==='v'&&q.touch===0)q.touch=.001}
+      else if(p.vy<0){p.y=q.y+q.h;p.vy=0}}}
+  p.anim+=Math.abs(p.vx)*dt*.05;
+  if(Math.random()<.5&&Math.abs(p.vx)>100&&p.on)trail.push({x:p.x+p.w/2,y:p.y+p.h,l:.3});
+  // چک‌پوینت
+  L.cps.forEach(c=>{if(c!==cp&&p.x>c.x-20&&Math.abs(p.y-(c.y-44))<80&&c.x>cp.x){cp=c;say('ذخیره شد ✓');beep(740,.12,'triangle',.07)}});
+  if(p.y>KILLY)respawn();
+  // پایان مرحله
+  const f=L.P[L.P.length-1];
+  if(!fin&&p.on===f){fin=1;beep(660,.14);setTimeout(()=>beep(990,.2),140);
+    if(stage+1>=STAGES)setTimeout(win,700);else{say('مرحله‌ی '+fa(stage+1)+' تمام شد!');setTimeout(()=>load(stage+1),1100)}}
+  trail.forEach(t=>t.l-=dt);trail=trail.filter(t=>t.l>0);
+  cam+=((p.x-innerWidth/scl()*.3)-cam)*Math.min(1,6*dt);
+  msgT=Math.max(0,msgT-dt);
+}
+let jHeld=false;
+function say(t){msg=t;msgT=1.6}
+function win(){
+  over=true;const t=time;let nb='';
+  if(!best||t<best){best=t;nb=' — رکورد جدید!';try{localStorage.setItem('sl-obby-best',t)}catch(e){}}
+  show('🏆 تمام شد!','زمان: '+fa(t.toFixed(1))+' ثانیه · مرگ: '+fa(deaths)+nb+'<br>بهترین زمان: '+fa(best.toFixed(1)),'دوباره',()=>{hide();start()});
+}
+function show(h,p,b,fn){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent=b;$('ob').onclick=fn;$('ov').style.display='flex'}
+function hide(){$('ov').style.display='none'}
+function start(){over=false;deaths=0;time=0;load(0);paused=false}
+/* رسم */
+function rr(a,b,w,h,r){x.beginPath();x.roundRect?x.roundRect(a,b,w,h,r):x.rect(a,b,w,h);x.fill()}
+function draw(){
+  const W=innerWidth,H=innerHeight,sc=scl(),th=THEMES[stage%THEMES.length];
+  x.setTransform(1,0,0,1,0,0);
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0f1630');g.addColorStop(1,'#2b1f55');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // ستاره‌ها
+  x.fillStyle='rgba(255,255,255,.7)';for(let i=0;i<50;i++){const sx=((i*173)%1000)/1000*W-(cam*.1*sc)%W,sy=((i*71)%600)/600*H*.7;x.fillRect(((sx%W)+W)%W,sy,2,2)}
+  // خطوط شهر دور
+  x.fillStyle='rgba(120,100,200,.18)';for(let i=0;i<12;i++){const bx=((i*210-cam*.3*sc)%(W+240)+(W+240))%(W+240)-120,bh=80+(i*37)%120;x.fillRect(bx,H-bh-40,90,bh+40)}
+  // گدازه
+  x.setTransform(sc,0,0,sc,-cam*sc,0);
+  const vis0=cam,vis1=cam+W/sc;
+  // سکوها
+  L.P.forEach(p=>{
+    if(p.x+p.w<vis0-50||p.x>vis1+50)return;
+    if(p.t==='v'&&p.gone>0){x.globalAlpha=.15}
+    const shake=p.t==='v'&&p.touch>0?Math.sin(tm*60)*2:0;
+    let c1=th[0],c2=th[1];if(p.t==='m'){c1='#ffd54f';c2='#f57f17'}else if(p.t==='v'){c1='#ef9a9a';c2='#c62828'}else if(p.t==='f'){c1='#fff59d';c2='#fbc02d'}else if(p.cp){c1='#a5d6a7';c2='#2e7d32'}
+    x.fillStyle=c2;rr(p.x+shake,p.y+5,p.w,p.h,5);x.fillStyle=c1;rr(p.x+shake,p.y,p.w,p.h-4,5);
+    x.fillStyle='rgba(255,255,255,.35)';x.fillRect(p.x+shake+4,p.y+3,p.w-8,3);
+    if(p.cp||p.t==='f'){const fx=p.x+p.w-26;x.fillStyle='#eee';x.fillRect(fx,p.y-54,3,54);x.fillStyle=p.t==='f'?'#ffd600':(cp&&cp.x>p.x&&cp.x<p.x+p.w?'#43a047':'#e53935');x.beginPath();x.moveTo(fx+3,p.y-54);x.lineTo(fx+30,p.y-44);x.lineTo(fx+3,p.y-34);x.fill()}
+    x.globalAlpha=1;
+  });
+  trail.forEach(t=>{x.fillStyle='rgba(255,255,255,'+t.l+')';x.fillRect(t.x-2,t.y-3,4,4)});
+  drawPlayer();
+  // گدازه پایین
+  x.setTransform(1,0,0,1,0,0);
+  const lh=60*sc;const lg=x.createLinearGradient(0,H-lh,0,H);lg.addColorStop(0,'rgba(255,120,0,0)');lg.addColorStop(1,'rgba(255,60,0,.85)');x.fillStyle=lg;x.fillRect(0,H-lh,W,lh);
+  // HUD
+  x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 14px Tahoma,sans-serif';x.textBaseline='middle';
+  x.textAlign='right';x.fillText('مرحله '+fa(stage+1)+' / '+fa(STAGES),W-10,17);
+  x.textAlign='center';x.fillText(fa(time.toFixed(1))+' ث',W/2+30,17);
+  x.textAlign='left';x.fillText('💀 '+fa(deaths),W>420?110:96,17);
+  // نوار پیشرفت
+  const pr=Math.max(0,Math.min(1,player.x/L.endX));x.fillStyle='rgba(255,255,255,.2)';x.fillRect(0,34,W,3);x.fillStyle=THEMES[stage%THEMES.length][0];x.fillRect(0,34,W*pr,3);
+  if(msgT>0){x.globalAlpha=Math.min(1,msgT);x.textAlign='center';x.font='bold 22px Tahoma,sans-serif';x.fillStyle='#fff';x.fillText(msg,W/2,H*.3);x.globalAlpha=1}
+}
+function scl(){return Math.max(.6,Math.min(1.4,innerHeight/520))}
+function drawPlayer(){
+  const p=player,cx=p.x+p.w/2,by=p.y+p.h,sw=Math.sin(p.anim*3)*(p.on?6:3);
+  x.save();x.translate(cx,by);x.scale(p.face,1);
+  const air=!p.on;
+  x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.ellipse(0,0,10,3,0,0,7);x.fill();
+  x.fillStyle='#283593';rr(-8,-14,6,14+(air?-3:Math.max(0,sw)),2);rr(2,-14,6,14+(air?0:Math.max(0,-sw)),2);
+  x.fillStyle='#e8453c';rr(-9,-30,18,17,3);
+  x.fillStyle='#f6c28b';rr(-13,-29+(air?-6:0),5,13,2);rr(8,-29+(air?-8:0),5,13,2);
+  x.fillStyle='#f6c28b';rr(-8,-44,16,15,4);
+  x.fillStyle='#222';x.fillRect(1,-39,2,4);x.fillRect(5,-39,2,4);
+  x.fillStyle='#222';x.fillRect(2,-33,5,1.5);
+  x.restore();
+}
+/* ورودی */
+function hold(id,k){const b=$(id);const on=e=>{e.preventDefault();btn[k]=true;b.classList.add('dn');try{b.setPointerCapture(e.pointerId)}catch(_){}};const off=()=>{btn[k]=false;b.classList.remove('dn')};b.addEventListener('pointerdown',on);['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,off))}
+hold('bl','l');hold('br','r');hold('bj','j');
+addEventListener('keydown',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=true;if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault()});
+addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
+let last=0;
+function resize(){cv.width=innerWidth;cv.height=innerHeight}
+function loop(t){
+  const dt=Math.min(.033,(t-last)/1000||0);last=t;
+  if(!paused)step(dt);draw();requestAnimationFrame(loop);
+}
+addEventListener('resize',resize);resize();
+if(!x.setTransform)x.setTransform=()=>{};
+load(0);
+show('🏃 Obby Run','مسیر پر از مانع را تا پرچم زرد بپر!<br>پلتفرم‌های قرمز بعد از ایستادن می‌افتند · خانه‌ی سبز = ذخیره<br>افتادن در گدازه = برگشت به آخرین ذخیره','شروع',()=>{hide();start()});
+requestAnimationFrame(loop);
+window.__ob={gen,STAGES,step,load,get player(){return player},get L(){return L},keys,btn,get stage(){return stage},get over(){return over},start,JUMP,GRAV,SPEED,get fin(){return fin},set paused(v){paused=v}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

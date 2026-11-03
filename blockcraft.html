@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Block Craft — ساخت‌وساز بلوکی سه‌بعدی، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Block Craft</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#79b8f0;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#cross{position:fixed;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;pointer-events:none;opacity:.85}
+#cross:before,#cross:after{content:"";position:absolute;background:#fff;mix-blend-mode:difference}
+#cross:before{left:9px;top:2px;width:2px;height:16px}#cross:after{top:9px;left:2px;height:2px;width:16px}
+#jb{position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.5);display:none;pointer-events:none}
+#jk{position:absolute;left:35px;top:35px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.55)}
+.btns{position:fixed;right:10px;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);display:grid;grid-template-columns:repeat(2,58px);gap:8px;z-index:20}
+.btns button{width:58px;height:58px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(0,0,0,.4);color:#fff;font-size:22px;touch-action:none;cursor:pointer}
+.btns button.on{background:rgba(255,200,0,.6)}
+#hot{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 8px);display:flex;gap:4px;z-index:20;background:rgba(0,0,0,.35);padding:4px;border-radius:8px}
+#hot div{width:36px;height:36px;border:3px solid rgba(255,255,255,.35);border-radius:4px;cursor:pointer}
+#hot div.sel{border-color:#fff;box-shadow:0 0 0 2px #000}
+#top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;z-index:20;display:flex;gap:6px}
+#top button{background:rgba(0,0,0,.45);color:#fff;border:0;border-radius:14px;padding:6px 10px;font:12px Tahoma,sans-serif;cursor:pointer}
+#hint{position:fixed;left:50%;top:60px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:12px;font-size:13px;text-align:center;line-height:1.8;max-width:90vw;z-index:20;pointer-events:none;transition:opacity .6s}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div id="cross"></div><div id="jb"><div id="jk"></div></div>
+<div id="top"><button id="rst">🌍 دنیای جدید</button></div>
+<div class="btns"><button id="bBreak" aria-label="شکستن">⛏</button><button id="bPlace" aria-label="گذاشتن">🧱</button><button id="bJump" aria-label="پرش">⬆</button><button id="bFly" aria-label="پرواز">✈</button><button id="bDown" aria-label="پایین" style="visibility:hidden">⬇</button></div>
+<div id="hot"></div>
+<div id="hint">با انگشت چپ حرکت کن، با انگشت راست دور و بر را ببین<br>⛏ می‌شکند · 🧱 می‌گذارد · ✈ پرواز<br><small>رایانه: WASD، ماوس، کلیک چپ/راست، Space، F</small></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const SX=48,SY=24,SZ=48,TH=Math.tan(35*Math.PI/180);
+const world=new Uint8Array(SX*SY*SZ);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+let au;function beep(f,d=.05,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+/* بلوک‌ها: 1 چمن 2 خاک 3 سنگ 4 چوب 5 برگ 6 تخته 7 آجر 8 شن */
+const BASE=[null,[96,168,58],[139,92,52],[132,132,134],[110,76,40],[56,140,46],[190,142,76],[170,72,60],[226,210,140]];
+const HOT=[1,2,3,4,5,6,7,8];
+let sel=0;
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function genWorld(){
+  world.fill(0);const R=rng(1234);
+  const hmap=new Int16Array(SX*SZ);
+  for(let z=0;z<SZ;z++)for(let xx=0;xx<SX;xx++){
+    let h=9+3*Math.sin(xx*.19)+3*Math.cos(z*.16)+2*Math.sin((xx+z)*.1);
+    const ex=Math.min(xx,SX-1-xx,z,SZ-1-z);if(ex<6)h+=(6-ex)*1.3;
+    h=Math.max(2,Math.min(SY-8,Math.floor(h)));hmap[z*SX+xx]=h;
+    for(let y=0;y<h;y++)world[(y*SZ+z)*SX+xx]=y===h-1?(h<=6?8:1):y>=h-3?2:3;
+  }
+  for(let t=0;t<26;t++){
+    const tx=4+Math.floor(R()*(SX-8)),tz=4+Math.floor(R()*(SZ-8)),h=hmap[tz*SX+tx];
+    if(world[((h-1)*SZ+tz)*SX+tx]!==1)continue;
+    for(let y=h;y<h+4;y++)world[(y*SZ+tz)*SX+tx]=4;
+    for(let dy=2;dy<=5;dy++){const r=dy>=4?1:2;for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.abs(dx)+Math.abs(dz)>r+1)continue;const xx=tx+dx,zz=tz+dz,yy=h+dy;if(yy<SY&&!world[(yy*SZ+zz)*SX+xx])world[(yy*SZ+zz)*SX+xx]=5}}
+  }
+}
+let mods={};
+function loadMods(){try{const m=JSON.parse(localStorage.getItem('sl-blockcraft')||'{}');for(const k in m)world[+k]=m[k];mods=m}catch(e){mods={}}}
+let saveT=0;function saveMods(){clearTimeout(saveT);saveT=setTimeout(()=>{try{if(Object.keys(mods).length<8000)localStorage.setItem('sl-blockcraft',JSON.stringify(mods))}catch(e){}},500)}
+const idx=(a,b,c)=>(b*SZ+c)*SX+a;
+function get(a,b,c){if(a<0||a>=SX||c<0||c>=SZ||b<0)return 1;if(b>=SY)return 0;return world[idx(a,b,c)]}
+/* بازیکن */
+let px=SX/2+.5,py=20,pz=SZ/2+.5,vx=0,vy=0,vz=0,yaw=0,pitch=-.15,ground=false,fly=false;
+function spawn(){
+  let bx=SX>>1,bz=SZ>>1,bh=-1;
+  for(let z=SZ/2-9;z<=SZ/2+9;z++)for(let xx=SX/2-9;xx<=SX/2+9;xx++){let y=SY-1;while(y>0&&!world[idx(xx,y,z)])y--;const b=world[idx(xx,y,z)];if(b===4||b===5)continue;if(y+1>bh){bh=y+1;bx=xx;bz=z}}
+  px=bx+.5;pz=bz+.5;py=bh+.01;vx=vy=vz=0;
+}
+function boxHits(a,b,c){
+  for(let i=Math.floor(a-.3);i<=Math.floor(a+.3-1e-6);i++)for(let j=Math.floor(b);j<=Math.floor(b+1.8-1e-6);j++)for(let k=Math.floor(c-.3);k<=Math.floor(c+.3-1e-6);k++)if(get(i,j,k))return true;
+  return false;
+}
+function physics(dt){
+  let mx=0,mz=0;
+  const fx=Math.sin(yaw),fz=Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  let f=-joy.y+(keys.w?1:0)-(keys.s?1:0),s=joy.x+(keys.d?1:0)-(keys.a?1:0);
+  const L=Math.hypot(f,s);if(L>1){f/=L;s/=L}
+  const sp=fly?9:4.4;mx=(fx*f+rx*s)*sp;mz=(fz*f+rz*s)*sp;
+  vx+=(mx-vx)*Math.min(1,14*dt);vz+=(mz-vz)*Math.min(1,14*dt);
+  if(fly){vy+=((jumpHeld?7:0)-(downHeld?7:0)-vy)*Math.min(1,10*dt)}
+  else{vy=Math.max(-32,vy-28*dt);if(jumpHeld&&ground){vy=8.8;ground=false}}
+  // محور به محور
+  let n=px+vx*dt;if(!boxHits(n,py,pz))px=n;else vx=0;
+  n=pz+vz*dt;if(!boxHits(px,py,n))pz=n;else vz=0;
+  n=py+vy*dt;
+  if(!boxHits(px,n,pz)){py=n;ground=false}
+  else{if(vy<0){py=Math.floor(n)+1;ground=true}else{py=Math.floor(n+1.8)-1.8-1e-4}vy=0}
+  if(py<-10){spawn()}
+  if(py>SY-2){py=SY-2;vy=Math.min(vy,0)}
+}
+/* ردیابی پرتو */
+let H_x,H_y,H_z,H_f,H_t,H_s;
+function ray(ox,oy,oz,dx,dy,dz,maxT){
+  let a=Math.floor(ox),b=Math.floor(oy),c=Math.floor(oz);
+  const sx=dx>0?1:-1,sy=dy>0?1:-1,sz=dz>0?1:-1;
+  const tdx=dx!==0?Math.abs(1/dx):1e30,tdy=dy!==0?Math.abs(1/dy):1e30,tdz=dz!==0?Math.abs(1/dz):1e30;
+  let tmx=dx===0?1e30:dx>0?(a+1-ox)*tdx:(ox-a)*tdx,tmy=dy===0?1e30:dy>0?(b+1-oy)*tdy:(oy-b)*tdy,tmz=dz===0?1e30:dz>0?(c+1-oz)*tdz:(oz-c)*tdz;
+  for(let n=0;n<120;n++){
+    let f,t;
+    if(tmx<tmy&&tmx<tmz){a+=sx;t=tmx;tmx+=tdx;f=0}else if(tmy<tmz){b+=sy;t=tmy;tmy+=tdy;f=1}else{c+=sz;t=tmz;tmz+=tdz;f=2}
+    if(t>maxT)return 0;
+    if(a<0||a>=SX||c<0||c>=SZ||b<0||b>=SY)return 0;
+    const bl=world[(b*SZ+c)*SX+a];
+    if(bl){H_x=a;H_y=b;H_z=c;H_f=f;H_t=t;H_s=f===0?sx:f===1?sy:sz;return bl}
+  }
+  return 0;
+}
+function h3(a,b,c){let h=(Math.imul(a,374761393)+Math.imul(b,668265263)+Math.imul(c,1013904223))|0;h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)&255}
+let RW,RH,asp,img,buf;
+function fit(){asp=innerWidth/innerHeight;RH=Math.round(Math.sqrt(26000/asp));RW=Math.round(RH*asp);cv.width=RW;cv.height=RH;img=x.createImageData(RW,RH);buf=new Uint32Array(img.data.buffer)}
+let tcx=-1,tcy=-1,tcz=-1;
+function shade(bl,fa,hx,hy,hz,t){
+  // fa: 0 x,1 y,2 z ; بافت 8×8
+  let u,v;
+  if(fa===0){u=hz;v=hy}else if(fa===1){u=hx;v=hz}else{u=hx;v=hy}
+  u-=Math.floor(u);v-=Math.floor(v);
+  const tu=(u*8)|0,tv=(v*8)|0;
+  let c=BASE[bl],r=c[0],g=c[1],b=c[2];
+  const nz=h3(H_x*8+tu,H_y*8+tv,H_z*8+fa);let m=.92+(nz&15)/100;
+  const top=fa===1&&H_s<0;
+  if(bl===1){if(top){}else if(v>.75&&fa!==1){}else{r=139;g=92;b=52}}
+  else if(bl===3){m=.84+(nz&31)/100}
+  else if(bl===6){if(tv===0||tv===4)m*=.78}
+  else if(bl===7){const off=((tv>>2)&1)?4:0;if((tv&3)===3||((tu+off)&7)===0)m*=.72}
+  else if(bl===4){if(fa===1){const dxr=u-.5,dzr=v-.5,rr=Math.sqrt(dxr*dxr+dzr*dzr);m*=(((rr*10)|0)&1)?.9:1.05;r=170;g=130;b=76}else m*=(tu&1)?.85:1}
+  else if(bl===5){m=.7+(nz&63)/110}
+  const fsh=fa===1?(H_s<0?1:.55):fa===0?.82:.68;
+  m*=fsh;
+  let R=r*m,G=g*m,B=b*m;
+  if(H_x===tcx&&H_y===tcy&&H_z===tcz){R+=44;G+=44;B+=44}
+  const fog=t>28?Math.min(1,(t-28)/24):0;
+  if(fog>0){R+=(185-R)*fog;G+=(222-G)*fog;B+=(250-B)*fog}
+  return 0xFF000000|((B>255?255:B)<<16)|((G>255?255:G)<<8)|(R>255?255:R)|0;
+}
+function render(){
+  const cp=Math.cos(pitch),sp=Math.sin(pitch),fx=Math.sin(yaw)*cp,fy=sp,fz=Math.cos(yaw)*cp;
+  const rx=Math.cos(yaw),rz=-Math.sin(yaw),ux=-Math.sin(yaw)*sp,uy=cp,uz=-Math.cos(yaw)*sp;
+  const ox=px,oy=py+1.62,oz=pz;
+  // هدف
+  tcx=-1;if(ray(ox,oy,oz,fx,fy,fz,5.5)){tcx=H_x;tcy=H_y;tcz=H_z}
+  for(let j=0;j<RH;j++){
+    const b=(1-2*(j+.5)/RH)*TH,bx=fx+ux*b,by=fy+uy*b,bz=fz+uz*b;
+    const o=j*RW;
+    for(let i=0;i<RW;i++){
+      const a=(2*(i+.5)/RW-1)*TH*asp,dx=bx+rx*a,dz=bz+rz*a;
+      const bl=ray(ox,oy,oz,dx,by,dz,64);
+      if(bl){
+        const t=H_t;buf[o+i]=shade(bl,H_f,ox+dx*t,oy+by*t,oz+dz*t,t);
+      }else{
+        const k=Math.max(0,Math.min(1,by/Math.hypot(dx,by,dz)*1.6));
+        const R=185+(88-185)*k,G=222+(160-222)*k,B=250+(236-250)*k;
+        buf[o+i]=0xFF000000|(B<<16)|(G<<8)|R;
+      }
+    }
+  }
+  x.putImageData(img,0,0);
+}
+/* ورودی */
+const keys={},joy={x:0,y:0};let jumpHeld=false,downHeld=false,breakHeld=false,placeHeld=false,actT=0;
+let joyId=null,lookId=null,jx0=0,jy0=0,lx=0,ly=0;
+const jb=$('jb'),jk=$('jk');
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'){if(document.pointerLockElement!==cv)try{cv.requestPointerLock()}catch(_){}if(e.button===0)doBreak();else if(e.button===2)doPlace();return}
+  e.preventDefault();
+  if(e.clientX<innerWidth*.45&&joyId===null){joyId=e.pointerId;jx0=e.clientX;jy0=e.clientY;jb.style.display='block';jb.style.left=jx0+'px';jb.style.top=jy0+'px';jk.style.transform='translate(0,0)'}
+  else if(lookId===null){lookId=e.pointerId;lx=e.clientX;ly=e.clientY}
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}
+});
+cv.addEventListener('pointermove',e=>{
+  if(e.pointerType==='mouse')return;
+  if(e.pointerId===joyId){let dx=(e.clientX-jx0)/45,dy=(e.clientY-jy0)/45;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}joy.x=Math.abs(dx)<.12?0:dx;joy.y=Math.abs(dy)<.12?0:dy;jk.style.transform=`translate(${dx*35}px,${dy*35}px)`}
+  else if(e.pointerId===lookId){yaw+=(e.clientX-lx)*.0055;pitch=Math.max(-1.5,Math.min(1.5,pitch-(e.clientY-ly)*.0055));lx=e.clientX;ly=e.clientY}
+});
+function up(e){if(e.pointerId===joyId){joyId=null;joy.x=joy.y=0;jb.style.display='none'}if(e.pointerId===lookId)lookId=null}
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement===cv){yaw+=e.movementX*.0025;pitch=Math.max(-1.5,Math.min(1.5,pitch-e.movementY*.0025))}});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+  if(k==='w'||k==='a'||k==='s'||k==='d')keys[k]=true;
+  else if(k===' '){jumpHeld=true;e.preventDefault()}else if(k==='shift')downHeld=true;
+  else if(k==='f')toggleFly();else if(k>='1'&&k<='8')pick(+k-1);hideHint()});
+addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(keys[k]!==undefined||'wasd'.includes(k))keys[k]=false;if(k===' ')jumpHeld=false;if(k==='shift')downHeld=false});
+addEventListener('wheel',e=>{pick((sel+(e.deltaY>0?1:7))%8)},{passive:true});
+function holdBtn(id,on,off){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();try{b.setPointerCapture(e.pointerId)}catch(_){}on();hideHint()});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,off))}
+holdBtn('bBreak',()=>{breakHeld=true;doBreak();actT=.28},()=>breakHeld=false);
+holdBtn('bPlace',()=>{placeHeld=true;doPlace();actT=.28},()=>placeHeld=false);
+holdBtn('bJump',()=>jumpHeld=true,()=>jumpHeld=false);
+holdBtn('bDown',()=>downHeld=true,()=>downHeld=false);
+$('bFly').addEventListener('click',toggleFly);
+function toggleFly(){fly=!fly;$('bFly').classList.toggle('on',fly);$('bDown').style.visibility=fly?'visible':'hidden';vy=0}
+function hideHint(){$('hint').style.opacity=0}setTimeout(hideHint,9000);
+/* نوار بلوک‌ها */
+const hot=$('hot');
+HOT.forEach((b,i)=>{const d=document.createElement('div');const c=BASE[b];d.style.background=`rgb(${c[0]},${c[1]},${c[2]})`;d.onclick=()=>pick(i);d.setAttribute('role','button');d.setAttribute('aria-label','بلوک '+(i+1));hot.appendChild(d)});
+function pick(i){sel=i;[...hot.children].forEach((d,k)=>d.classList.toggle('sel',k===i))}
+/* شکستن / گذاشتن */
+function look(){const cp=Math.cos(pitch);return[Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp]}
+function setBlock(a,b,c,v){world[idx(a,b,c)]=v;mods[idx(a,b,c)]=v;saveMods()}
+function doBreak(){const[fx,fy,fz]=look();if(ray(px,py+1.62,pz,fx,fy,fz,5.5)){setBlock(H_x,H_y,H_z,0);beep(200,.06,'square',.06)}}
+function doPlace(){
+  const[fx,fy,fz]=look();if(!ray(px,py+1.62,pz,fx,fy,fz,5.5))return;
+  let a=H_x,b=H_y,c=H_z;if(H_f===0)a-=H_s;else if(H_f===1)b-=H_s;else c-=H_s;
+  if(a<0||a>=SX||b<0||b>=SY||c<0||c>=SZ||world[idx(a,b,c)])return;
+  // اگر داخل بازیکن می‌شود نگذار
+  if(a+1>px-.3&&a<px+.3&&c+1>pz-.3&&c<pz+.3&&b+1>py&&b<py+1.8)return;
+  setBlock(a,b,c,HOT[sel]);beep(330,.06,'triangle',.07);
+}
+$('rst').onclick=()=>{if(!confirm('دنیای جدید ساخته شود؟ تغییراتت پاک می‌شود.'))return;mods={};try{localStorage.removeItem('sl-blockcraft')}catch(e){}genWorld();spawn()};
+/* حلقه */
+let last=0;
+function loop(t){
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  if(actT>0&&(breakHeld||placeHeld)){actT-=dt;if(actT<=0){actT=.2;breakHeld?doBreak():doPlace()}}
+  physics(dt);render();requestAnimationFrame(loop);
+}
+addEventListener('resize',fit);
+genWorld();loadMods();spawn();fit();pick(0);requestAnimationFrame(loop);
+window.__bc={world,ray,get:get,physics,boxHits,spawn,genWorld,get pos(){return[px,py,pz]},set pos(v){[px,py,pz]=v},get H(){return[H_x,H_y,H_z,H_f,H_s]},SX,SY,SZ,render,fit,doBreak,doPlace,setYP(a,b){yaw=a;pitch=b},keys,joy};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

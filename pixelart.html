@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Pixel Art — رنگ‌آمیزی عددی و نقاشی پیکسلی، بازی آنلاین رایگان از مجموعه‌ی S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Pixel Art</title>
+<style>
+:root{--bg:#f3efe6;--ink:#2a2118;--card:#fff;--line:#d8cfbf;--btn:#e8742a;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1812;--ink:#f1e8d8;--card:#2b241b;--line:#4a3f30;--btn:#ff9650;--btnink:#2a1000}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;padding:8px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:6px 0;font-size:1.1rem}
+.tabs,.pics,.pal,.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:5px 0;max-width:420px}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer}
+button.on{background:var(--btn);color:var(--btnink);border-color:transparent}
+button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.pics button{padding:3px;line-height:0}
+.pics canvas{width:44px;height:44px;image-rendering:pixelated;border-radius:6px;background:#fff}
+canvas#c{width:min(94vw,420px);aspect-ratio:1;image-rendering:pixelated;border-radius:10px;touch-action:none;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.sw{width:46px;height:46px;border-radius:10px;border:3px solid transparent;font-weight:700;font-size:.95rem;position:relative;padding:0;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.sw.on{border-color:var(--ink);transform:scale(1.1)}
+.sw small{position:absolute;bottom:1px;left:3px;font-size:.6rem;font-weight:400}
+.sw.done{opacity:.35}
+.msg{min-height:1.5em;font-size:.9rem;text-align:center}
+.pr{width:min(94vw,420px);height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin:4px 0}
+.pr i{display:block;height:100%;width:0;background:var(--btn);transition:width .2s}
+.win{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50}
+.win div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🎨 Pixel Art</h1>
+<div class="tabs"><button id="tN" class="on">رنگ‌آمیزی عددی</button><button id="tF">نقاشی آزاد</button></div>
+<div class="pics" id="pics"></div>
+<div class="pr" id="prw"><i id="pri"></i></div>
+<canvas id="c" width="320" height="320"></canvas>
+<div class="msg" id="msg"></div>
+<div class="pal" id="pal"></div>
+<div class="bar"><button id="clr">🗑 پاک کردن</button><button id="sv">💾 ذخیره PNG</button></div>
+<div class="win" id="win"><div><div style="font-size:2rem">🎉</div><b>تمام شد!</b><div id="wn"></div><button class="on" id="nx">تصویر بعدی</button></div></div>
+<script>
+const PICS=[{"name": "قلب", "pal": ["#e53935", "#a31515", "#ffd6d6"], "g": [".11111111111111.", ".11111111111111.", ".11111111111111.", "1111311111111111", ".11331111111111.", ".11311111111111.", ".11111111111111.", "..111111111111..", "..111111111111..", "...1111111112...", "....11111112....", ".....111112.....", "......1112......", "................", "................", "................"]}, {"name": "لبخند", "pal": ["#ffd23f", "#f0a500", "#2a1f3d", "#ff8fa3"], "g": ["................", ".....222222.....", "...2222112222...", "..222111111222..", "..221111111122..", ".22113311133122.", ".22113311133122.", ".21113311133112.", ".21111111111112.", ".22431111113422.", ".22113111131122.", "..221133331122..", "..222111111222..", "...2222112222...", ".....222222.....", "................"]}, {"name": "قارچ", "pal": ["#e53935", "#ffffff", "#f1d9b0", "#c9a56a"], "g": ["................", "................", ".....111111.....", "....11111221....", "...1111112211...", "..112211111111..", ".11122111111111.", ".11111121112211.", ".11111111112211.", ".11111111111111.", ".11111111111111.", ".....433333.....", ".....433333.....", ".....433333.....", ".....433333.....", ".....444444....."]}, {"name": "گربه", "pal": ["#f2a65a", "#ffb3c1", "#7ed957", "#16210f", "#ff6b81", "#5b3a1e", "#c9782f"], "g": ["................", "................", "..1.....7....1..", "..111171771111..", "..122171171221..", "..122211112221..", "..121111111121..", "..111111111111..", "..111431114311..", "..111331113311..", "..111111111111..", "..661115511166..", "...1111661111...", "...1111111111...", ".....111111.....", "................"]}, {"name": "خانه", "pal": ["#c0392b", "#f6e2b3", "#7a4a21", "#5cc8ff", "#ffd23f", "#4caf50"], "g": ["................", "............55..", ".......11..5555.", "......1111.5555.", ".....111111.55..", "....11111111....", "...1111111111...", "..111111111111..", "..222222222222..", "..244422224442..", "..244433334442..", "..244433334442..", "..222233332222..", "..222233532222..", "..222233332222..", "6666666666666666"]}, {"name": "گل", "pal": ["#ff7eb6", "#ffd23f", "#3aa655", "#f29200"], "g": ["................", "......1111......", ".....111111.....", "....11111111....", "...1112222111...", "...1112442111...", "...1112442111...", "...1112222111...", "....11111111....", ".....113311..3..", "..3...1331.33...", "...33..333333...", "...333.33333....", "...333.33.3.....", "....3..33.......", ".......33......."]}];
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d'),N=16,CS=20;
+const FREE=['#000000','#ffffff','#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#ec407a','#795548','#9e9e9e','#00acc1','#ffcc80','#a5d6a7','#90caf9','#ce93d8'];
+let mode='num',pi=0,cur=1,painted,free,down=false,prog={};
+try{prog=JSON.parse(localStorage.getItem('sl-pixelart')||'{}')}catch(e){}
+free=Array.from({length:N},()=>Array(N).fill(null));try{const f=JSON.parse(localStorage.getItem('sl-pixelart-free')||'null');if(f&&f.length===N)free=f}catch(e){}
+const save=()=>{try{localStorage.setItem('sl-pixelart',JSON.stringify(prog));localStorage.setItem('sl-pixelart-free',JSON.stringify(free))}catch(e){}};
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+let au;function beep(f,d=.05,v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+function loadPic(i){pi=i;const p=PICS[i];if(!prog[i])prog[i]=[];painted=new Set(prog[i]);cur=1;build()}
+function total(){return PICS[pi].g.join('').replace(/\./g,'').length}
+function build(){
+  // انتخاب تصویر
+  $('pics').innerHTML='';
+  if(mode==='num')PICS.forEach((p,i)=>{const b=document.createElement('button');b.className=i===pi?'on':'';const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');p.g.forEach((r,yy)=>[...r].forEach((ch,xx)=>{if(ch!=='.'&&((prog[i]||[]).includes(yy*N+xx)||true)){g.fillStyle=(prog[i]||[]).includes(yy*N+xx)?p.pal[ch-1]:'#ddd';g.fillRect(xx,yy,1,1)}}));b.appendChild(c);b.title=p.name;b.onclick=()=>loadPic(i);$('pics').appendChild(b)});
+  // پالت
+  $('pal').innerHTML='';
+  if(mode==='num'){const p=PICS[pi],cnt={};p.g.forEach((r,yy)=>[...r].forEach((ch,xx)=>{if(ch!=='.'&&!painted.has(yy*N+xx))cnt[ch]=(cnt[ch]||0)+1}));
+    p.pal.forEach((c,k)=>{const b=document.createElement('button');b.className='sw'+(cur===k+1?' on':'')+(cnt[k+1]?'':' done');b.style.background=c;b.innerHTML=(k+1)+'<small>'+(cnt[k+1]||'✓')+'</small>';b.onclick=()=>{cur=k+1;build()};b.setAttribute('aria-label','رنگ '+(k+1));$('pal').appendChild(b)})}
+  else{FREE.forEach((c,k)=>{const b=document.createElement('button');b.className='sw'+(cur===k+1?' on':'');b.style.background=c;b.style.border='3px solid '+(cur===k+1?'var(--ink)':'rgba(0,0,0,.2)');b.onclick=()=>{cur=k+1;build()};b.setAttribute('aria-label','رنگ '+(k+1));$('pal').appendChild(b)});
+    const e=document.createElement('button');e.textContent='🧽';e.className='sw'+(cur===0?' on':'');e.style.background='#999';e.onclick=()=>{cur=0;build()};$('pal').appendChild(e)}
+  $('prw').style.display=mode==='num'?'':'none';upd();draw();
+}
+function upd(){if(mode==='num'){const t=total(),d=painted.size;$('pri').style.width=(d/t*100)+'%';$('msg').textContent=d>=t?'تمام شد!':'رنگ '+fa(cur)+' را انتخاب کن و روی خانه‌های هم‌شماره بکش · '+fa(Math.round(d/t*100))+'٪'}else $('msg').textContent='با انگشت بکش و نقاشی کن'}
+function draw(){
+  x.clearRect(0,0,320,320);x.fillStyle='#fff';x.fillRect(0,0,320,320);
+  x.font='bold 11px Tahoma,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  if(mode==='num'){const p=PICS[pi];
+    for(let yy=0;yy<N;yy++)for(let xx=0;xx<N;xx++){const ch=p.g[yy][xx];if(ch==='.')continue;const k=yy*N+xx;
+      if(painted.has(k)){x.fillStyle=p.pal[ch-1];x.fillRect(xx*CS,yy*CS,CS,CS)}
+      else{x.fillStyle=(+ch===cur)?'#fff6bf':'#efefef';x.fillRect(xx*CS,yy*CS,CS,CS);x.fillStyle=(+ch===cur)?'#8a6d00':'#9a9a9a';x.fillText(ch,xx*CS+CS/2,yy*CS+CS/2+1)}}
+  }else{for(let yy=0;yy<N;yy++)for(let xx=0;xx<N;xx++){const c=free[yy][xx];if(c){x.fillStyle=c;x.fillRect(xx*CS,yy*CS,CS,CS)}}}
+  x.strokeStyle='rgba(0,0,0,.12)';x.lineWidth=1;x.beginPath();for(let i=0;i<=N;i++){x.moveTo(i*CS+.5,0);x.lineTo(i*CS+.5,320);x.moveTo(0,i*CS+.5);x.lineTo(320,i*CS+.5)}x.stroke();
+}
+function cell(e){const r=cv.getBoundingClientRect(),xx=Math.floor((e.clientX-r.left)/r.width*N),yy=Math.floor((e.clientY-r.top)/r.height*N);return(xx>=0&&yy>=0&&xx<N&&yy<N)?[xx,yy]:null}
+let wrongT=0;
+function paint(e){
+  const c=cell(e);if(!c)return;const[xx,yy]=c,k=yy*N+xx;
+  if(mode==='num'){const p=PICS[pi],ch=p.g[yy][xx];if(ch==='.'||painted.has(k))return;
+    if(+ch===cur){painted.add(k);prog[pi]=[...painted];save();beep(500+cur*60);build();if(painted.size>=total())setTimeout(winPic,300)}
+    else if(Date.now()-wrongT>300){wrongT=Date.now();beep(150,.08);$('msg').textContent='این خانه شماره‌ی '+fa(ch)+' است'}}
+  else{free[yy][xx]=cur?FREE[cur-1]:null;save();draw()}
+}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();down=true;try{cv.setPointerCapture(e.pointerId)}catch(_){}paint(e)});
+cv.addEventListener('pointermove',e=>{if(down)paint(e)});
+['pointerup','pointercancel'].forEach(t=>cv.addEventListener(t,()=>down=false));
+function winPic(){beep(880,.2);$('wn').textContent='«'+PICS[pi].name+'» را کامل کردی';$('win').style.display='flex'}
+$('nx').onclick=()=>{$('win').style.display='none';loadPic((pi+1)%PICS.length)};
+$('tN').onclick=()=>{mode='num';cur=1;$('tN').className='on';$('tF').className='';loadPic(pi)};
+$('tF').onclick=()=>{mode='free';cur=1;$('tF').className='on';$('tN').className='';build()};
+$('clr').onclick=()=>{if(mode==='num'){if(!confirm('رنگ‌های این تصویر پاک شود؟'))return;prog[pi]=[];painted=new Set();save();build()}else{if(!confirm('بوم پاک شود؟'))return;free=Array.from({length:N},()=>Array(N).fill(null));save();draw()}};
+$('sv').onclick=()=>{const c=document.createElement('canvas');c.width=c.height=N*10;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+  if(mode==='num'){const p=PICS[pi];p.g.forEach((r,yy)=>[...r].forEach((ch,xx)=>{if(ch!=='.'&&painted.has(yy*N+xx)){g.fillStyle=p.pal[ch-1];g.fillRect(xx*10,yy*10,10,10)}}))}
+  else free.forEach((r,yy)=>r.forEach((cc,xx)=>{if(cc){g.fillStyle=cc;g.fillRect(xx*10,yy*10,10,10)}}));
+  const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='pixel-art.png';document.body.appendChild(a);a.click();a.remove()};
+loadPic(0);
+window.__pa={PICS,get painted(){return painted},paint,N};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

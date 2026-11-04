@@ -31,8 +31,8 @@ button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
 <div class="msg" id="msg" role="status"></div>
 <div class="wrap"><canvas id="c" width="360" height="470"></canvas>
 <div class="end" id="end"><h2 id="eh"></h2><p id="ep"></p><button id="eb">بازی جدید</button></div></div>
-<div class="bar"><button class="al" id="ori">دیوار: افقی ▬</button><button class="al" id="skip" disabled>رد کردن دیوار</button><button class="al" id="nw">⟲ بازی جدید</button></div>
-<div class="hint">اول یک مهره‌ی نارنجی را انتخاب کن و تا ۲ خانه حرکتش بده، بعد (اگر خواستی) یک دیوار سبز بگذار. هر مهره‌ی تو که به یکی از دو خانه‌ی شروع قرمزها برسد، بازی را می‌بری. راه همه را نمی‌شود کامل بست.</div>
+<div class="bar"><button class="al" id="ori">دیوار: افقی ▬</button><button class="al" id="skip" disabled>رد کردن دیوار</button><button class="al" id="nw">⟲ بازی جدید</button><button class="al" id="mode">👤 با کامپیوتر</button></div>
+<div class="hint">اول یک مهره‌ی نارنجی را انتخاب کن و تا ۲ خانه حرکتش بده، بعد (اگر خواستی) یک دیوار سبز بگذار. هر مهره‌ات که به یکی از دو خانه‌ی شروع حریف برسد، بازی را می‌بری. با دکمه‌ی «دو نفره» می‌توانید دو نفری روی همین دستگاه بازی کنید (نارنجی پایین، قرمز بالا). راه همه را نمی‌شود کامل بست.</div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const R=11,C=9,CS=36,MX=18,MY=50,WALLS=9;
@@ -42,16 +42,19 @@ let au;function beep(f,d=.06,ty='triangle',v=.1){try{au=au||new(window.AudioCont
 /* بازیکن 0 = تو (نارنجی، پایین)، بازیکن 1 = کامپیوتر (قرمز، بالا) */
 const START=[[[9,2],[9,6]],[[1,2],[1,6]]];
 const GOAL=[START[1],START[0]];
-let pawns,hw,vw,left,phase,turn,sel,reach,ori='H',prev=null,over=false,wallsList,anim=null,wins=[0,0];
+let pawns,hw,vw,left,phase,turn,sel,reach,ori='H',prev=null,over=false,wallsList,anim=null,wins=[0,0],two=false;
+const isH=()=>turn===0||two;
+const nm=p=>two?(p===0?'نارنجی':'قرمز'):(p===0?'تو':'کامپیوتر');
+const turnMsg=()=>two?('نوبت '+nm(turn)+': یک مهره‌ی خودت را انتخاب کن'):'نوبت توست: یک مهره‌ی نارنجی را انتخاب کن';
 const key=(r,c)=>r*C+c;
 function newGame(){
   pawns=[START[0].map(p=>[...p]),START[1].map(p=>[...p])];
   hw=Array.from({length:R+1},()=>Array(C+1).fill(0));vw=Array.from({length:R+1},()=>Array(C+1).fill(0));
   wallsList=[];left=[WALLS,WALLS];phase='move';turn=0;sel=-1;reach=[];prev=null;over=false;anim=null;
-  $('end').style.display='none';say('نوبت توست: یک مهره‌ی نارنجی را انتخاب کن');ui();
+  $('end').style.display='none';say(turnMsg());ui();
 }
 function say(t){$('msg').textContent=t}
-function ui(){$('skip').disabled=!(phase==='wall'&&turn===0&&!over);$('ori').textContent='دیوار: '+(ori==='H'?'افقی ▬':'عمودی ▮')}
+function ui(){$('skip').disabled=!(phase==='wall'&&isH()&&!over);$('ori').textContent='دیوار: '+(ori==='H'?'افقی ▬':'عمودی ▮')}
 /* حرکت بین خانه‌ها */
 function blocked(r1,c1,r2,c2){
   if(c1===c2){const i=Math.max(r1,r2);return !!(hw[i][c1]||hw[i][c1+1])}
@@ -87,44 +90,45 @@ function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*360
 function cellAt(px,py){const c=Math.floor((px-MX)/CS),r=Math.floor((py-MY)/CS);return(r>=0&&r<R&&c>=0&&c<C)?[r,c]:null}
 function ixAt(px,py,touch){const j=Math.round((px-MX)/CS),i=Math.round((py-(touch?44:0)-MY)/CS);return[Math.max(1,Math.min(R-1,i)),Math.max(1,Math.min(C-1,j))]}
 cv.addEventListener('pointerdown',e=>{
-  if(over||turn!==0||anim)return;e.preventDefault();const[px,py,t]=pos(e);
+  if(over||!isH()||anim)return;e.preventDefault();const[px,py,t]=pos(e);
   if(phase==='move'){
     const c=cellAt(px,py);if(!c)return;
-    const k=pawns[0].findIndex(p=>p[0]===c[0]&&p[1]===c[1]);
-    if(k>=0){sel=k;reach=reachable(pawns[0][k]);beep(500,.04);say(reach.length?'یک خانه‌ی روشن را بزن':'این مهره گیر کرده؛ مهره‌ی دیگر را انتخاب کن');return}
-    if(sel>=0&&reach.some(r=>r[0]===c[0]&&r[1]===c[1]))doMove(0,sel,c);
+    const k=pawns[turn].findIndex(p=>p[0]===c[0]&&p[1]===c[1]);
+    if(k>=0){sel=k;reach=reachable(pawns[turn][k]);beep(500,.04);say(reach.length?'یک خانه‌ی روشن را بزن':'این مهره گیر کرده؛ مهره‌ی دیگر را انتخاب کن');return}
+    if(sel>=0&&reach.some(r=>r[0]===c[0]&&r[1]===c[1]))doMove(turn,sel,c);
   }else if(phase==='wall'){
     const[i,j]=ixAt(px,py,t);prev={o:ori,i,j};try{cv.setPointerCapture(e.pointerId)}catch(_){}
   }
 });
-cv.addEventListener('pointermove',e=>{if(phase==='wall'&&turn===0&&prev&&!over){const[px,py,t]=pos(e);const[i,j]=ixAt(px,py,t);prev={o:ori,i,j}}});
+cv.addEventListener('pointermove',e=>{if(phase==='wall'&&isH()&&prev&&!over){const[px,py,t]=pos(e);const[i,j]=ixAt(px,py,t);prev={o:ori,i,j}}});
 cv.addEventListener('pointerup',e=>{
-  if(phase!=='wall'||turn!==0||!prev||over)return;
+  if(phase!=='wall'||!isH()||!prev||over)return;
   const p=prev;prev=null;
-  if(left[0]>0&&wallOK(p.o,p.i,p.j)){addWall(p.o,p.i,p.j,0);beep(260,.08,'square',.06);endTurn()}
+  if(left[turn]>0&&wallOK(p.o,p.i,p.j)){addWall(p.o,p.i,p.j,turn);beep(260,.08,'square',.06);endTurn()}
   else{beep(120,.08,'sawtooth',.05);say('اینجا نمی‌شود دیوار گذاشت (یا راه کسی را کامل می‌بندد)')}
 });
 cv.addEventListener('pointercancel',()=>{prev=null});
 $('ori').onclick=()=>{ori=ori==='H'?'V':'H';ui()};
-$('skip').onclick=()=>{if(phase==='wall'&&turn===0)endTurn()};
+$('skip').onclick=()=>{if(phase==='wall'&&isH())endTurn()};
+$('mode').onclick=()=>{two=!two;wins=[0,0];$('mode').textContent=two?'👥 دو نفره':'👤 با کامپیوتر';newGame()};
 $('nw').onclick=newGame;$('eb').onclick=newGame;
 function doMove(pl,k,dest){
   const p=pawns[pl][k],from=[p[0],p[1]];
   anim={pl,k,from,to:dest,t:0};sel=-1;reach=[];
   const fin=()=>{p[0]=dest[0];p[1]=dest[1];anim=null;beep(380,.07);
     if(won(pl))return finish(pl);
-    if(pl===0){phase='wall';if(left[0]>0){say('حالا یک دیوار بگذار (بکش و رها کن) یا رد کن')}else{say('دیوارت تمام شده');setTimeout(endTurn,500)}ui()}
+    if(isH()){phase='wall';if(left[pl]>0){say('حالا یک دیوار بگذار (بکش و رها کن) یا رد کن')}else{say('دیوارت تمام شده');setTimeout(endTurn,500)}ui()}
   };
   anim.fin=fin;
 }
 function endTurn(){
   phase='move';turn=1-turn;ui();
-  if(turn===1){say('کامپیوتر فکر می‌کند…');setTimeout(aiTurn,700)}else say('نوبت توست: یک مهره‌ی نارنجی را انتخاب کن');
+  if(turn===1&&!two){say('کامپیوتر فکر می‌کند…');setTimeout(aiTurn,700)}else say(turnMsg());
 }
 function finish(pl){
   over=true;wins[pl]++;
-  $('eh').textContent=pl===0?'🏆 تو بردی!':'کامپیوتر برد';
-  $('ep').textContent='برد تو: '+fa(wins[0])+' — برد کامپیوتر: '+fa(wins[1]);
+  $('eh').textContent=two?'🏆 '+nm(pl)+' برد!':(pl===0?'🏆 تو بردی!':'کامپیوتر برد');
+  $('ep').textContent='برد '+nm(0)+': '+fa(wins[0])+' — برد '+nm(1)+': '+fa(wins[1]);
   setTimeout(()=>{$('end').style.display='flex';beep(pl===0?760:180,.35)},500);ui();
 }
 /* کامپیوتر */
@@ -179,8 +183,8 @@ function draw(){
   x.fillStyle='#10141d';x.fillRect(0,0,360,470);
   // بالا: دیوارهای باقی‌مانده
   x.textBaseline='middle';x.font='bold 13px Tahoma,sans-serif';
-  x.fillStyle='#ff6f61';x.textAlign='right';x.fillText('کامپیوتر: '+fa(left[1])+' دیوار',350,16);
-  x.fillStyle='#ffa45c';x.fillText('تو: '+fa(left[0])+' دیوار',350,36);
+  x.fillStyle='#ff6f61';x.textAlign='right';x.fillText(nm(1)+': '+fa(left[1])+' دیوار',350,16);
+  x.fillStyle='#ffa45c';x.fillText(nm(0)+': '+fa(left[0])+' دیوار',350,36);
   for(let k=0;k<left[1];k++){x.fillStyle='#5b5f8f';x.fillRect(14+k*13,10,9,12)}
   for(let k=0;k<left[0];k++){x.fillStyle='#3fae5a';x.fillRect(14+k*13,30,9,12)}
   // تخته
@@ -192,13 +196,13 @@ function draw(){
   reach.forEach(n=>{x.fillStyle='rgba(255,220,120,.35)';x.fillRect(MX+n[1]*CS+1,MY+n[0]*CS+1,CS-2,CS-2);x.fillStyle='#ffe08a';x.beginPath();x.arc(cx(n[1]),cy(n[0]),4,0,7);x.fill()});
   // دیوارها
   wallsList.forEach(w=>drawWall(w.o,w.i,w.j,w.pl?'#6b6fb5':'#3fae5a'));
-  if(prev&&phase==='wall'&&turn===0){const ok=left[0]>0&&wallOK(prev.o,prev.i,prev.j);drawWall(prev.o,prev.i,prev.j,ok?'#7be08f':'#ff5252',.8)}
+  if(prev&&phase==='wall'&&isH()){const ok=left[turn]>0&&wallOK(prev.o,prev.i,prev.j);drawWall(prev.o,prev.i,prev.j,ok?'#7be08f':'#ff5252',.8)}
   // مهره‌ها (به ترتیب ردیف برای عمق)
   const all=[];pawns.forEach((ps,pl)=>ps.forEach((p,k)=>all.push({pl,k,r:p[0],c:p[1]})));
   all.sort((a,b)=>a.r-b.r);
   all.forEach(o=>{let px=cx(o.c),py=cy(o.r);
     if(anim&&anim.pl===o.pl&&anim.k===o.k){const t=Math.min(1,anim.t);px=cx(anim.from[1])+(cx(anim.to[1])-cx(anim.from[1]))*t;py=cy(anim.from[0])+(cy(anim.to[0])-cy(anim.from[0]))*t}
-    cyl(px,py-2,o.pl?'#e53935':'#f08a24',o.pl===0&&sel===o.k&&turn===0)});
+    cyl(px,py-2,o.pl?'#e53935':'#f08a24',o.pl===turn&&isH()&&sel===o.k)});
 }
 let last=0;
 function loop(t){

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Block Away 3D — بلوک‌های سه‌بعدی را در جهت فلششان بیرون بفرست. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Block Away 3D</title>
+<style>
+:root{--bg:#e8f1ff;--ink:#1b2440;--card:#fff;--btn:#4b6bff;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12162a;--ink:#e8ecff;--card:#1f2540;--btn:#7b93ff;--btnink:#0a1030}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:radial-gradient(circle at 50% 30%,var(--bg),#b9ccff);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+@media (prefers-color-scheme:dark){body{background:radial-gradient(circle at 50% 30%,#232a52,#0c1022)}}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.info{display:flex;gap:14px;font-size:.88rem;margin:2px 0}
+.wrap{flex:1;min-height:0;width:100%;position:relative}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.bar{display:flex;gap:8px;margin:6px 0 10px;flex-wrap:wrap;justify-content:center;z-index:5}
+button{font:inherit;border:0;background:var(--btn);color:var(--btnink);border-radius:10px;padding:9px 14px;cursor:pointer}
+button.al{background:var(--card);color:var(--ink)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🧊 Block Away 3D</h1>
+<div class="info"><span>مرحله: <b id="lv">۱</b></span><span>مانده: <b id="rm">۰</b></span><span id="lf">❤❤❤</span></div>
+<div class="wrap"><canvas id="c"></canvas></div>
+<div class="bar"><button class="al" id="rot">↻ چرخش</button><button class="al" id="hn">💡 راهنما</button><button class="al" id="nw">⟲ دوباره</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button id="ob">ادامه</button></div></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.07,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+/* جهت‌ها: [dx,dy,dz] ؛ y بالا */
+const DIRS=[[1,0,0],[-1,0,0],[0,0,1],[0,0,-1],[0,1,0]];
+const PAL=['#ff6b6b','#ffa94d','#ffd43b','#69db7c','#38d9a9','#4dabf7','#9775fa','#f783ac'];
+let blocks,fly,level=1,lives=3,N,rotN=0,W,H,S,ox,oy,over=false,hintB=null,hintT=0,shake=0;
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function key(a,b,c){return a+','+b+','+c}
+function gen(){
+  const nx=Math.min(5,3+Math.floor((level+1)/3)),ny=Math.min(4,2+Math.floor(level/3)),nz=nx;N={x:nx,y:ny,z:nz};
+  const dens=Math.min(.9,.55+level*.03),R=rng(level*977+Date.now()%9973);
+  const cells=[];for(let y=0;y<ny;y++)for(let a=0;a<nx;a++)for(let c=0;c<nz;c++)if(R()<dens)cells.push([a,y,c]);
+  for(let i=cells.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]]}
+  const placed=new Set(),list=[];
+  const clear=(a,y,c,d)=>{a+=d[0];y+=d[1];c+=d[2];while(a>=0&&a<nx&&y>=0&&y<ny&&c>=0&&c<nz){if(placed.has(key(a,y,c)))return false;a+=d[0];y+=d[1];c+=d[2]}return true};
+  // ساخت معکوس: هر بلوک جهتی می‌گیرد که مسیرش از بلوک‌های قبلی خالی باشد → همیشه حل‌شدنی
+  cells.forEach(([a,y,c])=>{const ds=DIRS.filter(d=>clear(a,y,c,d));if(!ds.length)return;const d=ds[Math.floor(R()*ds.length)];placed.add(key(a,y,c));list.push({x:a,y,z:c,d,col:PAL[Math.floor(R()*PAL.length)]})});
+  blocks=list.length>=4?list:[{x:0,y:0,z:0,d:DIRS[0],col:PAL[0]}];
+}
+function start(){gen();fly=[];lives=3;over=false;hintB=null;fit();upd()}
+function fit(){const r=cv.getBoundingClientRect();W=cv.width=r.width||innerWidth;H=cv.height=r.height||innerHeight*.7;S=Math.min(W/(N.x+N.z+1)/1.25,H/(N.y+(N.x+N.z)*.5+2.6));ox=W/2;oy=H*.5+(N.y*S)/2-(N.x+N.z)*S*.25}
+// تبدیل مختصات با چرخش ۹۰ درجه‌ای نما
+function rotXZ(a,c){switch(rotN&3){case 0:return[a,c];case 1:return[c,N.x-1-a];case 2:return[N.x-1-a,N.z-1-c];default:return[N.z-1-c,a]}}
+function proj(a,y,c){const[u,v]=rotXZ(a,c);return[ox+(u-v)*S*.866,oy+(u+v)*S*.5-y*S]}
+function rd(d){ // جهت صفحه‌ای پس از چرخش نما (برای فلش)
+  return d}
+function poly(pts,fill,stroke){x.beginPath();pts.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.closePath();x.fillStyle=fill;x.fill();x.strokeStyle=stroke||'rgba(0,0,0,.35)';x.lineWidth=1.5;x.stroke()}
+function shade(c,a){const n=parseInt(c.slice(1),16);const f=v=>Math.max(0,Math.min(255,Math.round(v*a)));return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`}
+function corners(b,ex){ // رأس‌های مکعب در مختصات صفحه
+  const [px,py,pz]=[b.x+(ex?ex[0]:0),b.y+(ex?ex[1]:0),b.z+(ex?ex[2]:0)];
+  const P=(dx,dy,dz)=>{const[u,v]=rotXZ(px+dx,pz+dz);return[ox+(u-v)*S*.866,oy+(u+v)*S*.5-(py+dy)*S]};
+  return{P};
+}
+function drawBlock(b,ex,alpha){
+  const{P}=corners(b,ex);
+  // رأس‌ها با توجه به چرخش: پس از rotXZ ممکن است ۰/۱ جابه‌جا شود؛ از نقطه‌های گوشه استفاده می‌کنیم
+  const t=[P(0,1,0),P(1,1,0),P(1,1,1),P(0,1,1)];
+  // دو وجه جانبی قابل دیدن: آن‌هایی که پایین‌ترین رأس‌های صفحه دارند
+  const bot=[P(0,0,0),P(1,0,0),P(1,0,1),P(0,0,1)];
+  // پایین‌ترین رأس (بیشترین y صفحه)
+  let k=0;for(let i=1;i<4;i++)if(bot[i][1]>bot[k][1])k=i;
+  const l=(k+3)%4,r=(k+1)%4;
+  x.globalAlpha=alpha;
+  poly([t[l],t[k],bot[k],bot[l]],shade(b.col,.78));
+  poly([t[k],t[r],bot[r],bot[k]],shade(b.col,.58));
+  poly(t,shade(b.col,1.05));
+  // فلش روی وجه بالا
+  const cx=(t[0][0]+t[2][0])/2,cy=(t[0][1]+t[2][1])/2;
+  x.fillStyle='rgba(0,0,0,.65)';x.strokeStyle='rgba(0,0,0,.65)';
+  if(b.d[1]===1){x.font='bold '+(S*.62)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('▲',cx,cy)}
+  else{const A=P(.5,1,.5),B=P(.5+b.d[0]*.38,1,.5+b.d[2]*.38),C=P(.5-b.d[0]*.3,1,.5-b.d[2]*.3);
+    x.lineWidth=S*.12;x.lineCap='round';x.beginPath();x.moveTo(C[0],C[1]);x.lineTo(B[0],B[1]);x.stroke();
+    const dx=B[0]-A[0],dy=B[1]-A[1],l2=Math.hypot(dx,dy)||1,ux=dx/l2,uy=dy/l2;x.beginPath();x.moveTo(B[0]+ux*S*.2,B[1]+uy*S*.2);x.lineTo(B[0]-uy*S*.2-ux*S*.05,B[1]+ux*S*.2-uy*S*.05);x.lineTo(B[0]+uy*S*.2-ux*S*.05,B[1]-ux*S*.2-uy*S*.05);x.closePath();x.fill()}
+  x.globalAlpha=1;
+}
+function draw(){
+  x.clearRect(0,0,W,H);
+  // سکو
+  x.fillStyle='rgba(0,0,0,.08)';const Bp=(a,c)=>proj(a,0,c);x.beginPath();[Bp(0,0),Bp(N.x,0),Bp(N.x,N.z),Bp(0,N.z)].forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.fill();
+  const list=blocks.map(b=>({b,ex:null})).concat(fly.map(f=>({b:f.b,ex:f.off,a:Math.max(0,1-f.t*.8)})));
+  list.sort((p,q)=>depth(p)-depth(q));
+  list.forEach(o=>{
+    if(hintB===o.b&&hintT>0){x.save();x.shadowColor='#fff';x.shadowBlur=24}
+    const dx=(shake&&!o.ex)?(Math.random()-.5)*shake:0;if(dx)x.translate(dx,0);
+    drawBlock(o.b,o.ex,o.a==null?1:o.a);
+    if(dx)x.translate(-dx,0);if(hintB===o.b&&hintT>0)x.restore()});
+}
+function depth(o){const b=o.b,e=o.ex||[0,0,0];const[u,v]=rotXZ(b.x+e[0],b.z+e[2]);return u+v+(b.y+e[1])*.001+.0001*b.y}
+function isFree(b){let a=b.x+b.d[0],y=b.y+b.d[1],c=b.z+b.d[2];while(a>=0&&a<N.x&&y>=0&&y<N.y&&c>=0&&c<N.z){if(blocks.some(q=>q.x===a&&q.y===y&&q.z===c))return false;a+=b.d[0];y+=b.d[1];c+=b.d[2]}return true}
+function pip(p,poly_){let c=false;for(let i=0,j=poly_.length-1;i<poly_.length;j=i++){if(((poly_[i][1]>p[1])!==(poly_[j][1]>p[1]))&&(p[0]<(poly_[j][0]-poly_[i][0])*(p[1]-poly_[i][1])/(poly_[j][1]-poly_[i][1])+poly_[i][0]))c=!c}return c}
+function pick(px,py){
+  const order=blocks.slice().sort((p,q)=>depth({b:q})-depth({b:p}));
+  for(const b of order){const{P}=corners(b);const t=[P(0,1,0),P(1,1,0),P(1,1,1),P(0,1,1)],bot=[P(0,0,0),P(1,0,0),P(1,0,1),P(0,0,1)];let k=0;for(let i=1;i<4;i++)if(bot[i][1]>bot[k][1])k=i;const l=(k+3)%4,r=(k+1)%4;
+    if(pip([px,py],t)||pip([px,py],[t[l],t[k],bot[k],bot[l]])||pip([px,py],[t[k],t[r],bot[r],bot[k]]))return b}
+  return null;
+}
+function tap(e){
+  if(over)return;const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)*cv.width/r.width,py=(e.clientY-r.top)*cv.height/r.height;const b=pick(px,py);if(!b)return;
+  if(isFree(b)){blocks=blocks.filter(q=>q!==b);fly.push({b,t:0,off:[0,0,0]});beep(500+Math.random()*200,.08);upd();if(!blocks.length)setTimeout(win,500)}
+  else{lives--;shake=10;beep(140,.12,'sawtooth',.06);upd();if(lives<=0){over=true;setTimeout(lose,350)}}
+}
+cv.addEventListener('pointerdown',tap);
+function upd(){$('lv').textContent=fa(level);$('rm').textContent=fa(blocks.length);$('lf').textContent='❤'.repeat(lives)+'🖤'.repeat(3-lives)}
+function win(){over=true;beep(900,.3);$('oh').textContent='🎉 همه‌ی بلوک‌ها رفتند!';$('op').textContent='مرحله '+fa(level)+' تمام شد';$('ob').textContent='مرحله‌ی بعد';$('ob').onclick=()=>{$('ov').style.display='none';level++;start()};$('ov').style.display='flex';try{const b=+localStorage.getItem('sl-blockaway')||0;if(level>b)localStorage.setItem('sl-blockaway',level)}catch(e){}}
+function lose(){$('oh').textContent='💔 جانت تمام شد';$('op').textContent='به مرحله‌ی '+fa(level)+' رسیدی';$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';level=1;start()};$('ov').style.display='flex'}
+$('rot').onclick=()=>{rotN=(rotN+1)&3};
+$('hn').onclick=()=>{const f=blocks.filter(isFree);if(f.length){hintB=f[Math.floor(Math.random()*f.length)];hintT=2}};
+$('nw').onclick=()=>{start()};
+let last=0;function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  fly.forEach(f=>{f.t+=dt;const sp=8*f.t*f.t+6*f.t;f.off=[f.b.d[0]*sp,f.b.d[1]*sp,f.b.d[2]*sp]});fly=fly.filter(f=>f.t<1.4);
+  hintT-=dt;shake=Math.max(0,shake-40*dt);draw();requestAnimationFrame(loop)}
+addEventListener('resize',()=>{fit()});
+start();requestAnimationFrame(loop);
+window.__ba={get blocks(){return blocks},isFree,start,get N(){return N},DIRS,set level(v){level=v},pick,tap};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="تفاوت‌یابی — پیدا کردن آیتم‌ها در تصویر شلوغ و پیدا کردن تفاوت دو عکس. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Spot It</title>
+<style>
+:root{--bg:#fff7e6;--ink:#2a2118;--card:#fff;--line:#e3d6bd;--btn:#e8742a;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1812;--ink:#f1e8d8;--card:#2b241b;--line:#4a3f30;--btn:#ff9650;--btnink:#2a1000}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;padding:8px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:6px 0;font-size:1.1rem}
+.tabs,.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 0}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer}
+button.on{background:var(--btn);color:var(--btnink);border-color:transparent}
+button:disabled{opacity:.4}
+button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+.info{display:flex;gap:12px;font-size:.85rem;margin:2px 0;flex-wrap:wrap;justify-content:center}
+.targets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:460px;margin:4px 0;min-height:42px}
+.targets span{font-size:1.5rem;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:2px 8px;line-height:1.3}
+.targets span.ok{opacity:.35;text-decoration:line-through;background:#9ccc65}
+.boards{display:flex;flex-direction:column;gap:6px;align-items:center}
+canvas{width:min(94vw,460px);border-radius:12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2);touch-action:manipulation;display:block}
+.msg{min-height:1.4em;font-size:.88rem;text-align:center}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🔍 تفاوت‌یابی</h1>
+<div class="tabs"><button id="m1" class="on">آیتم‌ها در تصویر شلوغ</button><button id="m2">تفاوت دو عکس</button></div>
+<div class="info"><span>مرحله: <b id="lv">۱</b></span><span>زمان: <b id="tm">۰</b></span><span>پیدا شده: <b id="fd">۰</b></span><span>جان: <b id="lf">❤❤❤</b></span></div>
+<div class="targets" id="tg"></div>
+<div class="boards"><canvas id="c1" width="460" height="460"></canvas><canvas id="c2" width="460" height="300" style="display:none"></canvas></div>
+<div class="msg" id="msg"></div>
+<div class="bar"><button id="hint">💡 راهنما</button><button id="nw">⟲ مرحله‌ی جدید</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button class="on" id="ob">ادامه</button></div></div>
+<script>
+const $=i=>document.getElementById(i);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.08,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const c1=$('c1'),c2=$('c2'),x1=c1.getContext('2d'),x2=c2.getContext('2d');
+const FILL=['🍎','🍌','🍇','🍓','🥕','🌽','🍄','🌸','🌼','🌻','🍀','🦋','🐞','🐝','🐟','🐚','⭐','🎈','🎁','🎵','⚽','🏀','🎲','🧸','📚','✏️','🔔','🌙','☁️','🍪','🍩','🧁','🍭','🎨','🪁','🧩','👟','🧦','🎩','🔮','🪀','🎺','🥁','🛼','🌵','🍉','🍍','🥝','🍋','🍒','🌰','🥨','🧀','🥞','🍕','🌮','🍔','🍟'];
+const TARGETS=['🔑','💎','🕯️','🧭','⚓','🗝️','📯','🪙','🕰️','🔭','🧲','🪄','🦄','🐉','👑','🏆','🪐','🛡️','🗡️','📜','🧪','🔦','🪁','🎻'];
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function rnd(R,a,b){return a+R()*(b-a)}
+const emo=(g,e,x,y,s,r=0,flip=false)=>{g.save();g.translate(x,y);g.rotate(r);if(flip)g.scale(-1,1);g.font=s+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(e,0,0);g.restore()};
+let mode=1,level=1,lives=3,tStart=0,timer=null,found=0,over=false,hintT=0,marks=[];
+/* حالت ۱: آیتم‌های پنهان */
+let scene1,targets;
+function mk1(){
+  const R=rng(level*7919+Date.now()%1000),W=c1.width,H=c1.height;
+  const nT=Math.min(10,4+level),nF=Math.min(620,230+level*40);
+  const pool=TARGETS.slice().sort(()=>R()-.5).slice(0,nT);
+  const items=[];
+  for(let i=0;i<nF;i++)items.push({e:FILL[Math.floor(R()*FILL.length)],x:rnd(R,10,W-10),y:rnd(R,10,H-10),s:rnd(R,20,40),r:rnd(R,-.7,.7)});
+  targets=pool.map(e=>({e,x:rnd(R,24,W-24),y:rnd(R,24,H-24),s:Math.max(20,28-level*.6),r:rnd(R,-.9,.9),done:false}));
+  const all=items.slice();
+  targets.forEach(t=>{const o={t,e:t.e,x:t.x,y:t.y,s:t.s,r:t.r};if(R()<.55)all.push(o);else all.splice(all.length-Math.floor(R()*all.length*.12),0,o)});
+  scene1={all,bg:Math.floor(R()*4)};
+}
+const BGS=[['#fff3c4','#ffe0a3'],['#d6f0ff','#b6e0ff'],['#e8ffd6','#cdeeb0'],['#ffe3ec','#ffc9d9']];
+function draw1(){
+  const W=c1.width,H=c1.height,g=x1,b=BGS[scene1.bg];const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,b[0]);gr.addColorStop(1,b[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);
+  scene1.all.forEach(it=>{const done=it.t&&it.t.done;emo(g,it.e,it.x,it.y,it.s,it.r);if(done){g.strokeStyle='#2e7d32';g.lineWidth=4;g.beginPath();g.arc(it.x,it.y,it.s*.8,0,7);g.stroke()}});
+  if(hintT>0){const t=targets.find(q=>!q.done);if(t){g.strokeStyle='rgba(255,0,100,'+Math.min(1,hintT)+')';g.lineWidth=4;g.beginPath();g.arc(t.x,t.y,36+Math.sin(performance.now()/120)*4,0,7);g.stroke()}}
+}
+/* حالت ۲: تفاوت دو عکس */
+let sc2,diffs;
+function mk2(){
+  const R=rng(level*104729+Date.now()%1000),W=c2.width,H=c2.height,n=Math.min(70,34+level*3),nd=Math.min(10,4+Math.floor(level/2));
+  const objs=[];for(let i=0;i<n;i++)objs.push({e:FILL[Math.floor(R()*FILL.length)],x:rnd(R,26,W-26),y:rnd(R,26,H-26),s:rnd(R,26,44),r:rnd(R,-.4,.4),flip:false});
+  // تفاوت‌ها
+  const idxs=[];while(idxs.length<nd){const i=Math.floor(R()*n);if(!idxs.includes(i))idxs.push(i)}
+  const kinds=['remove','swap','shift','resize','flip','rotate'];diffs=[];
+  const B=objs.map(o=>Object.assign({},o));
+  idxs.forEach((i,k)=>{const o=B[i],kind=kinds[k%kinds.length];diffs.push({x:objs[i].x,y:objs[i].y,done:false});
+    if(kind==='remove')o.hide=true;else if(kind==='swap'){let e;do{e=FILL[Math.floor(R()*FILL.length)]}while(e===o.e);o.e=e}else if(kind==='shift'){o.x+=rnd(R,-1,1)>0?26:-26;o.y+=rnd(R,-1,1)>0?14:-14}else if(kind==='resize')o.s*=1.55;else if(kind==='flip'){o.flip=true;o.r=-o.r;o.e=o.e;if(o.e.length>0)o.s*=1;o.mirror=true}else o.r+=1.1});
+  // flip: برخی ایموجی‌ها متقارن‌اند؛ برای دیده شدن، بهجای آن رنگ سایه را عوض می‌کنیم
+  sc2={A:objs,B,bg:Math.floor(R()*4)};
+}
+function drawBoard(g,list,W,H,bg){const b=BGS[bg];const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,b[0]);gr.addColorStop(1,b[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);list.forEach(o=>{if(o.hide)return;emo(g,o.e,o.x,o.y,o.s,o.r,o.mirror)})}
+function draw2(){
+  drawBoard(x1,sc2.A,c1.width,c2.height,sc2.bg);drawBoard(x2,sc2.B,c2.width,c2.height,sc2.bg);
+  [x1,x2].forEach(g=>{diffs.forEach(d=>{if(d.done){g.strokeStyle='#e53935';g.lineWidth=4;g.beginPath();g.arc(d.x,d.y,32,0,7);g.stroke()}});
+    if(hintT>0){const d=diffs.find(q=>!q.done);if(d){g.strokeStyle='rgba(0,150,255,'+Math.min(1,hintT)+')';g.lineWidth=4;g.beginPath();g.arc(d.x,d.y,38+Math.sin(performance.now()/120)*4,0,7);g.stroke()}}})
+}
+/* جریان بازی */
+function setup(){
+  over=false;found=0;lives=3;hintT=0;clearInterval(timer);
+  c1.height=mode===1?460:300;c2.style.display=mode===2?'block':'none';
+  if(mode===1){mk1();$('tg').innerHTML=targets.map((t,i)=>`<span id="t${i}">${t.e}</span>`).join('');$('msg').textContent='آیتم‌های بالای صفحه را در تصویر پیدا کن'}
+  else{mk2();$('tg').innerHTML='';$('msg').textContent='تفاوت‌ها را در یکی از دو عکس لمس کن'}
+  $('lv').textContent=fa(level);upd();tStart=Date.now();
+  timer=setInterval(()=>{const s=Math.floor((Date.now()-tStart)/1000);$('tm').textContent=fa(s)+'s'},500);
+}
+function total(){return mode===1?targets.length:diffs.length}
+function upd(){$('fd').textContent=fa(found)+'/'+fa(total());$('lf').textContent='❤'.repeat(lives)+'🖤'.repeat(3-lives)}
+function pos(c,e){const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]}
+function tap(c,e){
+  if(over)return;const[px,py]=pos(c,e);let hit=false;
+  if(mode===1){for(let i=targets.length-1;i>=0;i--){const t=targets[i];if(!t.done&&Math.hypot(px-t.x,py-t.y)<Math.max(22,t.s*.85)){t.done=true;found++;hit=true;$('t'+i).classList.add('ok');break}}}
+  else{for(const d of diffs){if(!d.done&&Math.hypot(px-d.x,py-d.y)<34){d.done=true;found++;hit=true;break}}}
+  if(hit){beep(700+found*40);upd();if(found>=total())win()}
+  else{beep(160,.1,'sawtooth',.05);lives--;upd();const el=c;el.style.transform='translateX(6px)';setTimeout(()=>el.style.transform='',90);if(lives<=0)lose()}
+}
+c1.addEventListener('pointerdown',e=>tap(c1,e));c2.addEventListener('pointerdown',e=>tap(c2,e));
+function win(){over=true;clearInterval(timer);const s=Math.floor((Date.now()-tStart)/1000);let best=0;try{const k='sl-spotit-'+mode;best=+localStorage.getItem(k)||0;if(level>best)localStorage.setItem(k,level)}catch(e){}
+  beep(900,.3);$('oh').textContent='🎉 آفرین!';$('op').textContent='مرحله '+fa(level)+' را در '+fa(s)+' ثانیه تمام کردی';$('ob').textContent='مرحله‌ی بعد';$('ob').onclick=()=>{$('ov').style.display='none';level++;setup()};$('ov').style.display='flex'}
+function lose(){over=true;clearInterval(timer);beep(120,.4,'sawtooth',.08);$('oh').textContent='💔 جانت تمام شد';$('op').textContent='به مرحله‌ی '+fa(level)+' رسیدی';$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';level=1;setup()};$('ov').style.display='flex'}
+$('hint').onclick=()=>{if(over)return;hintT=2.2;lives=Math.max(1,lives-0);beep(500,.05)};
+$('nw').onclick=()=>{setup()};
+$('m1').onclick=()=>{mode=1;level=1;$('m1').className='on';$('m2').className='';setup()};
+$('m2').onclick=()=>{mode=2;level=1;$('m2').className='on';$('m1').className='';setup()};
+let last=0;function loop(t){const dt=(t-last)/1000||0;last=t;if(hintT>0)hintT-=dt;if(mode===1)draw1();else draw2();requestAnimationFrame(loop)}
+setup();requestAnimationFrame(loop);
+window.__sp={get targets(){return targets},get diffs(){return diffs},get sc2(){return sc2},setup,tap,get found(){return found},set mode(v){mode=v},get lives(){return lives},total,draw1,draw2,mk1,mk2};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

@@ -13,7 +13,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .pad button{width:92px;height:76px;border-radius:18px;border:2px solid rgba(255,255,255,.75);background:rgba(0,0,0,.4);color:#fff;font-size:34px;touch-action:none;cursor:pointer}
 .pad button.dn{background:rgba(255,255,255,.4)}
 #pl{left:12px}#pr2{right:12px}.pad button.p2{border-color:#ff8a80}.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.maps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:440px}.maps button{padding:4px;border:2px solid transparent;background:rgba(255,255,255,.12);color:#fff;font-size:.72rem;border-radius:10px}.maps button.sel,.row button.sel{outline:3px solid #ffb300}.maps canvas{display:block;width:84px;height:40px;background:#7ec0f0;border-radius:6px}.row button{background:rgba(255,255,255,.18);color:#fff}#pr{right:12px}
-.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,20,40,.82);color:#fff;text-align:center;padding:16px}
+.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;background:rgba(10,20,40,.9);color:#fff;text-align:center;padding:max(16px,env(safe-area-inset-top)) 12px 28px;overflow-y:auto}.ov>*:first-child{margin-top:auto}.ov>*:last-child{margin-bottom:auto}.go{font-size:1.15rem!important;padding:14px 38px!important;background:#43a047!important;color:#fff!important;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 .ov h2{margin:0;font-size:1.8rem}.ov p{margin:0;line-height:1.9;max-width:430px}
 .ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
 </style>
@@ -23,7 +23,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 <a class="back" href="index.html">&larr; S loop</a>
 <div class="pad" id="pr2" style="display:none"><button id="b2l" aria-label="چپ ۲">◀</button><button id="b2r" aria-label="راست ۲">▶</button></div>
 <div class="pad" id="pl"><button id="bl" aria-label="چپ">◀</button><button id="br" aria-label="راست">▶</button></div>
-<div class="ov" id="ov"><h2 id="oh">🚗 Car Brawl</h2><p id="op">با ماشینت به ماشین حریف بکوب!<br>ضربه‌ی محکم به سر راننده یا فرسودن بدنه‌ی ماشین، حریف را از بازی بیرون می‌کند. اگر ماشینت وارونه ماند هم می‌بازی.<br>◀ ▶ حرکت (در هوا: چرخاندن ماشین) · اول به ۳ برد، برنده است.<br><small>رایانه — بازیکن ۱: A / D · بازیکن ۲ (حالت دو نفره): کلیدهای جهت‌دار</small></p><div class="row" id="mm"><button data-m="1" class="sel">👤 تک‌نفره</button><button data-m="2">👥 دو نفره</button></div><div class="maps" id="maps"></div><button id="ob">شروع</button></div>
+<div class="ov" id="ov"><h2 id="oh">🚗 Car Brawl</h2><button id="ob0" class="go">▶ ورود به بازی</button><p id="op">با ماشینت به ماشین حریف بکوب!<br>ضربه‌ی محکم به سر راننده یا فرسودن بدنه‌ی ماشین، حریف را از بازی بیرون می‌کند. اگر ماشینت وارونه ماند هم می‌بازی.<br>◀ ▶ حرکت (در هوا: چرخاندن ماشین) · اول به ۳ برد، برنده است.<br><small>رایانه — بازیکن ۱: A / D · بازیکن ۲ (حالت دو نفره): کلیدهای جهت‌دار</small></p><div class="row" id="mm"><button data-m="1" class="sel">👤 تک‌نفره</button><button data-m="2">👥 دو نفره</button></div><div class="maps" id="maps"></div><button id="ob" class="go">▶ ورود به بازی</button></div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
@@ -150,7 +150,7 @@ function endRound(){
   if(sc[0]>=3||sc[1]>=3){state='over';show(mode===2?(sc[0]>=3?'🏆 آبی برنده شد!':'🏆 قرمز برنده شد!'):(sc[0]>=3?'🏆 برنده شدی!':'باختی'),fa(sc[0])+' — '+fa(sc[1]),'دوباره');return}
   round++;newRound();
 }
-function show(h,p,b){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent=b;$('mm').style.display='flex';$('maps').style.display='flex';$('ov').style.display='flex'}
+function show(h,p,b){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent='▶ '+b;$('ob0').textContent='▶ '+b;$('mm').style.display='flex';$('maps').style.display='flex';$('ov').style.display='flex'}
 function drawCar(c){
   x.save();x.translate(c.x,c.y);x.rotate(c.a);if(c.dir<0)x.scale(-1,1);if(c.ko)x.globalAlpha=.8;
   const col=c.col;
@@ -203,12 +203,13 @@ function mapUI(){const box=$('maps');box.innerHTML='';
 $('mm').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=+b.dataset.m;[...$('mm').children].forEach(c=>c.classList.toggle('sel',c===b));$('pr2').style.display=mode===2?'flex':'none'};
 mapUI();
 addEventListener('keydown',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=true});addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
-$('ob').onclick=()=>{$('ov').style.display='none';$('mm').style.display='none';$('maps').style.display='none';round=0;sc=[0,0];newRound()};
+function startGame(){$('ov').style.display='none';$('mm').style.display='none';$('maps').style.display='none';round=0;sc=[0,0];newRound()}
+$('ob').onclick=startGame;$('ob0').onclick=startGame;
 function resize(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',resize);resize();
 if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
 let last=0;function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
 G=MAPS[0].p;requestAnimationFrame(loop);
-window.__cb={update,newRound,get cars(){return cars},get sc(){return sc},get state(){return state},keys,btn,btn2,stepCar,ko,set round(v){round=v},ARENAS,MAPS,set mode(v){mode=v},set mapSel(v){mapSel=v}};
+window.__cb={startGame,update,newRound,get cars(){return cars},get sc(){return sc},get state(){return state},keys,btn,btn2,stepCar,ko,set round(v){round=v},ARENAS,MAPS,set mode(v){mode=v},set mapSel(v){mapSel=v}};
 </script>
 <script>
 /* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */

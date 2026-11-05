@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Mahjong — ماهجونگ سولیتر، جفت‌های یکسان را پیدا کن. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Mahjong</title>
+<style>
+:root{--bg:#1e5a3f;--ink:#f3f7ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;background:radial-gradient(circle at 50% 35%,#2f7d58,var(--bg));color:var(--ink);display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.top{display:flex;gap:10px;font-size:.85rem;margin:2px 0;flex-wrap:wrap;justify-content:center}
+.wrap{position:relative;flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{width:100%;height:100%;touch-action:none}
+.bar{display:flex;gap:8px;margin:6px 0 10px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;border:0;background:#ffd54f;color:#2a1c00;border-radius:10px;padding:8px 14px;cursor:pointer}
+button.al{background:rgba(255,255,255,.18);color:#fff}
+button.on{background:#ffd54f;color:#2a1c00}
+button:disabled{opacity:.4}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:50;text-align:center}
+.ov div{background:#16392b;padding:22px 26px;border-radius:16px;line-height:2;border:1px solid #fff3;max-width:88vw}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🀄 Mahjong</h1>
+<div class="top"><span>جفت‌های مانده: <b id="pl">۰</b></span><span>زمان: <b id="tm">۰:۰۰</b></span><span id="lt"></span></div>
+<div class="wrap"><canvas id="c"></canvas></div>
+<div class="bar"><button class="al" id="un">↩︎ بازگشت</button><button class="al" id="hn">💡 راهنما</button><button class="al" id="sh">🔀 بُر زدن</button><button class="al" id="l0">آسان</button><button class="al" id="l1">هرم</button><button class="al" id="l2">بزرگ</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button id="ob">بازی جدید</button></div></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+/* چیدمان‌ها: (cx,cy,z) در واحد نیم‌خانه؛ هر مهره 2×2 */
+function grid(c0,r0,cols,rows,z,ox,oy,out){for(let j=0;j<rows;j++)for(let i=0;i<cols;i++)out.push({x:ox+2*i,y:oy+2*j,z})}
+const LAY=[
+ {n:'آسان',f(){const o=[];grid(0,0,6,4,0,0,0,o);grid(0,0,4,2,1,3,3,o);return o}},
+ {n:'هرم',f(){const o=[];grid(0,0,8,6,0,0,0,o);grid(0,0,6,4,1,3,3,o);grid(0,0,4,2,2,4,4,o);o.push({x:5,y:5,z:3},{x:9,y:5,z:3});return o}},
+ {n:'بزرگ',f(){const o=[];grid(0,0,10,5,0,0,0,o);grid(0,0,8,3,1,3,3,o);grid(0,0,6,2,2,4,4,o);return o}}
+];
+let tiles,sel=null,hist=[],lay=1,t0=0,over=false,hintPair=null,hintT=0,done=0,dims={u:20,ox:0,oy:0};
+const FACES=[];for(let i=1;i<=9;i++){FACES.push({s:'d',n:i});}for(let i=1;i<=9;i++)FACES.push({s:'b',n:i});for(let i=1;i<=9;i++)FACES.push({s:'c',n:i});['东','南','西','北'].forEach(w=>FACES.push({s:'w',n:w}));[['中','#d32f2f'],['发','#2e7d32'],['白','#1565c0']].forEach(d=>FACES.push({s:'r',n:d[0],c:d[1]}));
+const NUM='一二三四五六七八九';
+function blockedTop(t,all){return all.some(o=>!o.gone&&o.z===t.z+1&&Math.abs(o.x-t.x)<2&&Math.abs(o.y-t.y)<2)}
+function blockedSide(t,all,dx){return all.some(o=>!o.gone&&o.z===t.z&&o.x===t.x+dx&&Math.abs(o.y-t.y)<2)}
+function isFree(t,all){return !t.gone&&!blockedTop(t,all)&&(!blockedSide(t,all,-2)||!blockedSide(t,all,2))}
+/* تخصیص وجه‌ها طوری که همیشه حل‌شدنی باشد */
+function assign(list,faces){ // list: مهره‌ها (gone=false)، faces: جفت‌ها [f,f]
+  for(let attempt=0;attempt<60;attempt++){
+    list.forEach(t=>{t.gone=false;t.f=null});const pairs=faces.slice();for(let i=pairs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pairs[i],pairs[j]]=[pairs[j],pairs[i]]}
+    let ok=true,k=0;
+    for(let n=0;n<list.length/2;n++){
+      const fr=list.filter(t=>!t.gone&&isFree(t,list));if(fr.length<2){ok=false;break}
+      const a=fr.splice(Math.floor(Math.random()*fr.length),1)[0],b=fr[Math.floor(Math.random()*fr.length)];
+      a.f=b.f=pairs[k++];a.gone=b.gone=true}
+    if(ok){list.forEach(t=>t.gone=false);return true}
+  }
+  return false;
+}
+function newGame(){
+  const pos=LAY[lay].f();tiles=pos.map(p=>({x:p.x,y:p.y,z:p.z,gone:false,f:null}));
+  const np=tiles.length/2,faces=[];for(let i=0;i<np;i++)faces.push(FACES[i%FACES.length]);
+  assign(tiles,faces);sel=null;hist=[];over=false;hintPair=null;done=0;t0=Date.now();$('ov').style.display='none';fitDims();upd();
+}
+function fitDims(){
+  const w=cv.clientWidth,h=cv.clientHeight;cv.width=w;cv.height=h;
+  const mx=Math.max(...tiles.map(t=>t.x))+2,my=Math.max(...tiles.map(t=>t.y))+2;
+  const u=Math.floor(Math.min((w-16)/mx,(h-16)/(my*1.0)*1.0));dims.u=Math.max(8,u);dims.ox=(w-mx*dims.u)/2;dims.oy=(h-my*dims.u)/2;
+}
+function rect(t){const u=dims.u,dz=Math.max(2,u*.14);return{x:dims.ox+t.x*u-t.z*dz,y:dims.oy+t.y*u-t.z*dz,w:2*u,h:2*u}}
+function face(f,r){
+  const cx=r.x+r.w/2,cy=r.y+r.h/2,s=r.w;x.textAlign='center';x.textBaseline='middle';
+  if(f.s==='d'){const n=f.n,cols=n<=3?1:n<=6?2:3,rows=Math.ceil(n/cols);for(let i=0;i<n;i++){const c=i%cols,rr=Math.floor(i/cols),px=cx+(c-(cols-1)/2)*s*.26,py=cy+(rr-(rows-1)/2)*s*.26;x.fillStyle=['#1565c0','#c62828','#2e7d32'][i%3];x.beginPath();x.arc(px,py,s*.1,0,7);x.fill();x.strokeStyle='#fff8';x.lineWidth=1;x.stroke()}}
+  else if(f.s==='b'){const n=f.n,cols=n<=3?1:n<=6?2:3,rows=Math.ceil(n/cols);for(let i=0;i<n;i++){const c=i%cols,rr=Math.floor(i/cols),px=cx+(c-(cols-1)/2)*s*.26,py=cy+(rr-(rows-1)/2)*s*.28;x.fillStyle='#2e7d32';x.fillRect(px-s*.045,py-s*.12,s*.09,s*.24);x.fillStyle='#a5d6a7';x.fillRect(px-s*.015,py-s*.12,s*.02,s*.24)}}
+  else if(f.s==='c'){x.fillStyle='#c62828';x.font='bold '+(s*.4)+'px "Noto Sans CJK SC","Noto Serif CJK SC","PingFang SC","Microsoft YaHei",serif';x.fillText(NUM[f.n-1],cx,cy-s*.12);x.fillStyle='#222';x.fillText('万',cx,cy+s*.2)}
+  else {x.fillStyle=f.s==='w'?'#1a237e':f.c;x.font='bold '+(s*.62)+'px "Noto Sans CJK SC","Noto Serif CJK SC","PingFang SC","Microsoft YaHei",serif';x.fillText(f.n,cx,cy+s*.03)}
+}
+function draw(){
+  x.clearRect(0,0,cv.width,cv.height);
+  const order=tiles.filter(t=>!t.gone).sort((a,b)=>a.z-b.z||a.y-b.y||a.x-b.x);
+  order.forEach(t=>{
+    const r=rect(t),free=isFree(t,tiles),dz=Math.max(2,dims.u*.14);
+    x.fillStyle='rgba(0,0,0,.28)';x.beginPath();x.roundRect?x.roundRect(r.x+dz,r.y+dz,r.w,r.h,6):x.rect(r.x+dz,r.y+dz,r.w,r.h);x.fill();
+    x.fillStyle='#3b8f6a';x.beginPath();x.roundRect?x.roundRect(r.x+dz*.6,r.y+dz*.6,r.w,r.h,6):x.rect(r.x+dz*.6,r.y+dz*.6,r.w,r.h);x.fill();
+    x.fillStyle=free?'#fbf4dd':'#cfc8b0';x.beginPath();x.roundRect?x.roundRect(r.x,r.y,r.w,r.h,6):x.rect(r.x,r.y,r.w,r.h);x.fill();
+    x.strokeStyle='#8c8470';x.lineWidth=1;x.stroke();
+    face(t.f,r);
+    if(!free){x.fillStyle='rgba(60,50,30,.18)';x.fillRect(r.x,r.y,r.w,r.h)}
+    if(sel===t){x.strokeStyle='#ff9800';x.lineWidth=3;x.strokeRect(r.x+1.5,r.y+1.5,r.w-3,r.h-3)}
+    if(hintPair&&hintT>0&&(hintPair[0]===t||hintPair[1]===t)){x.strokeStyle='#00e5ff';x.lineWidth=3;x.strokeRect(r.x+1.5,r.y+1.5,r.w-3,r.h-3)}
+  });
+}
+const same=(a,b)=>a.f.s===b.f.s&&a.f.n===b.f.n;
+function pick(px,py){
+  const order=tiles.filter(t=>!t.gone).sort((a,b)=>b.z-a.z||b.y-a.y||b.x-a.x);
+  for(const t of order){const r=rect(t);if(px>=r.x&&px<=r.x+r.w&&py>=r.y&&py<=r.y+r.h)return t}return null;
+}
+function click(px,py){
+  if(over)return;const t=pick(px,py);if(!t)return;
+  if(!isFree(t,tiles)){beep(150,.06,'sawtooth',.04);return}
+  if(sel===t){sel=null;return}
+  if(!sel){sel=t;beep(500,.04);return}
+  if(same(sel,t)){sel.gone=t.gone=true;hist.push([sel,t]);done++;beep(800,.1);sel=null;hintPair=null;upd();if(tiles.every(q=>q.gone))win();else if(!movesLeft())noMoves()}
+  else{sel=t;beep(400,.04)}
+}
+function movesLeft(){return findPair()!==null}
+function findPair(){const fr=tiles.filter(t=>!t.gone&&isFree(t,tiles));for(let i=0;i<fr.length;i++)for(let j=i+1;j<fr.length;j++)if(same(fr[i],fr[j]))return[fr[i],fr[j]];return null}
+function noMoves(){if(over)return;$('pl').textContent='—';setTimeout(()=>{if(!over&&!movesLeft()){shuffle(true)}},400)}
+function shuffle(auto){
+  const rem=tiles.filter(t=>!t.gone);if(!rem.length)return;
+  const groups={},rep={};rem.forEach(t=>{const k=t.f.s+t.f.n;groups[k]=(groups[k]||0)+1;rep[k]=t.f});
+  const pl=[];Object.keys(groups).forEach(k=>{for(let i=0;i<(groups[k]>>1);i++)pl.push(rep[k])});
+  if(assign(rem,pl)){hist=[];sel=null;hintPair=null;beep(300,.2);if(auto)flash('مهره‌ها بُر خورد')}
+  upd();
+}
+function flash(t){$('lt').textContent=t;setTimeout(()=>$('lt').textContent='',1800)}
+function upd(){$('pl').textContent=fa(tiles.filter(t=>!t.gone).length/2)}
+function win(){over=true;const s=Math.round((Date.now()-t0)/1000);let best=0;try{best=+localStorage.getItem('sl-mahjong-best'+lay)||0;if(!best||s<best){best=s;localStorage.setItem('sl-mahjong-best'+lay,s)}}catch(e){}
+  $('oh').textContent='🎉 تمام شد!';$('op').innerHTML='زمان: '+fa(Math.floor(s/60)+':'+String(s%60).padStart(2,'0'))+'<br>بهترین زمان: '+fa(Math.floor(best/60)+':'+String(best%60).padStart(2,'0'));$('ov').style.display='flex';beep(900,.3)}
+$('un').onclick=()=>{if(!hist.length||over)return;const[a,b]=hist.pop();a.gone=b.gone=false;sel=null;hintPair=null;upd()};
+$('hn').onclick=()=>{const p=findPair();if(p){hintPair=p;hintT=2}};
+$('sh').onclick=()=>shuffle(false);
+[0,1,2].forEach(i=>$('l'+i).onclick=()=>{lay=i;newGame();marks()});
+function marks(){[0,1,2].forEach(i=>$('l'+i).className=i===lay?'on':'al')}
+$('ob').onclick=newGame;
+cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();click((e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height)});
+let last=0;function loop(ts){const dt=(ts-last)/1000||0;last=ts;if(hintT>0)hintT-=dt;if(!over){const s=Math.floor((Date.now()-t0)/1000);$('tm').textContent=fa(Math.floor(s/60)+':'+String(s%60).padStart(2,'0'))}draw();requestAnimationFrame(loop)}
+addEventListener('resize',()=>{if(tiles)fitDims()});
+if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+marks();newGame();requestAnimationFrame(loop);
+window.__mj={get tiles(){return tiles},isFree,findPair,click,newGame,LAY,assign,same,set lay(v){lay=v},shuffle,pick};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

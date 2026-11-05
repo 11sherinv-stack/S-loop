@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Pet Buddy — از حیوان خانگی مجازی‌ات مراقبت کن؛ غذا بده، بازی کن، حمام ببر. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Pet Buddy</title>
+<style>
+:root{--ink:#2a1d10;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:manipulation;background:#bfe6ff}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.stats{position:fixed;top:calc(env(safe-area-inset-top,0px) + 38px);left:8px;right:8px;display:flex;gap:6px;justify-content:center;z-index:10}
+.st{flex:1;max-width:90px;background:rgba(255,255,255,.75);border-radius:10px;padding:3px 5px;font-size:.7rem;text-align:center}
+.st i{display:block;height:6px;border-radius:3px;background:#ddd;margin-top:2px;overflow:hidden}.st i b{display:block;height:100%;border-radius:3px}
+.coins{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;background:rgba(255,255,255,.8);border-radius:14px;padding:4px 10px;font-weight:700;z-index:10}
+.bar{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:0;right:0;display:flex;gap:8px;justify-content:center;z-index:10;flex-wrap:wrap;padding:0 8px}
+.bar button{width:64px;height:64px;border-radius:18px;border:0;background:rgba(255,255,255,.88);font-size:1.7rem;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.25)}
+.bar button small{display:block;font-size:.6rem;line-height:1}
+.panel{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%);width:min(94vw,380px);background:rgba(255,255,255,.96);border-radius:18px;padding:12px;z-index:20;display:none;box-shadow:0 6px 24px rgba(0,0,0,.35);max-height:46vh;overflow:auto}
+.panel h3{margin:0 0 8px;font-size:.95rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.grid button{border:1px solid #d6c9b4;background:#fff8ec;border-radius:12px;padding:8px 2px;font:inherit;font-size:.75rem;cursor:pointer;line-height:1.5}
+.grid button span{display:block;font-size:1.6rem}
+.grid button:disabled{opacity:.4}
+.grid button.on{outline:3px solid #ff9800}
+.x{float:left;background:none;border:0;font-size:1.1rem;cursor:pointer}
+.msg{position:fixed;left:50%;top:35%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;border-radius:14px;padding:8px 16px;z-index:30;display:none;max-width:86vw;text-align:center}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="coins">🪙 <span id="co">0</span></div>
+<div class="stats" id="stats"></div>
+<div class="panel" id="pf"><button class="x" data-x="1">✕</button><h3>🍽 غذا</h3><div class="grid" id="gf"></div></div>
+<div class="panel" id="pg"><button class="x" data-x="1">✕</button><h3>🎮 بازی</h3><div class="grid"><button id="g1"><span>🧺</span>صید میوه</button><button id="g2"><span>🐭</span>موش‌گیر</button></div></div>
+<div class="panel" id="ps"><button class="x" data-x="1">✕</button><h3>🛍 فروشگاه</h3><div class="grid" id="gs"></div></div>
+<div class="msg" id="msg"></div>
+<div class="bar">
+<button id="bF" aria-label="غذا">🍎<small>غذا</small></button><button id="bG" aria-label="بازی">🎮<small>بازی</small></button><button id="bB" aria-label="حمام">🛁<small>حمام</small></button><button id="bS" aria-label="خواب">💡<small>خواب</small></button><button id="bP" aria-label="فروشگاه">🛍<small>فروشگاه</small></button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.08,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const FOODS=[{n:'سیب',e:'🍎',h:18,hp:3,p:0},{n:'هویج',e:'🥕',h:15,hp:2,p:0},{n:'برگر',e:'🍔',h:35,hp:6,p:12},{n:'پیتزا',e:'🍕',h:40,hp:8,p:15},{n:'کیک',e:'🍰',h:20,hp:18,p:20},{n:'بستنی',e:'🍦',h:12,hp:22,p:25}];
+const COLORS=[{n:'سبز',c:'#7ed957',p:0},{n:'نارنجی',c:'#ffa94d',p:30},{n:'صورتی',c:'#ff8fb3',p:30},{n:'آبی',c:'#6ec6ff',p:40},{n:'بنفش',c:'#b58cff',p:50},{n:'طلایی',c:'#ffd23f',p:120}];
+const HATS=[{n:'بدون کلاه',e:'∅',p:0},{n:'کلاه جشن',e:'🎉',p:25},{n:'تاج',e:'👑',p:100},{n:'کلاه کابوی',e:'🤠',p:60},{n:'کلاه فارغ‌التحصیلی',e:'🎓',p:80},{n:'عینک',e:'🕶',p:40}];
+const DEF={h:80,hp:80,en:90,hy:90,coins:20,color:0,hat:0,ownC:[0],ownH:[0],sleep:false,t:Date.now(),poo:0};
+let S;try{S=Object.assign({},DEF,JSON.parse(localStorage.getItem('sl-petbuddy')||'{}'))}catch(e){S=Object.assign({},DEF)}
+const save=()=>{try{S.t=Date.now();localStorage.setItem('sl-petbuddy',JSON.stringify(S))}catch(e){}};
+const clamp=v=>Math.max(0,Math.min(100,v));
+// کاهش در زمان غیبت
+(function(){const mins=Math.min(360,(Date.now()-S.t)/60000);S.h=clamp(S.h-mins*.5);S.hp=clamp(S.hp-mins*.35);S.hy=clamp(S.hy-mins*.3);S.en=clamp(S.sleep?S.en+mins*1.2:S.en-mins*.25)})();
+let W,H,tm=0,mood='ok',px=.5,py=0,tgt=.5,look=[0,0],bounce=0,ptr=[0,0],mode='home',game=null,hearts=[],toastT=0,bath=0,bubbles=[];
+function fit(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+function toast(t,ms=1600){const m=$('msg');m.textContent=t;m.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>m.style.display='none',ms)}
+function stats(){const items=[['🍗','h','#ff7043'],['😊','hp','#ffca28'],['⚡','en','#42a5f5'],['🫧','hy','#26c6da']];
+  $('stats').innerHTML=items.map(([e,k,c])=>`<div class="st">${e}<i><b style="width:${S[k]}%;background:${c}"></b></i></div>`).join('');$('co').textContent=fa(S.coins)}
+function moodOf(){const m=Math.min(S.h,S.hp,S.en,S.hy);return S.sleep?'sleep':m<20?'sad':S.hp>75&&m>45?'happy':'ok'}
+/* رسم */
+function drawPet(cx,cy,sz){
+  const col=COLORS[S.color].c,sq=1+Math.sin(tm*3)*.025+bounce*.15,sk=1/sq;
+  x.save();x.translate(cx,cy);x.scale(sq,sk);
+  x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.ellipse(0,sz*.5/sk,sz*.5,sz*.08,0,0,7);x.fill();
+  const g=x.createRadialGradient(-sz*.2,-sz*.25,sz*.1,0,0,sz*.7);g.addColorStop(0,'#fff8');g.addColorStop(.15,col);g.addColorStop(1,shade(col,-.22));
+  x.fillStyle=g;x.beginPath();x.moveTo(-sz*.5,sz*.35);x.bezierCurveTo(-sz*.6,-sz*.35,-sz*.3,-sz*.58,0,-sz*.58);x.bezierCurveTo(sz*.3,-sz*.58,sz*.6,-sz*.35,sz*.5,sz*.35);x.bezierCurveTo(sz*.45,sz*.52,-sz*.45,sz*.52,-sz*.5,sz*.35);x.fill();
+  const m=moodOf();
+  // چشم‌ها
+  const ex=[-sz*.17,sz*.17],ey=-sz*.1;
+  ex.forEach(e=>{
+    if(m==='sleep'){x.strokeStyle='#222';x.lineWidth=sz*.025;x.beginPath();x.arc(e,ey,sz*.06,0,Math.PI);x.stroke();return}
+    x.fillStyle='#fff';x.beginPath();x.ellipse(e,ey,sz*.095,sz*.12*(blink()?.1:1),0,0,7);x.fill();
+    x.fillStyle='#222';x.beginPath();x.arc(e+look[0]*sz*.04,ey+look[1]*sz*.04,sz*.05,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(e+look[0]*sz*.04+2,ey+look[1]*sz*.04-2,sz*.014,0,7);x.fill()});
+  // دهان
+  x.strokeStyle='#4a2a1a';x.lineWidth=sz*.03;x.lineCap='round';x.beginPath();
+  if(m==='happy'){x.arc(0,sz*.08,sz*.12,.1,Math.PI-.1)}else if(m==='sad'){x.arc(0,sz*.22,sz*.1,Math.PI+.3,-.3)}else if(m==='sleep'){x.ellipse(0,sz*.14,sz*.03,sz*.04,0,0,7)}else{x.moveTo(-sz*.07,sz*.15);x.lineTo(sz*.07,sz*.15)}
+  x.stroke();
+  if(m==='happy'){x.fillStyle='rgba(255,100,120,.35)';x.beginPath();x.ellipse(-sz*.3,sz*.07,sz*.06,sz*.04,0,0,7);x.ellipse(sz*.3,sz*.07,sz*.06,sz*.04,0,0,7);x.fill()}
+  // کلاه
+  if(S.hat){x.font=(sz*.34)+'px serif';x.textAlign='center';x.textBaseline='middle';const h=HATS[S.hat].e;x.fillText(h,0,S.hat===5?-sz*.1:-sz*.62)}
+  x.restore();
+}
+function shade(h,a){const n=parseInt(h.slice(1),16);const f=v=>Math.max(0,Math.min(255,Math.round(v+v*a)));return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`}
+let blinkT=0;function blink(){blinkT=(blinkT+1)%260;return blinkT<8}
+function room(){
+  const dark=S.sleep;
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,dark?'#1a2140':'#cfeaff');g.addColorStop(.62,dark?'#273060':'#eaf6ff');g.addColorStop(.62,dark?'#3a2b20':'#d9b48b');g.addColorStop(1,dark?'#2a1e15':'#b98e63');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // پنجره
+  x.fillStyle=dark?'#0a0f2a':'#7fc8ff';x.fillRect(W*.1,H*.12,W*.28,H*.2);x.strokeStyle='#8a5a2c';x.lineWidth=6;x.strokeRect(W*.1,H*.12,W*.28,H*.2);x.beginPath();x.moveTo(W*.24,H*.12);x.lineTo(W*.24,H*.32);x.moveTo(W*.1,H*.22);x.lineTo(W*.38,H*.22);x.stroke();
+  if(dark){x.fillStyle='#ffe';x.beginPath();x.arc(W*.3,H*.18,8,0,7);x.fill()}
+  // تابلو
+  x.fillStyle='#e8c07a';x.fillRect(W*.62,H*.14,W*.22,H*.14);x.fillStyle='#e57373';x.beginPath();x.arc(W*.73,H*.21,H*.04,0,7);x.fill();
+  if(dark){x.fillStyle='rgba(10,15,40,.45)';x.fillRect(0,0,W,H)}
+}
+function draw(){
+  x.setTransform(1,0,0,1,0,0);room();
+  const sz=Math.min(W*.55,H*.32),cx=W*px,cy=H*.62-sz*.1-py;
+  if(mode==='bath'){x.fillStyle='rgba(255,255,255,.35)';x.fillRect(0,H*.22,W,H*.55)}
+  drawPet(cx,cy,sz);
+  if(S.poo>0){for(let i=0;i<S.poo;i++){x.font='28px serif';x.textAlign='center';x.fillText('💩',W*(.2+i*.15),H*.74)}}
+  bubbles.forEach(b=>{x.strokeStyle='rgba(255,255,255,.9)';x.fillStyle='rgba(180,230,255,.45)';x.lineWidth=2;x.beginPath();x.arc(b.x,b.y,b.r,0,7);x.fill();x.stroke()});
+  hearts.forEach(h=>{x.globalAlpha=Math.max(0,h.l);x.font='22px serif';x.fillText(h.e,h.x,h.y);x.globalAlpha=1});
+  if(S.sleep){x.font='bold '+(sz*.2)+'px sans-serif';x.fillStyle='#fff';x.textAlign='left';x.fillText('Z z z',cx+sz*.35,cy-sz*.45-Math.sin(tm*2)*6)}
+  if(game)game.draw();
+}
+/* بازی‌ها */
+function startGame(kind){
+  $('pg').style.display='none';
+  if(S.en<15){toast('خیلی خسته است! بگذار بخوابد');return}
+  mode='game';let score=0,left=30;const items=[],pw=Math.min(W*.5,180);let gx=.5;
+  game={
+    update(dt){left-=dt;
+      if(kind===1){if(Math.random()<dt*2.2)items.push({x:Math.random(),y:-20,e:Math.random()<.2?'💣':['🍎','🍌','🍇','🍓'][Math.floor(Math.random()*4)],v:160+Math.random()*120});
+        items.forEach(it=>{it.y+=it.v*dt});
+        const catchY=H*.7;for(const it of items){if(!it.done&&it.y>catchY-30&&it.y<catchY+30&&Math.abs(it.x*W-gx*W)<pw*.5){it.done=true;if(it.e==='💣'){score=Math.max(0,score-3);beep(120,.2,'sawtooth')}else{score++;beep(700+score*10,.05)}}}
+      }else{if(Math.random()<dt*1.6&&items.length<5)items.push({x:.12+Math.random()*.76,y:.3+Math.random()*.35,l:1.1});items.forEach(it=>it.l-=dt)}
+      for(let i=items.length-1;i>=0;i--){const it=items[i];if(it.done||it.y>H+30||(it.l!==undefined&&it.l<=0))items.splice(i,1)}
+      if(left<=0)end()},
+    draw(){x.setTransform(1,0,0,1,0,0);x.font='28px serif';x.textAlign='center';
+      if(kind===1){items.forEach(it=>{x.fillText(it.e,it.x*W,it.y)});x.fillStyle='#8d5a2b';x.fillRect(gx*W-pw/2,H*.7,pw,12);x.font='30px serif';x.fillText('🧺',gx*W,H*.7+8)}
+      else items.forEach(it=>{x.fillText('🐭',it.x*W,it.y*H)});
+      x.fillStyle='rgba(0,0,0,.5)';x.fillRect(W/2-70,H*.12,140,30);x.fillStyle='#fff';x.font='bold 15px Tahoma';x.fillText('امتیاز '+fa(score)+' · '+fa(Math.ceil(left))+' ث',W/2,H*.12+15)},
+    move(px_){gx=Math.max(.1,Math.min(.9,px_))},
+    tap(tx,ty){if(kind!==2)return;for(let i=0;i<items.length;i++){const it=items[i];if(Math.hypot(it.x*W-tx,it.y*H-ty)<38){items.splice(i,1);score++;beep(800,.05);return}}}
+  };
+  function end(){const gain=Math.floor(score*1.5);S.coins+=gain;S.hp=clamp(S.hp+Math.min(30,score*2));S.en=clamp(S.en-10);S.h=clamp(S.h-6);game=null;mode='home';toast('امتیاز '+fa(score)+' → +'+fa(gain)+' 🪙');beep(880,.2);save();stats()}
+}
+/* منوها */
+function closeP(){['pf','pg','ps'].forEach(i=>$(i).style.display='none')}
+function open(id){const v=$(id).style.display==='block';closeP();if(!v)$(id).style.display='block'}
+document.querySelectorAll('.x').forEach(b=>b.onclick=closeP);
+$('bF').onclick=()=>{if(S.sleep)return toast('خوابیده است');open('pf')};
+$('bG').onclick=()=>{if(S.sleep)return toast('خوابیده است');open('pg')};
+$('bP').onclick=()=>{open('ps');shop()};
+$('gf').innerHTML=FOODS.map((f,i)=>`<button data-i="${i}"><span>${f.e}</span>${f.n}</button>`).join('');
+$('gf').onclick=e=>{const b=e.target.closest('button');if(!b)return;const f=FOODS[+b.dataset.i];
+  if(S.h>95)return toast('سیر است!');
+  S.h=clamp(S.h+f.h);S.hp=clamp(S.hp+f.hp);S.hy=clamp(S.hy-f.p*.3);if(Math.random()<.35)S.poo=Math.min(3,S.poo+1);
+  for(let i=0;i<5;i++)hearts.push({e:f.e,x:W*px+(Math.random()-.5)*80,y:H*.45,l:1});beep(500,.1);bounce=1;save();stats();closeP()};
+$('g1').onclick=()=>startGame(1);$('g2').onclick=()=>startGame(2);
+$('bB').onclick=()=>{if(S.sleep)return toast('خوابیده است');closeP();mode=mode==='bath'?'home':'bath';if(mode==='bath')toast('با انگشت روی حیوان بکش تا کف کند 🫧')};
+$('bS').onclick=()=>{closeP();S.sleep=!S.sleep;mode='home';toast(S.sleep?'شب بخیر 😴':'صبح بخیر ☀️');beep(S.sleep?300:600,.2);save()};
+function shop(){
+  $('gs').innerHTML=COLORS.map((c,i)=>{const own=S.ownC.includes(i);return `<button data-k="c" data-i="${i}" class="${S.color===i?'on':''}"><span style="color:${c.c}">●</span>${c.n}<br>${own?(S.color===i?'✓':'انتخاب'):'🪙 '+fa(c.p)}</button>`}).join('')+HATS.map((h,i)=>{const own=S.ownH.includes(i);return `<button data-k="h" data-i="${i}" class="${S.hat===i?'on':''}"><span>${h.e}</span>${h.n}<br>${own?(S.hat===i?'✓':'بپوش'):'🪙 '+fa(h.p)}</button>`}).join('');
+}
+$('gs').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,k=b.dataset.k,L=k==='c'?COLORS:HATS,own=k==='c'?S.ownC:S.ownH;
+  if(!own.includes(i)){if(S.coins<L[i].p)return toast('سکه‌ی کافی نداری');S.coins-=L[i].p;own.push(i)}
+  if(k==='c')S.color=i;else S.hat=i;beep(900,.1);save();stats();shop()};
+/* ورودی */
+function pos(e){return[e.clientX,e.clientY]}
+cv.addEventListener('pointerdown',e=>{
+  const[tx,ty]=pos(e);ptr=[tx,ty];
+  if(game){game.tap&&game.tap(tx,ty);game.move&&game.move(tx/W);return}
+  if(S.sleep){S.sleep=false;toast('بیدار شد!');save();return}
+  const sz=Math.min(W*.55,H*.32);
+  if(Math.hypot(tx-W*px,ty-(H*.62))<sz*.6&&mode==='home'){S.hp=clamp(S.hp+2);bounce=1;hearts.push({e:'❤️',x:tx,y:ty-20,l:1});beep(600+Math.random()*200,.05);}
+  // پاک کردن
+  if(S.poo>0&&ty>H*.68&&ty<H*.82){S.poo=0;S.hy=clamp(S.hy+5);beep(300,.1);save()}
+  down=true;
+});
+let down=false;
+cv.addEventListener('pointermove',e=>{
+  const[tx,ty]=pos(e);const sz=Math.min(W*.55,H*.32);look=[Math.max(-1,Math.min(1,(tx-W*px)/(sz))),Math.max(-1,Math.min(1,(ty-H*.55)/sz))];
+  if(game&&game.move&&down)game.move(tx/W);
+  if(mode==='bath'&&down&&Math.hypot(tx-W*px,ty-H*.55)<sz*.6){bath+=1;S.hy=clamp(S.hy+.5);if(Math.random()<.5)bubbles.push({x:tx,y:ty,r:6+Math.random()*10,v:20+Math.random()*30});if(bath%25===0)beep(900,.04);}
+});
+addEventListener('pointerup',()=>{down=false;save();stats()});
+/* حلقه */
+let last=0,decayT=0,sayT=0;
+function loop(t){
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;tm+=dt;
+  // حرکت
+  if(Math.random()<dt*.4)tgt=.3+Math.random()*.4;if(S.sleep||mode!=='home')tgt=.5;px+=(tgt-px)*dt*1.2;
+  bounce=Math.max(0,bounce-dt*3);
+  hearts.forEach(h=>{h.y-=40*dt;h.l-=dt*.9});hearts=hearts.filter(h=>h.l>0);
+  bubbles.forEach(b=>{b.y-=b.v*dt;b.r+=dt*2});bubbles=bubbles.filter(b=>b.y>0&&b.r<28);
+  decayT+=dt;if(decayT>=3){decayT=0;
+    if(S.sleep){S.en=clamp(S.en+2.2);S.h=clamp(S.h-.1)}else{S.h=clamp(S.h-.45*3/60*2);S.hp=clamp(S.hp-.3*3/60*2);S.hy=clamp(S.hy-.25*3/60*2-(S.poo?.3:0));S.en=clamp(S.en-.2*3/60*2)}
+    if(!S.sleep&&Math.min(S.h,S.hp,S.en,S.hy)<20&&Math.random()<.3){toast('😢 حیوانت به مراقبت نیاز دارد')}
+    save();stats()}
+  if(game&&game.update)game.update(dt);
+  draw();requestAnimationFrame(loop);
+}
+addEventListener('resize',fit);fit();stats();requestAnimationFrame(loop);
+window.__pb={S,FOODS,COLORS,HATS,moodOf,get mode(){return mode},stats};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

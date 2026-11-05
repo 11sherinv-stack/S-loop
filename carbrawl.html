@@ -12,7 +12,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 .pad{direction:ltr;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:12px;z-index:20}
 .pad button{width:92px;height:76px;border-radius:18px;border:2px solid rgba(255,255,255,.75);background:rgba(0,0,0,.4);color:#fff;font-size:34px;touch-action:none;cursor:pointer}
 .pad button.dn{background:rgba(255,255,255,.4)}
-#pl{left:12px}#pr{right:12px}
+#pl{left:12px}#pr2{right:12px}.pad button.p2{border-color:#ff8a80}.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.maps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:440px}.maps button{padding:4px;border:2px solid transparent;background:rgba(255,255,255,.12);color:#fff;font-size:.72rem;border-radius:10px}.maps button.sel,.row button.sel{outline:3px solid #ffb300}.maps canvas{display:block;width:84px;height:40px;background:#7ec0f0;border-radius:6px}.row button{background:rgba(255,255,255,.18);color:#fff}#pr{right:12px}
 .ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,20,40,.82);color:#fff;text-align:center;padding:16px}
 .ov h2{margin:0;font-size:1.8rem}.ov p{margin:0;line-height:1.9;max-width:430px}
 .ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
@@ -21,26 +21,37 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 <body>
 <canvas id="c"></canvas>
 <a class="back" href="index.html">&larr; S loop</a>
+<div class="pad" id="pr2" style="display:none"><button id="b2l" aria-label="چپ ۲">◀</button><button id="b2r" aria-label="راست ۲">▶</button></div>
 <div class="pad" id="pl"><button id="bl" aria-label="چپ">◀</button><button id="br" aria-label="راست">▶</button></div>
-<div class="ov" id="ov"><h2 id="oh">🚗 Car Brawl</h2><p id="op">با ماشینت به ماشین حریف بکوب!<br>ضربه‌ی محکم به سر راننده یا فرسودن بدنه‌ی ماشین، حریف را از بازی بیرون می‌کند. اگر ماشینت وارونه ماند هم می‌بازی.<br>◀ ▶ حرکت (در هوا: چرخاندن ماشین) · اول به ۳ برد، برنده است.<br><small>رایانه: کلیدهای جهت‌دار یا A / D</small></p><button id="ob">شروع</button></div>
+<div class="ov" id="ov"><h2 id="oh">🚗 Car Brawl</h2><p id="op">با ماشینت به ماشین حریف بکوب!<br>ضربه‌ی محکم به سر راننده یا فرسودن بدنه‌ی ماشین، حریف را از بازی بیرون می‌کند. اگر ماشینت وارونه ماند هم می‌بازی.<br>◀ ▶ حرکت (در هوا: چرخاندن ماشین) · اول به ۳ برد، برنده است.<br><small>رایانه — بازیکن ۱: A / D · بازیکن ۲ (حالت دو نفره): کلیدهای جهت‌دار</small></p><div class="row" id="mm"><button data-m="1" class="sel">👤 تک‌نفره</button><button data-m="2">👥 دو نفره</button></div><div class="maps" id="maps"></div><button id="ob">شروع</button></div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
 const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 let au;function beep(f,d=.06,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 const GRAV=1300,I=2600,DRIVE=330,MAXV=560,WALL0=30,WALL1=1970;
-const ARENAS=[
- [[0,430],[800,430],[950,380],[1050,380],[1200,430],[2000,430]],
- [[0,430],[250,430],[420,350],[560,350],[640,430],[1360,430],[1440,350],[1580,350],[1750,430],[2000,430]],
- [[0,420],[300,440],[600,400],[900,440],[1100,440],[1400,400],[1700,440],[2000,420]]
+const MAPS=[
+ {n:'دشت',p:[[0,430],[800,430],[950,380],[1050,380],[1200,430],[2000,430]]},
+ {n:'رمپ‌ها',p:[[0,430],[250,430],[420,350],[560,350],[640,430],[1360,430],[1440,350],[1580,350],[1750,430],[2000,430]]},
+ {n:'موج‌ها',p:[[0,420],[300,440],[600,400],[900,440],[1100,440],[1400,400],[1700,440],[2000,420]]},
+ {n:'دره',p:[[0,380],[500,380],[700,470],[1000,520],[1300,470],[1500,380],[2000,380]]},
+ {n:'تپه‌ی بزرگ',p:[[0,450],[500,450],[850,300],[1150,300],[1500,450],[2000,450]]},
+ {n:'کوهستان',p:[[0,430],[250,340],[450,420],[700,300],[900,400],[1100,400],[1300,300],[1550,420],[1750,340],[2000,430]]},
+ {n:'پله‌ها',p:[[0,470],[350,470],[400,420],[700,420],[750,370],[1000,370],[1250,370],[1300,420],[1600,420],[1650,470],[2000,470]]},
+ {n:'حوضچه',p:[[0,360],[300,360],[500,470],[1500,470],[1700,360],[2000,360]]}
 ];
+const ARENAS=MAPS.map(m=>m.p);
+let mode=1,mapSel=-1;
 const WR=[{lx:-30,ly:14,r:13,t:'w'},{lx:30,ly:14,r:13,t:'w'},{lx:-36,ly:0,r:9,t:'c'},{lx:-18,ly:-2,r:9,t:'c'},{lx:0,ly:-4,r:9,t:'c'},{lx:18,ly:-2,r:9,t:'c'},{lx:36,ly:0,r:9,t:'c'},{lx:-4,ly:-14,r:9,t:'c'},{lx:-2,ly:-27,r:8,t:'h'}];
 let G,cars,round=0,sc=[0,0],state='menu',tm=0,msg='',msgT=0,koT=0,parts=[],shake=0;
-const btn={l:false,r:false};
+const btn={l:false,r:false},btn2={l:false,r:false};
 function mk(x0,col,human,dir){return{x:x0,y:350,a:0,vx:0,vy:0,w:0,hp:100,ko:false,col,human,dir,wr:0,gr:0,upT:0,input:0,stuck:0,aiT:0,mode:'ram',why:''}}
 function newRound(){
-  G=ARENAS[round%ARENAS.length];cars=[mk(520,'#1e88e5',true,1),mk(1480,'#e53935',false,-1)];koT=0;parts=[];state='fight';
-  msg='دور '+fa(round+1);msgT=1.4;
+  const mi=mapSel>=0?mapSel:Math.floor(Math.random()*MAPS.length);G=MAPS[mi].p;
+  cars=[mk(520,'#1e88e5',true,1),mk(1480,'#e53935',mode===2,-1)];
+  cars.forEach(c=>{c.y=groundAt(c.x).y-75});
+  koT=0;parts=[];state='fight';
+  msg='دور '+fa(round+1)+' · '+MAPS[mi].n;msgT=1.8;
 }
 function groundAt(px){for(let i=0;i<G.length-1;i++){const a=G[i],b=G[i+1];if(px>=a[0]&&px<=b[0]){const s=(b[1]-a[1])/(b[0]-a[0]),l=Math.hypot(s,1);return{y:a[1]+s*(px-a[0]),nx:s/l,ny:-1/l,a}}}return{y:G[G.length-1][1],nx:0,ny:-1,a:G[0]}}
 function cp(c,k){const q=WR[k],ca=Math.cos(c.a),sa=Math.sin(c.a);return[c.x+q.lx*ca-q.ly*sa,c.y+q.lx*sa+q.ly*ca]}
@@ -124,22 +135,22 @@ function update(dt){
   const sub=6,d=dt/sub;
   for(let s=0;s<sub;s++){
     const[a,b]=cars;
-    a.input=a.ko?0:(btn.r||keys.ArrowRight||keys.d?1:0)-(btn.l||keys.ArrowLeft||keys.a?1:0);
-    ai(b,a,d);
+    a.input=a.ko?0:((btn.r||keys.d||(mode===1&&keys.ArrowRight))?1:0)-((btn.l||keys.a||(mode===1&&keys.ArrowLeft))?1:0);
+    if(mode===2)b.input=b.ko?0:((btn2.r||keys.ArrowRight)?1:0)-((btn2.l||keys.ArrowLeft)?1:0);else ai(b,a,d);
     stepCar(a,d);stepCar(b,d);
     carVsCar(a,b);
   }
   parts.forEach(p=>{p.l-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=900*dt});parts=parts.filter(p=>p.l>0);
   shake=Math.max(0,shake-30*dt);msgT=Math.max(0,msgT-dt);
   const[a,b]=cars;
-  if((a.ko||b.ko)&&koT===0){koT=1;msg=(a.ko&&b.ko)?'مساوی!':b.ko?'ضربه‌ی فنی! ('+b.why+')':'باختی ('+a.why+')';msgT=2;if(!(a.ko&&b.ko)){if(b.ko)sc[0]++;else sc[1]++}}
+  if((a.ko||b.ko)&&koT===0){koT=1;msg=(a.ko&&b.ko)?'مساوی!':mode===2?((b.ko?'آبی':'قرمز')+' برد! ('+(b.ko?b.why:a.why)+')'):b.ko?'ضربه‌ی فنی! ('+b.why+')':'باختی ('+a.why+')';msgT=2;if(!(a.ko&&b.ko)){if(b.ko)sc[0]++;else sc[1]++}}
   if(koT>0){koT+=dt;if(koT>2.6)endRound()}
 }
 function endRound(){
-  if(sc[0]>=3||sc[1]>=3){state='over';show(sc[0]>=3?'🏆 برنده شدی!':'باختی',fa(sc[0])+' — '+fa(sc[1]),'دوباره');return}
+  if(sc[0]>=3||sc[1]>=3){state='over';show(mode===2?(sc[0]>=3?'🏆 آبی برنده شد!':'🏆 قرمز برنده شد!'):(sc[0]>=3?'🏆 برنده شدی!':'باختی'),fa(sc[0])+' — '+fa(sc[1]),'دوباره');return}
   round++;newRound();
 }
-function show(h,p,b){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent=b;$('ov').style.display='flex'}
+function show(h,p,b){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent=b;$('mm').style.display='flex';$('maps').style.display='flex';$('ov').style.display='flex'}
 function drawCar(c){
   x.save();x.translate(c.x,c.y);x.rotate(c.a);if(c.dir<0)x.scale(-1,1);if(c.ko)x.globalAlpha=.8;
   const col=c.col;
@@ -162,14 +173,14 @@ function draw(){
   const[a,b]=cars,mx=(a.x+b.x)/2,dx=Math.abs(a.x-b.x);
   const z=Math.max(.38,Math.min(1.1,W/(dx+380)));
   const sx=shake?(Math.random()-.5)*shake:0,sy=shake?(Math.random()-.5)*shake:0;
-  x.setTransform(z,0,0,z,W/2-mx*z+sx,H*.62-380*z+sy);
+  const my=Math.max(280,Math.min(560,(a.y+b.y)/2+40));x.setTransform(z,0,0,z,W/2-mx*z+sx,H*.6-my*z+sy);
   // پس‌زمینه کوه
   x.fillStyle='rgba(90,130,170,.35)';for(let i=0;i<9;i++){const bx=i*260-100;x.beginPath();x.moveTo(bx,430);x.lineTo(bx+130,250+(i%3)*30);x.lineTo(bx+260,430);x.fill()}
   // زمین
-  x.fillStyle='#6b8f3a';x.beginPath();x.moveTo(G[0][0]-600,1200);G.forEach(p=>x.lineTo(p[0],p[1]));x.lineTo(G[G.length-1][0]+600,G[G.length-1][1]);x.lineTo(G[G.length-1][0]+600,1200);x.closePath();x.fill();
+  x.fillStyle='#6b8f3a';x.beginPath();x.moveTo(G[0][0]-600,1400);G.forEach(p=>x.lineTo(p[0],p[1]));x.lineTo(G[G.length-1][0]+600,G[G.length-1][1]);x.lineTo(G[G.length-1][0]+600,1400);x.closePath();x.fill();
   x.strokeStyle='#8bb552';x.lineWidth=6;x.beginPath();G.forEach((p,i)=>i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.stroke();
   // دیوارها
-  x.fillStyle='#8d6e63';x.fillRect(WALL0-24,150,24,300);x.fillRect(WALL1,150,24,300);
+  x.fillStyle='#8d6e63';x.fillRect(WALL0-24,60,24,700);x.fillRect(WALL1,60,24,700);
   cars.forEach(drawCar);
   parts.forEach(p=>{x.fillStyle=p.c;x.fillRect(p.x,p.y,5,5)});
   x.setTransform(1,0,0,1,0,0);
@@ -181,13 +192,23 @@ function draw(){
 }
 function hold(id,k){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();btn[k]=true;b.classList.add('dn');try{b.setPointerCapture(e.pointerId)}catch(_){}});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>{btn[k]=false;b.classList.remove('dn')}))}
 hold('bl','l');hold('br','r');
+function hold2(id,k){const b=$(id);b.classList.add('p2');b.addEventListener('pointerdown',e=>{e.preventDefault();btn2[k]=true;b.classList.add('dn');try{b.setPointerCapture(e.pointerId)}catch(_){}});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>{btn2[k]=false;b.classList.remove('dn')}))}
+hold2('b2l','l');hold2('b2r','r');
+function mapUI(){const box=$('maps');box.innerHTML='';
+  const mk=(label,i)=>{const b=document.createElement('button');b.dataset.i=i;if(i===mapSel)b.className='sel';
+    if(i>=0){const c=document.createElement('canvas');c.width=84;c.height=40;const g=c.getContext('2d');g.fillStyle='#6b8f3a';g.beginPath();g.moveTo(0,40);MAPS[i].p.forEach(q=>g.lineTo(q[0]/2000*84,(q[1]-250)/330*40));g.lineTo(84,40);g.fill();b.appendChild(c)}
+    else{const d=document.createElement('div');d.style.cssText='width:84px;height:40px;display:flex;align-items:center;justify-content:center;font-size:1.4rem';d.textContent='🎲';b.appendChild(d)}
+    const l=document.createElement('div');l.textContent=label;b.appendChild(l);b.onclick=()=>{mapSel=i;mapUI()};box.appendChild(b)};
+  mk('تصادفی',-1);MAPS.forEach((m,i)=>mk(m.n,i))}
+$('mm').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=+b.dataset.m;[...$('mm').children].forEach(c=>c.classList.toggle('sel',c===b));$('pr2').style.display=mode===2?'flex':'none'};
+mapUI();
 addEventListener('keydown',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=true});addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
-$('ob').onclick=()=>{$('ov').style.display='none';round=0;sc=[0,0];newRound()};
+$('ob').onclick=()=>{$('ov').style.display='none';$('mm').style.display='none';$('maps').style.display='none';round=0;sc=[0,0];newRound()};
 function resize(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',resize);resize();
 if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
 let last=0;function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
-G=ARENAS[0];requestAnimationFrame(loop);
-window.__cb={update,newRound,get cars(){return cars},get sc(){return sc},get state(){return state},keys,btn,stepCar,ko,set round(v){round=v},ARENAS};
+G=MAPS[0].p;requestAnimationFrame(loop);
+window.__cb={update,newRound,get cars(){return cars},get sc(){return sc},get state(){return state},keys,btn,btn2,stepCar,ko,set round(v){round=v},ARENAS,MAPS,set mode(v){mode=v},set mapSel(v){mapSel=v}};
 </script>
 <script>
 /* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */

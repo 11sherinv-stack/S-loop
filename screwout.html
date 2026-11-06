@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Screw Out — پیچ‌ها را باز کن، سه‌تا هم‌رنگ را جمع کن و تخته‌ها را بیفتان. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Screw Out</title>
+<style>
+:root{--bg:#f1e6d3;--ink:#2b1d0e;--card:#fff;--btn:#e8742a;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241a10;--ink:#f1e6d3;--card:#33261a;--btn:#ff9650;--btnink:#2a1000}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.info{display:flex;gap:14px;font-size:.88rem;margin:2px 0}
+.wrap{flex:1;min-height:0;width:100%;position:relative}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.bar{display:flex;gap:8px;margin:6px 0 12px}
+button{font:inherit;border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+.ov button{background:var(--btn);color:var(--btnink)}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🔩 Screw Out</h1>
+<div class="info"><span>مرحله: <b id="lv">۱</b></span><span>تخته‌ی مانده: <b id="rm">۰</b></span></div>
+<div class="wrap"><canvas id="c"></canvas></div>
+<div class="bar"><button id="un">↩︎ برگشت</button><button id="nw">⟲ دوباره</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button id="ob">ادامه</button></div></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const WOOD=['#c9955c','#b9824a','#d4a56c','#a8733f','#c08a52'],SC=['#e53935','#1e88e5','#43a047','#fdd835','#8e24aa'];
+const TRAY=6;
+let boards=[],tray=[],level=1,over=false,W=360,H=520,anims=[],hist=[],bx=0,by=0,bw=360,bh=420;
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function inBoard(b,px,py){const dx=px-b.x,dy=py-b.y,c=Math.cos(-b.a),s=Math.sin(-b.a),lx=dx*c-dy*s,ly=dx*s+dy*c;return Math.abs(lx)<=b.w/2&&Math.abs(ly)<=b.h/2}
+function sp(b,s){const c=Math.cos(b.a),sn=Math.sin(b.a);return[b.x+s.lx*c-s.ly*sn,b.y+s.lx*sn+s.ly*c]}
+function exposed(b,s){const[px,py]=sp(b,s);return !boards.some(o=>o!==b&&o.z>b.z&&!o.fall&&inBoard(o,px,py))}
+function gen(){
+  const nB=Math.min(11,4+Math.floor(level*.8)),nCol=Math.min(5,3+Math.floor(level/3));
+  for(let tries=0;tries<200;tries++){
+    const R=rng(level*733+tries*31+Date.now()%991);boards=[];
+    for(let i=0;i<nB;i++){const w=rnd(R,150,230),h=rnd(R,34,48),ang=(R()<.5?0:R()<.5?Math.PI/2:rnd(R,-.9,.9));
+      const b={x:bx+bw/2+rnd(R,-bw*.24,bw*.24),y:by+bh/2+rnd(R,-bh*.3,bh*.3),w,h,a:ang,z:i,col:WOOD[i%WOOD.length],scr:[],fall:false};
+      const ns=R()<.55?2:3;for(let k=0;k<ns;k++){const lx=(k===0?-1:k===1?1:0)*(w/2-16)+(ns===3&&k===2?0:0);b.scr.push({lx,ly:0,col:0})}
+      boards.push(b)}
+    // رنگ پیچ‌ها: تعداد هر رنگ مضرب ۳
+    const all=[];boards.forEach(b=>b.scr.forEach(s=>all.push(s)));
+    const total=all.length-(all.length%3);while(all.length>total){const s=all.pop();const b=boards.find(q=>q.scr.includes(s));b.scr.splice(b.scr.indexOf(s),1)}
+    if(boards.some(b=>!b.scr.length))continue;
+    const cols=[];for(let i=0;i<all.length;i++)cols.push(Math.floor(i/3)%nCol);
+    for(let i=cols.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[cols[i],cols[j]]=[cols[j],cols[i]]}
+    all.forEach((s,i)=>s.col=cols[i]);
+    if(solvable())return;
+  }
+}
+function rnd(R,a,b){return a+R()*(b-a)}
+function solvable(){
+  for(let t=0;t<260;t++){
+    const bs=boards.map(b=>({...b,scr:b.scr.map(s=>({...s})),fall:false}));let tr=[],guard=0;
+    while(bs.some(b=>!b.fall)&&guard++<200){
+      const ex=[];bs.forEach(b=>{if(b.fall)return;b.scr.forEach(s=>{const[px,py]=sp(b,s);if(!bs.some(o=>o!==b&&o.z>b.z&&!o.fall&&inBoard(o,px,py)))ex.push([b,s])})});
+      if(!ex.length)break;
+      // ترجیح: رنگی که در سینی هست
+      let pick=ex.filter(([b,s])=>tr.filter(c=>c===s.col).length>=1);if(!pick.length||Math.random()<.15)pick=ex;
+      const[b,s]=pick[Math.floor(Math.random()*pick.length)];b.scr.splice(b.scr.indexOf(s),1);tr.push(s.col);
+      const k=tr.filter(c=>c===s.col).length;if(k>=3){let n=0;tr=tr.filter(c=>c!==s.col||(n++>=3))}
+      if(!b.scr.length)b.fall=true;
+      if(tr.length>TRAY)break;
+    }
+    if(bs.every(b=>b.fall))return true;
+  }
+  return false;
+}
+function start(){fit();gen();tray=[];anims=[];hist=[];over=false;upd()}
+function fit(){const r=cv.getBoundingClientRect();W=cv.width=r.width||360;H=cv.height=r.height||500;bx=10;by=10;bw=W-20;bh=H-90}
+function upd(){$('lv').textContent=fa(level);$('rm').textContent=fa(boards.filter(b=>!b.fall).length)}
+function draw(){
+  x.clearRect(0,0,W,H);
+  x.fillStyle='rgba(0,0,0,.08)';x.fillRect(bx,by,bw,bh);x.strokeStyle='rgba(0,0,0,.25)';x.strokeRect(bx,by,bw,bh);
+  const list=boards.slice().sort((a,b)=>a.z-b.z);
+  list.forEach(b=>{
+    x.save();x.translate(b.x,b.y+(b.fall?b.fy:0));x.rotate(b.a+(b.fall?b.fr:0));x.globalAlpha=b.fall?Math.max(0,1-b.fy/260):1;
+    x.fillStyle='rgba(0,0,0,.25)';x.fillRect(-b.w/2+3,-b.h/2+5,b.w,b.h);
+    x.fillStyle=b.col;x.fillRect(-b.w/2,-b.h/2,b.w,b.h);x.strokeStyle='rgba(60,30,5,.5)';x.lineWidth=2;x.strokeRect(-b.w/2,-b.h/2,b.w,b.h);
+    x.strokeStyle='rgba(80,45,10,.25)';x.lineWidth=1;for(let i=-b.w/2+14;i<b.w/2;i+=22){x.beginPath();x.moveTo(i,-b.h/2+6);x.lineTo(i+12,b.h/2-6);x.stroke()}
+    x.restore();
+    if(!b.fall)b.scr.forEach(s=>{const[px,py]=sp(b,s),ex=exposed(b,s);
+      x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.arc(px+1.5,py+2,13,0,7);x.fill();
+      x.fillStyle=SC[s.col];x.beginPath();x.arc(px,py,13,0,7);x.fill();x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=2;x.stroke();
+      x.strokeStyle='rgba(0,0,0,.55)';x.lineWidth=3;x.beginPath();x.moveTo(px-7,py);x.lineTo(px+7,py);x.moveTo(px,py-7);x.lineTo(px,py+7);x.stroke();
+      if(!ex){x.fillStyle='rgba(60,40,20,.38)';x.beginPath();x.arc(px,py,13,0,7);x.fill()}});
+  });
+  // سینی
+  const tw=Math.min(W-20,6*52),tx=(W-tw)/2,ty=H-70,cw=tw/TRAY;
+  x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.roundRect?x.roundRect(tx-6,ty-8,tw+12,58,12):x.rect(tx-6,ty-8,tw+12,58);x.fill();
+  for(let i=0;i<TRAY;i++){x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.arc(tx+cw*(i+.5),ty+21,17,0,7);x.fill();
+    if(tray[i]!==undefined){x.fillStyle=SC[tray[i]];x.beginPath();x.arc(tx+cw*(i+.5),ty+21,14,0,7);x.fill();x.strokeStyle='rgba(255,255,255,.6)';x.lineWidth=2;x.stroke();x.strokeStyle='rgba(0,0,0,.5)';x.lineWidth=3;x.beginPath();x.moveTo(tx+cw*(i+.5)-7,ty+21);x.lineTo(tx+cw*(i+.5)+7,ty+21);x.stroke()}}
+}
+function tap(e){
+  if(over)return;const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width,py=(e.clientY-r.top)*H/r.height;
+  const list=boards.filter(b=>!b.fall).sort((a,b)=>b.z-a.z);
+  for(const b of list)for(const s of b.scr){const[sx,sy]=sp(b,s);if(Math.hypot(px-sx,py-sy)<20){
+    if(!exposed(b,s)){beep(140,.08,'square',.05);return}
+    hist.push({b,s,tray:tray.slice(),fall:false});
+    b.scr.splice(b.scr.indexOf(s),1);tray.push(s.col);beep(500+s.col*80,.07);
+    const k=tray.filter(c=>c===s.col).length;if(k>=3){let n=0;tray=tray.filter(c=>c!==s.col||(n++>=3));beep(900,.15)}
+    if(!b.scr.length){b.fall=true;b.fy=0;b.fr=0;b.vy=0;hist[hist.length-1].fall=true;beep(260,.2,'sawtooth',.05)}
+    upd();
+    if(boards.every(q=>q.fall))setTimeout(win,700);else if(tray.length>=TRAY&&!tray.some((c,i)=>tray.filter(q=>q===c).length>=3)){over=true;setTimeout(lose,500)}
+    return}}
+}
+cv.addEventListener('pointerdown',tap);
+$('un').onclick=()=>{if(over||!hist.length)return;const h=hist.pop();h.s.scr; h.b.scr.push(h.s);if(h.fall){h.b.fall=false}tray=h.tray;upd()};
+function win(){over=true;let best=0;try{best=+localStorage.getItem('sl-screwout')||0;if(level>best)localStorage.setItem('sl-screwout',level)}catch(e){}beep(900,.3);$('oh').textContent='🎉 همه‌ی تخته‌ها افتادند!';$('op').textContent='مرحله '+fa(level)+' تمام شد';$('ob').textContent='مرحله‌ی بعد';$('ob').onclick=()=>{$('ov').style.display='none';level++;start()};$('ov').style.display='flex'}
+function lose(){$('oh').textContent='😵 سینی پر شد';$('op').textContent='سه‌تا هم‌رنگ جمع نشد؛ دوباره امتحان کن';$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';start()};$('ov').style.display='flex'}
+$('nw').onclick=()=>start();
+let last=0;function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;boards.forEach(b=>{if(b.fall){b.vy+=900*dt;b.fy+=b.vy*dt;b.fr+=dt*.8}});draw();requestAnimationFrame(loop)}
+addEventListener('resize',()=>{fit()});
+if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+start();requestAnimationFrame(loop);
+window.__so={get boards(){return boards},get tray(){return tray},solvable,start,set level(v){level=v},tap,exposed,sp};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

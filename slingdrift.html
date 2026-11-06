@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Sling Drift — نگه دار تا ماشین دور میله بچرخد، رها کن تا شلیک شود. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Sling Drift</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1e2a35;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,20,30,.84);color:#fff;text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.8rem}.ov p{margin:0;line-height:1.9;max-width:420px}
+.ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="ov" id="ov"><h2 id="oh">🌀 Sling Drift</h2><p id="op">ماشین همیشه به جلو می‌رود. صفحه را نگه دار تا به نزدیک‌ترین میله قلاب شود و دورش بچرخد؛ رها کن تا مستقیم شلیک شود.<br>در جاده بمان و تا جایی که می‌توانی جلو برو!</p><button id="ob">شروع</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const SP=330,HW=125,GAP=330;
+let W,H,state='menu',car,gates=[],poles=[],hook=null,trail=[],best=0,t=0,cam=0,score=0,msg='',holdBtn=false;
+try{best=+localStorage.getItem('sl-slingdrift')||0}catch(e){}
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+let R=rng(1);
+function gateAt(k){while(gates.length<=k){const i=gates.length,sign=i%2?1:-1,amp=i<2?0:55+R()*Math.min(50,20+i*1.5);gates.push({x:i===0?0:sign*amp,y:-i*GAP})}return gates[k]}
+function c(y){ // مرکز جاده
+  const k=Math.max(0,Math.floor(-y/GAP)),a=gateAt(k),b=gateAt(k+1),u=Math.max(0,Math.min(1,(a.y-y)/GAP)),s=(1-Math.cos(Math.PI*u))/2;return a.x+(b.x-a.x)*s}
+function polesUpTo(k){while(poles.length<=k){const i=poles.length,g=gateAt(i);if(i<2){poles.push({x:g.x+(i?0:0),y:g.y-GAP*.35,i});poles[i].x=0+(i===1?70:-70)*0;continue}
+  const dir=g.x>0?-1:1;poles.push({x:g.x+dir*(98),y:g.y,i})}}
+function reset(){R=rng(Date.now()%100000);gates=[];poles=[];car={x:0,y:80,a:-Math.PI/2};hook=null;trail=[];score=0;t=0;state='play';cam=car.y;msg=''}
+function nearestPole(){let b=null,bd=1e9;polesUpTo(Math.floor(-car.y/GAP)+6);for(const p of poles){const d=Math.hypot(p.x-car.x,p.y-car.y);const ahead=(p.x-car.x)*Math.cos(car.a)+(p.y-car.y)*Math.sin(car.a);if(d<235&&d>45&&ahead>-30&&d<bd){bd=d;b=p}}return b}
+function doHook(){if(hook||state!=='play')return;const p=nearestPole();if(!p)return;const rx=car.x-p.x,ry=car.y-p.y,vx=Math.cos(car.a),vy=Math.sin(car.a),cr=rx*vy-ry*vx;hook={p,r:Math.hypot(rx,ry),phi:Math.atan2(ry,rx),s:cr>=0?1:-1};beep(600,.06)}
+function release(){if(!hook)return;car.a=hook.phi+hook.s*Math.PI/2;hook=null;beep(380,.05)}
+function step(dt){
+  t+=dt;if(state!=='play')return;
+  const v=SP+Math.min(120,-car.y/60);
+  if(hook){hook.phi+=hook.s*v/hook.r*dt;car.x=hook.p.x+Math.cos(hook.phi)*hook.r;car.y=hook.p.y+Math.sin(hook.phi)*hook.r;car.a=hook.phi+hook.s*Math.PI/2}
+  else{car.x+=Math.cos(car.a)*v*dt;car.y+=Math.sin(car.a)*v*dt}
+  trail.push([car.x,car.y,!!hook]);if(trail.length>240)trail.shift();
+  cam+=((car.y+H*.28/ (zoom()))-cam)*Math.min(1,8*dt);
+  const d=Math.abs(car.x-c(car.y));if(d>HW-8||car.y>200)crash();
+  score=Math.max(score,Math.floor(-car.y/10));
+}
+function crash(){if(state!=='play')return;state='over';hook=null;beep(110,.4,'sawtooth',.08);if(score>best){best=score;try{localStorage.setItem('sl-slingdrift',best)}catch(e){}}
+  setTimeout(()=>{$('oh').textContent='💥 تصادف!';$('op').innerHTML='مسافت: '+fa(score)+' متر<br>بهترین: '+fa(best);$('ob').textContent='دوباره';$('ov').style.display='flex'},500)}
+function zoom(){return Math.min(1.25,Math.max(.7,W/430))}
+function draw(){
+  x.setTransform(1,0,0,1,0,0);x.fillStyle='#2d5a3a';x.fillRect(0,0,W,H);
+  const z=zoom();x.setTransform(z,0,0,z,W/2,H*.72-(cam+H*.28/z)*z+ (car?0:0));
+  // با دوربین: y جهان → صفحه
+  x.setTransform(z,0,0,z,W/2,0);
+  const top=cam-H/z*.9,bot=cam+H/z*.2;
+  const ty=y=>(y-top)*z;
+  x.setTransform(1,0,0,1,0,0);
+  // چمن راه‌راه
+  for(let y=Math.floor(top/80)*80;y<bot+80;y+=80){x.fillStyle=((y/80)&1)?'#2d5a3a':'#356b45';x.fillRect(0,ty(y),W,80*z+1)}
+  // جاده
+  x.beginPath();let first=true;for(let y=Math.floor(top/20)*20-20;y<=bot+20;y+=20){const px=W/2+(c(y)-HW)*z;first?x.moveTo(px,ty(y)):x.lineTo(px,ty(y));first=false}
+  for(let y=bot+20;y>=top-40;y-=20){x.lineTo(W/2+(c(y)+HW)*z,ty(y))}x.closePath();x.fillStyle='#4a525c';x.fill();
+  x.strokeStyle='#ffd54f';x.lineWidth=4;x.beginPath();first=true;for(let y=Math.floor(top/20)*20-20;y<=bot+20;y+=20){const px=W/2+(c(y)-HW)*z;first?x.moveTo(px,ty(y)):x.lineTo(px,ty(y));first=false}x.stroke();
+  x.beginPath();first=true;for(let y=Math.floor(top/20)*20-20;y<=bot+20;y+=20){const px=W/2+(c(y)+HW)*z;first?x.moveTo(px,ty(y)):x.lineTo(px,ty(y));first=false}x.stroke();
+  x.strokeStyle='rgba(255,255,255,.45)';x.setLineDash&&x.setLineDash([16,18]);x.beginPath();first=true;for(let y=Math.floor(top/20)*20-20;y<=bot+20;y+=20){const px=W/2+c(y)*z;first?x.moveTo(px,ty(y)):x.lineTo(px,ty(y));first=false}x.stroke();x.setLineDash&&x.setLineDash([]);
+  // ردّ لاستیک
+  for(let i=1;i<trail.length;i++){const a=trail[i-1],b=trail[i];x.strokeStyle=b[2]?'rgba(20,20,20,.55)':'rgba(20,20,20,.25)';x.lineWidth=(b[2]?6:3)*z;x.beginPath();x.moveTo(W/2+a[0]*z,ty(a[1]));x.lineTo(W/2+b[0]*z,ty(b[1]));x.stroke()}
+  // میله‌ها
+  polesUpTo(Math.floor(-bot/GAP)+7);
+  poles.forEach(p=>{if(p.y<top-30||p.y>bot+30)return;const sx=W/2+p.x*z,sy=ty(p.y),near=nearestPole()===p;
+    x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.arc(sx+3,sy+4,13*z,0,7);x.fill();x.fillStyle=near?'#ffeb3b':'#ef5350';x.beginPath();x.arc(sx,sy,12*z,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=3*z;x.stroke();
+    if(near&&!hook){x.strokeStyle='rgba(255,235,59,.6)';x.lineWidth=2;x.beginPath();x.arc(sx,sy,(18+Math.sin(t*8)*3)*z,0,7);x.stroke()}});
+  // طناب
+  if(hook){x.strokeStyle='#fff';x.lineWidth=3*z;x.beginPath();x.moveTo(W/2+hook.p.x*z,ty(hook.p.y));x.lineTo(W/2+car.x*z,ty(car.y));x.stroke()}
+  // ماشین
+  if(car){x.save();x.translate(W/2+car.x*z,ty(car.y));x.rotate(car.a+Math.PI/2);x.scale(z,z);x.fillStyle='rgba(0,0,0,.3)';x.fillRect(-9,-15,22,34);x.fillStyle='#e53935';x.beginPath();x.roundRect?x.roundRect(-10,-18,20,36,6):x.rect(-10,-18,20,36);x.fill();x.fillStyle='#263238';x.fillRect(-7,-8,14,9);x.fillStyle='#fff59d';x.fillRect(-8,-18,4,3);x.fillRect(4,-18,4,3);x.restore()}
+  x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 15px Tahoma,sans-serif';x.textBaseline='middle';x.textAlign='center';x.fillText(fa(score)+' م',W/2,17);x.textAlign='right';x.fillText('بهترین '+fa(best),W-10,17);
+}
+function down(){if(state==='play')doHook()}
+function up(){release()}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();down()});cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+addEventListener('keydown',e=>{if(e.key===' '&&!holdBtn){holdBtn=true;down();e.preventDefault()}});addEventListener('keyup',e=>{if(e.key===' '){holdBtn=false;up()}});
+$('ob').onclick=()=>{$('ov').style.display='none';reset()};
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}addEventListener('resize',resize);resize();
+if(!x.setLineDash)x.setLineDash=()=>{};
+let last=0;function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
+car={x:0,y:80,a:-Math.PI/2};cam=80;requestAnimationFrame(loop);
+window.__sd2={reset,step,doHook,release,get car(){return car},get state(){return state},get score(){return score},c,nearestPole,get hook(){return hook},HW,GAP,gateAt,get gates(){return gates}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

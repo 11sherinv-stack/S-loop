@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Word Scapes — با حروف دایره کلمه بساز و جدول را پر کن؛ نسخه‌ی فارسی و انگلیسی. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Word Scapes</title>
+<style>
+:root{--bg:#d9f1e4;--ink:#16372a;--card:#fff;--btn:#2e9e6b;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10261c;--ink:#e2f6ea;--card:#1b3a2b;--btn:#4fd69a;--btnink:#052316}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:linear-gradient(180deg,var(--bg),#7cc9a2);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+@media (prefers-color-scheme:dark){body{background:linear-gradient(180deg,#0e231a,#0a1a13)}}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.top{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0 2px;flex-wrap:wrap}
+.top button{font:inherit;border:0;background:var(--card);color:var(--ink);border-radius:12px;padding:6px 12px;cursor:pointer}
+.top button.on{background:var(--btn);color:var(--btnink)}
+.top span{font-size:.88rem}
+.gridw{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#g{max-width:96vw;max-height:100%;touch-action:none}
+#cur{min-height:44px;font-size:1.8rem;font-weight:800;letter-spacing:4px;display:flex;align-items:center;justify-content:center}
+#cur span{background:var(--btn);color:var(--btnink);border-radius:12px;padding:2px 14px}
+#w{touch-action:none;margin-bottom:6px}
+.bar{display:flex;gap:10px;margin:2px 0 10px;align-items:center}
+.bar button{font:inherit;border:0;background:var(--card);color:var(--ink);border-radius:50%;width:52px;height:52px;font-size:1.4rem;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.bonus{font-size:.8rem;opacity:.85;min-height:1.2em}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+.ov button{font:inherit;border:0;background:var(--btn);color:var(--btnink);border-radius:12px;padding:10px 24px;cursor:pointer}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="top"><button id="lf" class="on">فارسی</button><button id="le">English</button><span>مرحله <b id="lv">۱</b></span><span>🪙 <b id="co">0</b></span></div>
+<div class="gridw"><canvas id="g"></canvas></div>
+<div id="cur"></div>
+<div class="bonus" id="bn"></div>
+<canvas id="w" width="300" height="300"></canvas>
+<div class="bar"><button id="sh" aria-label="بُر زدن">🔀</button><button id="hn" aria-label="راهنما">💡</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button id="ob">مرحله‌ی بعد</button></div></div>
+<script>
+const DATA={"en": [{"letters": "eitsx", "base": "exist", "H": 8, "W": 5, "words": [["exist", 3, 0, "h"], ["tie", 1, 0, "v"], ["exit", 0, 4, "v"], ["set", 3, 3, "v"], ["site", 5, 1, "h"], ["sit", 5, 1, "v"], ["six", 1, 2, "h"]], "extra": ["exits", "ext", "its", "sext", "ties"]}, {"letters": "recha", "base": "reach", "H": 5, "W": 7, "words": [["reach", 3, 0, "h"], ["each", 0, 4, "v"], ["her", 2, 1, "v"], ["are", 1, 4, "h"], ["ear", 1, 6, "v"], ["care", 1, 3, "h"], ["hear", 0, 6, "v"]], "extra": ["ace", "ache", "acre", "arc", "arch", "car", "cha", "char", "chare", "era", "hae", "hare", "race", "rah", "rec", "rhea"]}, {"letters": "wnhos", "base": "shown", "H": 5, "W": 6, "words": [["shown", 2, 1, "h"], ["who", 0, 3, "v"], ["now", 2, 5, "v"], ["son", 2, 1, "v"], ["snow", 1, 5, "v"], ["show", 0, 0, "h"], ["how", 4, 3, "h"]], "extra": ["hon", "hons", "hows", "nosh", "ohs", "own", "owns", "sow", "sown", "won"]}, {"letters": "teofn", "base": "often", "H": 4, "W": 7, "words": [["often", 2, 0, "h"], ["note", 0, 2, "v"], ["tone", 0, 4, "v"], ["net", 0, 2, "h"], ["not", 1, 0, "v"], ["one", 1, 4, "h"], ["ten", 0, 6, "v"]], "extra": ["eft", "eon", "fen", "foe", "font", "oft", "toe", "ton"]}, {"letters": "tmtrea", "base": "matter", "H": 8, "W": 9, "words": [["matter", 3, 1, "h"], ["meat", 3, 1, "v"], ["eat", 3, 5, "v"], ["rate", 5, 0, "h"], ["ear", 5, 3, "v"], ["team", 5, 5, "h"], ["term", 2, 8, "v"], ["are", 5, 7, "v"], ["matt", 0, 3, "v"]], "extra": ["amt", "arm", "armet", "art", "ate", "atm", "att", "era", "ert", "eta", "mar", "mare", "mart", "mat", "mate", "matte", "met", "meta", "ram", "rat", "ream", "rem", "rte", "tam", "tame", "tamer"]}, {"letters": "tonefs", "base": "soften", "H": 8, "W": 9, "words": [["soften", 4, 1, "h"], ["soft", 4, 1, "v"], ["tone", 1, 5, "v"], ["sent", 1, 2, "h"], ["not", 4, 6, "v"], ["net", 0, 3, "v"], ["one", 5, 6, "h"], ["stone", 0, 5, "v"], ["often", 6, 0, "h"]], "extra": ["eft", "efts", "eon", "eons", "fen", "fens", "fest", "foe", "foes", "font", "fonts", "nest", "nets", "noes", "nose", "note", "notes", "oft", "ones", "onset", "set", "snot", "son", "sone", "sot", "steno"]}, {"letters": "caarme", "base": "camera", "H": 8, "W": 6, "words": [["camera", 4, 0, "h"], ["came", 4, 0, "v"], ["race", 4, 4, "v"], ["cream", 0, 2, "v"], ["car", 0, 2, "h"], ["are", 7, 2, "h"], ["care", 0, 2, "h"], ["area", 7, 2, "h"], ["ear", 0, 5, "v"]], "extra": ["ace", "acme", "acre", "arc", "areca", "arm", "cam", "cram", "era", "mac", "mace", "mar", "mara", "marc", "mare", "ram", "ream", "rec", "rem"]}, {"letters": "dervir", "base": "driver", "H": 6, "W": 7, "words": [["driver", 1, 1, "h"], ["red", 0, 5, "v"], ["drive", 1, 1, "v"], ["rid", 3, 0, "h"], ["ride", 3, 0, "h"], ["rider", 3, 0, "h"], ["river", 0, 3, "v"]], "extra": ["der", "deriv", "derv", "die", "dir", "dire", "div", "dive", "diver", "drier", "err", "ire", "rev", "riv", "rive", "vide", "vie"]}, {"letters": "otehnr", "base": "throne", "H": 7, "W": 9, "words": [["throne", 3, 1, "h"], ["hero", 0, 4, "v"], ["other", 0, 6, "v"], ["net", 1, 1, "v"], ["her", 2, 6, "h"], ["rent", 3, 3, "v"], ["then", 5, 0, "h"], ["north", 0, 8, "v"], ["tone", 6, 3, "h"]], "extra": ["eon", "ert", "hen", "hent", "hern", "heron", "hoe", "hoer", "hon", "hone", "honer", "hor", "horn", "hornet", "hort", "hot", "nor", "not", "note", "one", "ore", "ort", "rheo", "rhet", "rho", "roe"]}, {"letters": "cseard", "base": "sacred", "H": 7, "W": 7, "words": [["sacred", 3, 1, "h"], ["car", 3, 3, "v"], ["card", 3, 3, "v"], ["case", 1, 1, "v"], ["care", 0, 5, "v"], ["ear", 1, 4, "h"], ["race", 5, 3, "h"], ["dear", 1, 3, "h"], ["read", 6, 0, "h"]], "extra": ["ace", "aces", "acre", "acres", "arc", "arcs", "are", "ares", "arsed", "cad", "cade", "cadre", "cadres", "cads", "cards", "cares", "cars", "carse", "cased", "cedar", "cedars", "cesar", "dace", "daces", "dare", "dares"]}, {"letters": "sriamne", "base": "remains", "H": 8, "W": 9, "words": [["remains", 4, 1, "h"], ["rise", 1, 2, "v"], ["main", 2, 0, "h"], ["name", 0, 0, "v"], ["arise", 0, 2, "v"], ["remain", 0, 5, "v"], ["mean", 2, 5, "h"], ["raise", 1, 7, "v"], ["mine", 4, 3, "v"], ["near", 0, 0, "h"]], "extra": ["aim", "aims", "ain", "air", "airmen", "airs", "amen", "ami", "amie", "amine", "amines", "ane", "anim", "anime", "anis", "anise", "are", "ares", "arisen", "arm", "arms", "arsine", "ear", "earn", "earns", "ears"]}, {"letters": "anirtep", "base": "painter", "H": 8, "W": 8, "words": [["painter", 4, 0, "h"], ["pair", 2, 2, "v"], ["print", 0, 4, "v"], ["part", 4, 0, "v"], ["earn", 4, 5, "v"], ["pain", 7, 2, "h"], ["rain", 1, 4, "h"], ["train", 1, 3, "h"], ["paint", 7, 2, "h"]], "extra": ["ain", "air", "airt", "ait", "ane", "ant", "ante", "anti", "antre", "ape", "apt", "apter", "are", "arpent", "art", "ate", "atrip", "ear", "eat", "entrap", "era", "ert", "eta", "etna", "inept", "inert"]}, {"letters": "racfesu", "base": "surface", "H": 8, "W": 9, "words": [["surface", 4, 1, "h"], ["sure", 2, 3, "v"], ["case", 4, 6, "v"], ["cause", 2, 0, "h"], ["sauce", 7, 2, "h"], ["face", 0, 0, "v"], ["care", 1, 7, "v"], ["race", 1, 5, "h"], ["scare", 0, 7, "v"], ["fear", 0, 0, "h"]], "extra": ["ace", "aces", "acre", "acres", "arc", "arcs", "are", "ares", "cafe", "cafes", "car", "cares", "cars", "carse", "caus", "causer", "cesar", "cru", "crus", "cruse", "cue", "cues", "cur", "cure", "cures", "curs"]}, {"letters": "ernudht", "base": "thunder", "H": 8, "W": 9, "words": [["thunder", 3, 1, "h"], ["under", 3, 3, "v"], ["hurt", 0, 1, "v"], ["hunt", 0, 1, "h"], ["true", 6, 0, "h"], ["trend", 2, 7, "v"], ["tend", 5, 5, "h"], ["then", 0, 4, "v"], ["ruth", 4, 0, "v"], ["rent", 7, 3, "h"]], "extra": ["den", "dent", "der", "due", "duet", "duh", "dun", "dune", "dunt", "edh", "end", "ert", "hen", "hent", "her", "herd", "hern", "hue", "hun", "hunter", "hut", "nerd", "net", "neut", "nude", "nut"]}, {"letters": "rnnatel", "base": "lantern", "H": 8, "W": 9, "words": [["lantern", 4, 1, "h"], ["alert", 3, 1, "v"], ["alter", 0, 6, "v"], ["rent", 6, 1, "h"], ["earn", 1, 3, "v"], ["late", 0, 5, "h"], ["lane", 1, 0, "h"], ["near", 4, 7, "v"], ["learn", 0, 3, "v"]], "extra": ["ale", "alt", "ane", "anent", "ann", "ant", "ante", "antler", "antre", "are", "art", "artel", "ate", "ear", "earl", "eat", "elan", "enl", "era", "ert", "eta", "etna", "lanner", "lar", "lat", "later"]}, {"letters": "soiderl", "base": "soldier", "H": 8, "W": 8, "words": [["soldier", 4, 0, "h"], ["side", 4, 0, "v"], ["role", 1, 5, "v"], ["lord", 2, 4, "h"], ["dose", 6, 0, "h"], ["rise", 4, 6, "v"], ["lose", 4, 2, "v"], ["ride", 0, 7, "v"], ["does", 7, 4, "h"]], "extra": ["deil", "del", "deli", "delis", "der", "die", "dies", "dir", "dire", "dis", "dlr", "doe", "doer", "dol", "dole", "doles", "dols", "dor", "eidos", "eld", "ides", "idle", "idler", "idles", "idol", "idols"]}, {"letters": "shpewri", "base": "whisper", "H": 7, "W": 9, "words": [["whisper", 3, 1, "h"], ["hire", 0, 6, "v"], ["wire", 3, 1, "v"], ["pie", 3, 5, "v"], ["wish", 0, 2, "v"], ["she", 5, 3, "h"], ["wise", 1, 1, "h"], ["ship", 0, 5, "h"], ["her", 6, 0, "h"], ["rise", 3, 7, "v"]], "extra": ["ersh", "esp", "heir", "heirs", "hep", "herp", "hew", "hews", "hie", "hies", "hip", "hips", "hires", "his", "ire", "peri", "peris", "perish", "pew", "pews", "phew", "phi", "phis", "phr", "pier", "pies"]}, {"letters": "avrfuol", "base": "flavour", "H": 6, "W": 8, "words": [["flavour", 3, 0, "h"], ["flour", 0, 5, "v"], ["oral", 0, 1, "v"], ["for", 0, 0, "h"], ["far", 0, 5, "h"], ["favor", 1, 3, "v"], ["our", 5, 1, "h"], ["four", 5, 0, "h"]], "extra": ["afoul", "arvo", "avo", "farl", "faro", "flavor", "flor", "flora", "flu", "fluor", "foal", "fol", "fora", "fou", "foul", "fro", "fur", "furl", "lar", "lav", "loaf", "lour", "louvar", "lur", "oaf", "oar"]}, {"letters": "slereht", "base": "shelter", "H": 9, "W": 9, "words": [["shelter", 4, 1, "h"], ["three", 4, 5, "v"], ["her", 8, 4, "h"], ["else", 2, 1, "v"], ["let", 2, 0, "h"], ["see", 3, 3, "v"], ["rest", 4, 7, "v"], ["there", 0, 6, "v"], ["here", 2, 5, "h"], ["sheet", 0, 2, "h"]], "extra": ["eel", "eels", "ere", "ersh", "erst", "ert", "ester", "ether", "heel", "heels", "heres", "herl", "lee", "leer", "lees", "leet", "lehr", "lethe", "lets", "reel", "reels", "reest", "rel", "rete", "rhet", "rte"]}, {"letters": "ynrcotu", "base": "country", "H": 9, "W": 7, "words": [["country", 4, 0, "h"], ["not", 4, 3, "v"], ["tour", 6, 3, "h"], ["our", 4, 1, "v"], ["toy", 2, 6, "v"], ["court", 0, 4, "v"], ["out", 6, 4, "v"], ["cut", 8, 2, "h"], ["run", 6, 6, "v"], ["count", 2, 2, "h"]], "extra": ["con", "cont", "cony", "cor", "corn", "cornu", "corny", "cot", "county", "coy", "crony", "cru", "cry", "ctn", "ctr", "cunt", "cur", "curt", "cyton", "nor", "nut", "oct", "orc", "ort", "outcry", "roc"]}], "fa": [{"letters": "بادر", "base": "بادر", "H": 4, "W": 7, "words": [["ادب", 2, 2, "h"], ["دار", 1, 2, "v"], ["برد", 1, 0, "h"], ["بار", 1, 0, "v"], ["درب", 0, 4, "v"], ["ربا", 1, 4, "h"], ["باد", 0, 6, "v"]], "extra": ["ردا"]}, {"letters": "درام", "base": "مادر", "H": 3, "W": 6, "words": [["مادر", 1, 0, "h"], ["دار", 0, 1, "v"], ["مرد", 0, 3, "v"], ["مار", 0, 3, "h"], ["دام", 2, 3, "h"], ["رام", 0, 5, "v"]], "extra": ["ردا"]}, {"letters": "انشد", "base": "دانش", "H": 3, "W": 6, "words": [["دانش", 2, 2, "h"], ["شاد", 0, 2, "v"], ["شان", 0, 4, "v"], ["ندا", 1, 0, "h"]], "extra": []}, {"letters": "مالس", "base": "سلام", "H": 5, "W": 4, "words": [["سلام", 2, 0, "h"], ["مال", 0, 1, "v"], ["سال", 2, 0, "v"], ["اسم", 2, 2, "v"], ["ماس", 0, 1, "h"]], "extra": []}, {"letters": "ارید", "base": "دریا", "H": 5, "W": 6, "words": [["دریا", 2, 0, "h"], ["ردا", 2, 1, "v"], ["دیار", 0, 3, "v"], ["دار", 4, 0, "h"], ["ریا", 3, 3, "h"], ["رای", 2, 5, "v"], ["دیر", 0, 3, "h"], ["یاد", 0, 0, "v"]], "extra": ["یار"]}, {"letters": "هسدرا", "base": "راهدس", "H": 9, "W": 4, "words": [["ساده", 4, 0, "h"], ["راه", 2, 3, "v"], ["هدر", 2, 1, "h"], ["دار", 4, 2, "v"], ["دره", 6, 1, "h"], ["درس", 6, 1, "v"], ["سرد", 8, 1, "h"], ["رده", 0, 1, "v"]], "extra": ["دسر", "ردا", "سده"]}, {"letters": "پرهدن", "base": "پرنده", "H": 5, "W": 7, "words": [["پرنده", 4, 0, "h"], ["پرده", 1, 4, "v"], ["هدر", 2, 1, "v"], ["دهن", 2, 0, "h"], ["پهن", 0, 2, "v"], ["پدر", 1, 4, "h"], ["رده", 1, 6, "v"], ["دره", 3, 4, "h"]], "extra": []}, {"letters": "سافرم", "base": "مسافر", "H": 9, "W": 5, "words": [["مسافر", 4, 0, "h"], ["فرس", 2, 1, "v"], ["فرم", 4, 3, "v"], ["افسر", 2, 0, "h"], ["سفر", 0, 3, "v"], ["سرم", 6, 1, "h"], ["رسم", 6, 2, "v"], ["اسم", 8, 0, "h"]], "extra": ["رام", "مار", "ماس"]}, {"letters": "هرسمد", "base": "مدرسه", "H": 5, "W": 6, "words": [["مدرسه", 2, 1, "h"], ["دسر", 0, 3, "v"], ["دره", 2, 2, "v"], ["درس", 0, 3, "h"], ["سده", 0, 5, "v"], ["سرد", 2, 4, "v"], ["سرم", 0, 1, "v"], ["رده", 4, 0, "h"]], "extra": ["رسم", "سهم", "مرد", "مهد", "مهر", "هدر"]}, {"letters": "رمنباه", "base": "برنامه", "H": 6, "W": 9, "words": [["برنامه", 2, 1, "h"], ["مهربان", 0, 2, "v"], ["بهار", 1, 6, "v"], ["رمان", 0, 4, "v"], ["بار", 1, 6, "h"], ["بام", 0, 0, "h"], ["بره", 4, 5, "h"], ["رام", 4, 1, "h"]], "extra": ["راه", "ربا", "مار", "ماه", "مهر", "نام"]}, {"letters": "زمنستا", "base": "زمستان", "H": 7, "W": 7, "words": [["زمستان", 3, 1, "h"], ["نماز", 0, 1, "v"], ["سمت", 1, 0, "h"], ["سنت", 1, 4, "v"], ["زمان", 0, 6, "v"], ["ماست", 3, 2, "v"], ["ساز", 5, 2, "h"], ["ستم", 1, 4, "h"]], "extra": ["اسم", "مات", "ماس", "نام"]}, {"letters": "شدرویخ", "base": "خورشید", "H": 8, "W": 6, "words": [["خورشید", 4, 0, "h"], ["دوش", 4, 5, "v"], ["خیر", 2, 2, "v"], ["خود", 2, 2, "h"], ["خوش", 6, 3, "h"], ["درو", 0, 3, "v"], ["دیر", 0, 3, "h"], ["خرید", 4, 0, "v"]], "extra": ["رود", "روش", "ریش", "شور", "شیر", "ورد"]}, {"letters": "اوهخدنا", "base": "خانواده", "H": 8, "W": 7, "words": [["خانواده", 3, 0, "h"], ["دانه", 3, 5, "v"], ["دانا", 0, 4, "v"], ["خوان", 0, 2, "v"], ["خانه", 5, 3, "h"], ["خواهد", 3, 0, "v"], ["خواند", 0, 2, "v"], ["دوان", 7, 0, "h"]], "extra": ["خود", "دهن", "ندا", "نوا", "هوا"]}]};
+const $=i=>document.getElementById(i),gc=$('g'),gx=gc.getContext('2d'),wc=$('w'),wx=wc.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.07,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let lang='fa',prog={fa:0,en:0},coins=0,lev,found,bonusFound,hinted,letters,wheelPos,sel=[],dragging=false,flash=0,shakeT=0,lastWord='';
+try{const d=JSON.parse(localStorage.getItem('sl-wordscapes')||'{}');if(d.prog)prog=Object.assign(prog,d.prog);coins=d.coins||0;lang=d.lang||'fa'}catch(e){}
+const save=()=>{try{localStorage.setItem('sl-wordscapes',JSON.stringify({prog,coins,lang}))}catch(e){}};
+const rtl=()=>lang==='fa';
+function load(){
+  const arr=DATA[lang];const i=prog[lang]%arr.length;lev=arr[i];
+  found=new Set();bonusFound=new Set();hinted=new Set();letters=lev.letters.split('');sel=[];lastWord='';
+  $('lv').textContent=fa(prog[lang]+1);$('co').textContent=fa(coins);
+  $('lf').className=lang==='fa'?'on':'';$('le').className=lang==='en'?'on':'';
+  document.documentElement.dir=lang==='fa'?'rtl':'ltr';
+  layoutWheel();drawGrid();drawWheel();upd();$('ov').style.display='none';
+}
+function upd(){$('co').textContent=fa(coins);$('bn').textContent=bonusFound.size?((rtl()?'کلمه‌های جایزه: ':'Bonus words: ')+[...bonusFound].join(' · ')):''}
+/* جدول */
+function cellSize(){return Math.max(22,Math.min(44,Math.floor(Math.min(innerWidth*.94/lev.W,innerHeight*.34/lev.H))))}
+function drawGrid(){
+  const cs=cellSize(),W=lev.W*cs,H=lev.H*cs;gc.width=W+4;gc.height=H+4;gc.style.width=(W+4)+'px';gc.style.height=(H+4)+'px';
+  gx.clearRect(0,0,gc.width,gc.height);
+  const colOf=c=>rtl()?lev.W-1-c:c;
+  const cells=new Map();
+  lev.words.forEach(([w,r,c,d],wi)=>{for(let i=0;i<w.length;i++){const rr=d==='h'?r:r+i,cc=d==='h'?c+i:c;const k=rr+','+cc;const o=cells.get(k)||{ch:w[i],rev:false};if(found.has(wi)||hinted.has(k))o.rev=true;cells.set(k,o)}});
+  gx.font='bold '+Math.floor(cs*.58)+'px Vazirmatn,Tahoma,sans-serif';gx.textAlign='center';gx.textBaseline='middle';
+  cells.forEach((o,k)=>{const[r,c]=k.split(',').map(Number),x=2+colOf(c)*cs,y=2+r*cs;
+    gx.fillStyle=o.rev?'#ffd54f':'#fff';gx.strokeStyle='#2e7d5b';gx.lineWidth=2;gx.beginPath();gx.roundRect?gx.roundRect(x+1,y+1,cs-2,cs-2,6):gx.rect(x+1,y+1,cs-2,cs-2);gx.fill();gx.stroke();
+    if(o.rev){gx.fillStyle='#3b2a00';gx.fillText(lang==='en'?o.ch.toUpperCase():o.ch,x+cs/2,y+cs/2+1)}});
+}
+/* چرخ حروف */
+let WR=120,CX=150,CY=150,LR=26;
+function layoutWheel(){const n=letters.length;wheelPos=letters.map((_,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return[CX+Math.cos(a)*(WR-34),CY+Math.sin(a)*(WR-34)]})}
+function drawWheel(){
+  wx.clearRect(0,0,300,300);
+  wx.fillStyle='rgba(255,255,255,.55)';wx.beginPath();wx.arc(CX,CY,WR,0,7);wx.fill();
+  if(sel.length>1){wx.strokeStyle='#2e9e6b';wx.lineWidth=10;wx.lineCap='round';wx.lineJoin='round';wx.beginPath();sel.forEach((i,k)=>{const p=wheelPos[i];k?wx.lineTo(p[0],p[1]):wx.moveTo(p[0],p[1])});if(dragging&&ptr)wx.lineTo(ptr[0],ptr[1]);wx.stroke()}
+  wx.font='bold 30px Vazirmatn,Tahoma,sans-serif';wx.textAlign='center';wx.textBaseline='middle';
+  letters.forEach((ch,i)=>{const p=wheelPos[i],on=sel.includes(i);wx.fillStyle=on?'#2e9e6b':'#fff';wx.beginPath();wx.arc(p[0],p[1],LR,0,7);wx.fill();wx.strokeStyle='#2e9e6b';wx.lineWidth=2;wx.stroke();wx.fillStyle=on?'#fff':'#16372a';wx.fillText(lang==='en'?ch.toUpperCase():ch,p[0],p[1]+2)});
+}
+let ptr=null;
+function wpos(e){const r=wc.getBoundingClientRect();return[(e.clientX-r.left)*300/r.width,(e.clientY-r.top)*300/r.height]}
+function hit(p){for(let i=0;i<wheelPos.length;i++)if(Math.hypot(p[0]-wheelPos[i][0],p[1]-wheelPos[i][1])<LR+6)return i;return -1}
+function curText(){return sel.map(i=>letters[i]).join('')}
+function showCur(){const t=curText();$('cur').innerHTML=t?'<span>'+(lang==='en'?t.toUpperCase():t)+'</span>':''}
+wc.addEventListener('pointerdown',e=>{e.preventDefault();ptr=wpos(e);const h=hit(ptr);if(h<0)return;dragging=true;sel=[h];try{wc.setPointerCapture(e.pointerId)}catch(_){}beep(400+h*40,.04);showCur();drawWheel()});
+wc.addEventListener('pointermove',e=>{if(!dragging)return;ptr=wpos(e);const h=hit(ptr);
+  if(h>=0){const k=sel.indexOf(h);if(k===-1){sel.push(h);beep(400+h*40,.04)}else if(k===sel.length-2){sel.pop()}}
+  showCur();drawWheel()});
+function endDrag(){if(!dragging)return;dragging=false;ptr=null;const w=curText();sel=[];showCur();drawWheel();if(w.length>=2)submit(w)}
+wc.addEventListener('pointerup',endDrag);wc.addEventListener('pointercancel',endDrag);
+function submit(w){
+  const idx=lev.words.findIndex(x=>x[0]===w);
+  if(idx>=0){if(found.has(idx)){say(rtl()?'قبلاً پیدا شده':'Already found');return}found.add(idx);beep(800,.12);drawGrid();coins+=0;save();if(lev.words.every((_,i)=>found.has(i)||false)||allRevealed())return win();return}
+  if(lev.extra.includes(w)){if(bonusFound.has(w)){say(rtl()?'قبلاً پیدا شده':'Already found');return}bonusFound.add(w);coins+=2;beep(950,.12);say(rtl()?'کلمه‌ی جایزه! +۲ 🪙':'Bonus word! +2 🪙');upd();save();return}
+  beep(150,.12,'sawtooth',.05);say(rtl()?'کلمه‌ی معتبر نیست':'Not a word');
+}
+function allRevealed(){// همه‌ی خانه‌ها باز شده؟ (با راهنما)
+  const need=new Set(),have=new Set();lev.words.forEach(([w,r,c,d],wi)=>{for(let i=0;i<w.length;i++){const k=(d==='h'?r:r+i)+','+(d==='h'?c+i:c);need.add(k);if(found.has(wi)||hinted.has(k))have.add(k)}});
+  // سلول‌هایی که از کلمات پیداشده باز شده‌اند
+  lev.words.forEach(([w,r,c,d],wi)=>{if(found.has(wi))for(let i=0;i<w.length;i++)have.add((d==='h'?r:r+i)+','+(d==='h'?c+i:c))});
+  return need.size===have.size;
+}
+let sayT=0;function say(t){$('cur').innerHTML='<span style="background:#555;font-size:1rem;letter-spacing:0">'+t+'</span>';clearTimeout(sayT);sayT=setTimeout(()=>{$('cur').innerHTML=''},1200)}
+function win(){
+  const gain=10+bonusFound.size*2;coins+=gain;prog[lang]++;save();beep(900,.3);
+  $('oh').textContent=rtl()?'🎉 آفرین!':'🎉 Great!';$('op').textContent=(rtl()?'مرحله تمام شد · +':'Level complete · +')+gain+' 🪙';$('ob').textContent=rtl()?'مرحله‌ی بعد':'Next level';$('ov').style.display='flex';
+}
+$('ob').onclick=()=>load();
+$('sh').onclick=()=>{for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}drawWheel();beep(300,.1)};
+$('hn').onclick=()=>{if(coins<5){say(rtl()?'سکه‌ی کافی نداری (۵)':'Need 5 coins');return}
+  // یک خانه‌ی بسته را باز کن
+  const closed=[];lev.words.forEach(([w,r,c,d],wi)=>{if(found.has(wi))return;for(let i=0;i<w.length;i++){const k=(d==='h'?r:r+i)+','+(d==='h'?c+i:c);if(!hinted.has(k))closed.push(k)}});
+  if(!closed.length)return;coins-=5;hinted.add(closed[Math.floor(Math.random()*closed.length)]);beep(600,.1);drawGrid();upd();save();
+  if(allRevealed())setTimeout(win,400)};
+$('lf').onclick=()=>{lang='fa';save();load()};$('le').onclick=()=>{lang='en';save();load()};
+addEventListener('resize',()=>{drawGrid()});
+if(!gx.roundRect)gx.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+load();
+window.__ws={DATA,get lev(){return lev},submit,get found(){return found},get prog(){return prog},load,set lang(v){lang=v},win};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

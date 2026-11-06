@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Car Park — ماشین‌ها را با لمس از پارکینگ بیرون بفرست. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Car Park</title>
+<style>
+:root{--bg:#cfd8dc;--ink:#1c2630;--card:#fff;--btn:#ff7043;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b2228;--ink:#e6edf2;--card:#27323a;--btn:#ff8a65;--btnink:#2a0e04}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.info{display:flex;gap:14px;font-size:.88rem;margin:2px 0}
+.wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{touch-action:none;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.3)}
+.bar{display:flex;gap:8px;margin:8px 0 12px}
+button{font:inherit;border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+button.on{background:var(--btn);color:var(--btnink)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🚗 Car Park</h1>
+<div class="info"><span>مرحله: <b id="lv">۱</b></span><span>مانده: <b id="rm">۰</b></span><span id="lf">❤❤❤</span></div>
+<div class="wrap"><canvas id="c"></canvas></div>
+<div class="bar"><button id="hn">💡 راهنما</button><button id="nw">⟲ دوباره</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button class="on" id="ob">ادامه</button></div></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.07,ty='triangle',v=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const COL=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00acc1','#fdd835','#ec407a','#6d4c41','#546e7a'];
+let N=6,cars=[],fly=[],level=1,lives=3,CS=50,OX=0,OY=0,over=false,hintC=null,hintT=0,bump=null,bumpT=0,best=0;
+try{best=+localStorage.getItem('sl-carpark')||0}catch(e){}
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+// ماشین: {r,c,len,h(horizontal),d(+1/-1 جهت حرکت روی محور),col}
+function cellsOf(car){const o=[];for(let i=0;i<car.len;i++)o.push(car.h?[car.r,car.c+i]:[car.r+i,car.c]);return o}
+function pathClear(car,list){ // از جلوی ماشین تا لبه
+  const cells=cellsOf(car),front=car.d>0?cells[cells.length-1]:cells[0];
+  let r=front[0],c=front[1];
+  for(;;){if(car.h)c+=car.d;else r+=car.d;if(r<0||r>=N||c<0||c>=N)return true;if(list.some(q=>q!==car&&cellsOf(q).some(([a,b])=>a===r&&b===c)))return false}
+}
+function gen(){
+  N=Math.min(8,5+Math.floor((level-1)/3));const R=rng(level*911+Date.now()%9991),target=Math.round(N*N*Math.min(.52,.3+level*.012));
+  const list=[],occ=new Set(),k=(r,c)=>r+','+c;
+  for(let t=0;t<900&&list.length<target;t++){
+    const h=R()<.5,len=R()<.62?2:3,r=Math.floor(R()*(h?N:N-len+1)),c=Math.floor(R()*(h?N-len+1:N)),d=R()<.5?1:-1;
+    const car={r,c,len,h,d,col:COL[Math.floor(R()*COL.length)]};
+    if(cellsOf(car).some(([a,b])=>occ.has(k(a,b))))continue;
+    if(!pathClear(car,list))continue;
+    list.push(car);cellsOf(car).forEach(([a,b])=>occ.add(k(a,b)));
+  }
+  cars=list;
+}
+function start(){gen();fly=[];lives=3;over=false;hintC=null;fit();upd()}
+function fit(){const w=Math.min(innerWidth*.96,520),h=innerHeight-170;const s=Math.floor(Math.min(w,h)/N);CS=Math.max(30,s);cv.width=CS*N;cv.height=CS*N;OX=0;OY=0}
+function carRect(car,off){const w=car.h?car.len:1,h=car.h?1:car.len;return{x:(car.c+(off&&car.h?off*car.d:0))*CS,y:(car.r+(off&&!car.h?off*car.d:0))*CS,w:w*CS,h:h*CS}}
+function rr(a,b,w,h,r){x.beginPath();x.roundRect?x.roundRect(a,b,w,h,r):x.rect(a,b,w,h);x.fill()}
+function drawCar(car,off,alpha){
+  const R=carRect(car,off),p=CS*.1;x.globalAlpha=alpha;
+  x.fillStyle='rgba(0,0,0,.28)';rr(R.x+p+3,R.y+p+4,R.w-2*p,R.h-2*p,CS*.2);
+  x.fillStyle=car.col;rr(R.x+p,R.y+p,R.w-2*p,R.h-2*p,CS*.2);
+  // شیشه و سقف
+  const hz=car.h,fw=car.d>0;x.fillStyle='rgba(20,30,40,.78)';
+  if(hz){const wl=R.w-2*p,gx=R.x+p+wl*(fw?.52:.12);rr(gx,R.y+p+CS*.12,wl*.34,R.h-2*p-CS*.24,CS*.1);x.fillStyle='rgba(255,255,255,.25)';rr(R.x+p+wl*(fw?.12:.5),R.y+p+CS*.14,wl*.36,R.h-2*p-CS*.28,CS*.1)}
+  else{const hl=R.h-2*p,gy=R.y+p+hl*(fw?.52:.12);rr(R.x+p+CS*.12,gy,R.w-2*p-CS*.24,hl*.34,CS*.1);x.fillStyle='rgba(255,255,255,.25)';rr(R.x+p+CS*.14,R.y+p+hl*(fw?.12:.5),R.w-2*p-CS*.28,hl*.36,CS*.1)}
+  // چراغ جلو
+  x.fillStyle='#fff7b0';const lw=CS*.12;
+  if(hz){const fx=fw?R.x+R.w-p-lw:R.x+p;rr(fx,R.y+p+CS*.08,lw,CS*.14,3);rr(fx,R.y+R.h-p-CS*.22,lw,CS*.14,3)}
+  else{const fy=fw?R.y+R.h-p-lw:R.y+p;rr(R.x+p+CS*.08,fy,CS*.14,lw,3);rr(R.x+R.w-p-CS*.22,fy,CS*.14,lw,3)}
+  // فلش
+  x.fillStyle='rgba(255,255,255,.85)';x.font='bold '+(CS*.42)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';
+  const ar=hz?(fw?'▶':'◀'):(fw?'▼':'▲');x.fillText(ar,R.x+R.w/2,R.y+R.h/2+1);
+  x.globalAlpha=1;
+}
+function draw(){
+  x.fillStyle='#546e7a';x.fillRect(0,0,cv.width,cv.height);
+  x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=2;x.setLineDash&&x.setLineDash([8,8]);
+  for(let i=0;i<=N;i++){x.beginPath();x.moveTo(i*CS,0);x.lineTo(i*CS,cv.height);x.moveTo(0,i*CS);x.lineTo(cv.width,i*CS);x.stroke()}
+  x.setLineDash&&x.setLineDash([]);
+  cars.forEach(c=>{
+    let off=0;if(bump&&bump.car===c&&bumpT>0)off=Math.sin(bumpT*40)*.06;
+    drawCar(c,off,1);
+    if(hintC===c&&hintT>0){const R=carRect(c);x.strokeStyle='#fff';x.lineWidth=4;x.strokeRect(R.x+2,R.y+2,R.w-4,R.h-4)}});
+  fly.forEach(f=>drawCar(f.car,f.off,Math.max(0,1-f.t*.7)));
+}
+function pickCar(px,py){const c=Math.floor(px/CS),r=Math.floor(py/CS);return cars.find(q=>cellsOf(q).some(([a,b])=>a===r&&b===c))}
+cv.addEventListener('pointerdown',e=>{if(over)return;const r=cv.getBoundingClientRect(),px=(e.clientX-r.left)*cv.width/r.width,py=(e.clientY-r.top)*cv.height/r.height,car=pickCar(px,py);if(!car)return;
+  if(pathClear(car,cars)){cars=cars.filter(q=>q!==car);fly.push({car,t:0,off:0});beep(300+Math.random()*100,.1,'sawtooth',.04);upd();if(!cars.length)setTimeout(win,600)}
+  else{lives--;bump={car};bumpT=.3;beep(130,.12,'square',.06);upd();if(lives<=0){over=true;setTimeout(lose,350)}}});
+function upd(){$('lv').textContent=fa(level);$('rm').textContent=fa(cars.length);$('lf').textContent='❤'.repeat(lives)+'🖤'.repeat(3-lives)}
+function win(){over=true;if(level>best){best=level;try{localStorage.setItem('sl-carpark',best)}catch(e){}}beep(900,.3);$('oh').textContent='🎉 پارکینگ خالی شد!';$('op').textContent='مرحله '+fa(level)+' تمام شد';$('ob').textContent='مرحله‌ی بعد';$('ob').onclick=()=>{$('ov').style.display='none';level++;start()};$('ov').style.display='flex'}
+function lose(){$('oh').textContent='💥 جانت تمام شد';$('op').textContent='به مرحله‌ی '+fa(level)+' رسیدی';$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';level=1;start()};$('ov').style.display='flex'}
+$('hn').onclick=()=>{const f=cars.filter(c=>pathClear(c,cars));if(f.length){hintC=f[Math.floor(Math.random()*f.length)];hintT=2}};
+$('nw').onclick=()=>start();
+let last=0;function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;fly.forEach(f=>{f.t+=dt;f.off=(8*f.t*f.t+7*f.t)});fly=fly.filter(f=>f.t<1.2);hintT-=dt;bumpT-=dt;draw();requestAnimationFrame(loop)}
+addEventListener('resize',fit);
+if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
+start();requestAnimationFrame(loop);
+window.__cp={get cars(){return cars},pathClear,start,set level(v){level=v},get N(){return N}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

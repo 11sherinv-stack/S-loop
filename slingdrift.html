@@ -23,18 +23,28 @@ const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
 const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 let au;function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
-const SP=330,HW=125,GAP=330;
-let W,H,state='menu',car,gates=[],poles=[],hook=null,trail=[],best=0,t=0,cam=0,score=0,msg='',holdBtn=false;
+const SP=330,HW=100;
+let W,H,state='menu',car,poles=[],hook=null,trail=[],best=0,t=0,cam=0,score=0,msg='',holdBtn=false;
 try{best=+localStorage.getItem('sl-slingdrift')||0}catch(e){}
 function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
-let R=rng(1);
-function gateAt(k){while(gates.length<=k){const i=gates.length,sign=i%2?1:-1,amp=i<2?0:55+R()*Math.min(50,20+i*1.5);gates.push({x:i===0?0:sign*amp,y:-i*GAP})}return gates[k]}
-function c(y){ // مرکز جاده
-  const k=Math.max(0,Math.floor(-y/GAP)),a=gateAt(k),b=gateAt(k+1),u=Math.max(0,Math.min(1,(a.y-y)/GAP)),s=(1-Math.cos(Math.PI*u))/2;return a.x+(b.x-a.x)*s}
-function polesUpTo(k){while(poles.length<=k){const i=poles.length,g=gateAt(i);if(i<2){poles.push({x:g.x+(i?0:0),y:g.y-GAP*.35,i});poles[i].x=0+(i===1?70:-70)*0;continue}
-  const dir=g.x>0?-1:1;poles.push({x:g.x+dir*(98),y:g.y,i})}}
-function reset(){R=rng(Date.now()%100000);gates=[];poles=[];car={x:0,y:80,a:-Math.PI/2};hook=null;trail=[];score=0;t=0;state='play';cam=car.y;msg=''}
-function nearestPole(){let b=null,bd=1e9;polesUpTo(Math.floor(-car.y/GAP)+6);for(const p of poles){const d=Math.hypot(p.x-car.x,p.y-car.y);const ahead=(p.x-car.x)*Math.cos(car.a)+(p.y-car.y)*Math.sin(car.a);if(d<235&&d>45&&ahead>-30&&d<bd){bd=d;b=p}}return b}
+let R=rng(1),path=[],pst=null;
+/* جاده از روی مسیر واقعی دریفت ساخته می‌شود: صاف → چرخش دور میله → صاف ... پس همیشه قابل رانندگی است */
+function initPath(){path=[[0,120]];poles=[];pst={x:0,y:120,h:-Math.PI/2,s:1,n:0}}
+function seg(){
+  const st=pst,s=st.s,n=st.n,Rd=n<1?96:72+R()*34,L=n<1?190:70+R()*60;
+  const alpha=(n<1?34:30+R()*22)*Math.PI/180,target=-Math.PI/2+s*alpha;let delta=Math.abs(target-st.h);if(delta<.35)delta=.35;
+  const steps=Math.ceil(L/12);for(let i=1;i<=steps;i++)path.push([st.x+Math.cos(st.h)*L*i/steps,st.y+Math.sin(st.h)*L*i/steps]);
+  st.x+=Math.cos(st.h)*L;st.y+=Math.sin(st.h)*L;
+  const php=st.h-s*Math.PI/2,pole={x:st.x-Rd*Math.cos(php),y:st.y-Rd*Math.sin(php)};poles.push(pole);
+  const as=Math.max(2,Math.ceil(delta/(5*Math.PI/180)));
+  for(let i=1;i<=as;i++){const ph=php+s*delta*i/as;path.push([pole.x+Rd*Math.cos(ph),pole.y+Rd*Math.sin(ph)])}
+  const ph=php+s*delta;st.x=pole.x+Rd*Math.cos(ph);st.y=pole.y+Rd*Math.sin(ph);st.h+=s*delta;st.s=-s;st.n++;
+}
+function extend(toY){let g=0;while(path[path.length-1][1]>toY&&g++<400)seg()}
+function c(y){extend(y-500);if(y>=path[0][1])return path[0][0];let lo=0,hi=path.length-1;while(hi-lo>1){const m=(lo+hi)>>1;if(path[m][1]>=y)lo=m;else hi=m}const a=path[lo],b=path[hi],u=(a[1]-y)/((a[1]-b[1])||1);return a[0]+(b[0]-a[0])*Math.max(0,Math.min(1,u))}
+function polesUpTo(){extend(car?car.y-700:-700)}
+function reset(){R=rng(Date.now()%100000);initPath();car={x:0,y:120,a:-Math.PI/2};hook=null;trail=[];score=0;t=0;state='play';cam=car.y;msg=''}
+function nearestPole(){let b=null,bd=1e9;extend(car.y-700);for(const p of poles){const d=Math.hypot(p.x-car.x,p.y-car.y);const ahead=(p.x-car.x)*Math.cos(car.a)+(p.y-car.y)*Math.sin(car.a);if(d<235&&d>45&&ahead>-30&&d<bd){bd=d;b=p}}return b}
 function doHook(){if(hook||state!=='play')return;const p=nearestPole();if(!p)return;const rx=car.x-p.x,ry=car.y-p.y,vx=Math.cos(car.a),vy=Math.sin(car.a),cr=rx*vy-ry*vx;hook={p,r:Math.hypot(rx,ry),phi:Math.atan2(ry,rx),s:cr>=0?1:-1};beep(600,.06)}
 function release(){if(!hook)return;car.a=hook.phi+hook.s*Math.PI/2;hook=null;beep(380,.05)}
 function step(dt){
@@ -43,8 +53,8 @@ function step(dt){
   if(hook){hook.phi+=hook.s*v/hook.r*dt;car.x=hook.p.x+Math.cos(hook.phi)*hook.r;car.y=hook.p.y+Math.sin(hook.phi)*hook.r;car.a=hook.phi+hook.s*Math.PI/2}
   else{car.x+=Math.cos(car.a)*v*dt;car.y+=Math.sin(car.a)*v*dt}
   trail.push([car.x,car.y,!!hook]);if(trail.length>240)trail.shift();
-  cam+=((car.y+H*.28/ (zoom()))-cam)*Math.min(1,8*dt);
-  const d=Math.abs(car.x-c(car.y));if(d>HW-8||car.y>200)crash();
+  cam+=((car.y+H*.28/zoom())-cam)*Math.min(1,8*dt);
+  const d=Math.abs(car.x-c(car.y));if(d>HW-9||car.y>200)crash();
   score=Math.max(score,Math.floor(-car.y/10));
 }
 function crash(){if(state!=='play')return;state='over';hook=null;beep(110,.4,'sawtooth',.08);if(score>best){best=score;try{localStorage.setItem('sl-slingdrift',best)}catch(e){}}
@@ -69,7 +79,7 @@ function draw(){
   // ردّ لاستیک
   for(let i=1;i<trail.length;i++){const a=trail[i-1],b=trail[i];x.strokeStyle=b[2]?'rgba(20,20,20,.55)':'rgba(20,20,20,.25)';x.lineWidth=(b[2]?6:3)*z;x.beginPath();x.moveTo(W/2+a[0]*z,ty(a[1]));x.lineTo(W/2+b[0]*z,ty(b[1]));x.stroke()}
   // میله‌ها
-  polesUpTo(Math.floor(-bot/GAP)+7);
+  extend(top-700);
   poles.forEach(p=>{if(p.y<top-30||p.y>bot+30)return;const sx=W/2+p.x*z,sy=ty(p.y),near=nearestPole()===p;
     x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.arc(sx+3,sy+4,13*z,0,7);x.fill();x.fillStyle=near?'#ffeb3b':'#ef5350';x.beginPath();x.arc(sx,sy,12*z,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=3*z;x.stroke();
     if(near&&!hook){x.strokeStyle='rgba(255,235,59,.6)';x.lineWidth=2;x.beginPath();x.arc(sx,sy,(18+Math.sin(t*8)*3)*z,0,7);x.stroke()}});
@@ -87,8 +97,8 @@ $('ob').onclick=()=>{$('ov').style.display='none';reset()};
 function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}addEventListener('resize',resize);resize();
 if(!x.setLineDash)x.setLineDash=()=>{};
 let last=0;function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
-car={x:0,y:80,a:-Math.PI/2};cam=80;requestAnimationFrame(loop);
-window.__sd2={reset,step,doHook,release,get car(){return car},get state(){return state},get score(){return score},c,nearestPole,get hook(){return hook},HW,GAP,gateAt,get gates(){return gates}};
+initPath();car={x:0,y:120,a:-Math.PI/2};cam=120;requestAnimationFrame(loop);
+window.__sd2={get poles(){return poles},extend,reset,step,doHook,release,get car(){return car},get state(){return state},get score(){return score},c,nearestPole,get hook(){return hook},HW};
 </script>
 <script>
 /* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */

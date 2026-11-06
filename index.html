@@ -153,6 +153,38 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 /* S Loop mini games */
 #sl-game-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.78);display:none;overflow:auto;padding:18px 12px;direction:rtl}#sl-game-modal.open{display:block}.sl-game-box{max-width:620px;margin:3vh auto;background:var(--bg1);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 20px 70px #0008}.sl-game-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.sl-game-top h2{font-size:1.25rem}.sl-game-board{margin:14px auto;max-width:500px}.sl-game-info{text-align:center;color:var(--muted);min-height:28px}.sl-game-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}.sl-game-board button{font:inherit;cursor:pointer}#sl-game-modal .sl-game-box.fr{max-width:560px;height:calc(100vh - 28px);height:calc(100dvh - 28px);margin:0 auto;padding:10px;display:flex;flex-direction:column}#sl-game-modal .sl-game-box.fr #sl-game-content{flex:1;min-height:0;margin-top:8px}#sl-game-modal iframe{width:100%;height:100%;border:0;border-radius:14px;background:#000;display:block}#sl-game-modal .sl-game-box.fr .sl-game-top h2{margin:0}.rv-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;background:#176b49;padding:6px;border-radius:10px;max-width:420px;margin:auto}.rv-cell{aspect-ratio:1;border:0;border-radius:4px;background:#26885e;display:grid;place-items:center;padding:2px}.rv-piece{width:82%;height:82%;border-radius:50%;box-shadow:inset 0 2px 4px #fff5,0 2px 3px #0005}.hana-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.hana-card{min-height:92px;border:2px solid #b98a4b;border-radius:10px;background:#fff4d7;color:#442b12;font-size:1.7rem;display:grid;place-items:center}.hana-card small{font-size:.65rem}.triple-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.triple-tile{min-height:70px;border:1px solid var(--line);border-radius:12px;background:var(--field);font-size:1.8rem}.triple-tile.selected{outline:3px solid var(--tq);transform:scale(.96)}.stress-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.stress-bubble{aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 35% 30%,#fff,#8bded3 45%,#159c90 80%);box-shadow:inset -5px -6px 10px #006b6255,0 3px 5px #0003}.stress-bubble.popped{visibility:hidden}.ping-wrap{max-width:440px;margin:auto}.ping-canvas{display:block;width:100%;height:auto;background:linear-gradient(90deg,#247c70 49.5%,#fff9 49.5% 50.5%,#247c70 50.5%);border:3px solid #fff;border-radius:12px;touch-action:none}.ping-controls{display:flex;justify-content:space-between;gap:12px;margin-top:10px}.ping-controls button{flex:1;padding:14px 5px;border-radius:12px;border:0;background:var(--btn);color:var(--btnink);font-weight:700;touch-action:none}
 
+
+/* ===== گرامافون + جلد صفحه‌ها ===== */
+.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 10px}
+.card{padding-left:24%}
+.sl{position:relative;width:100%;aspect-ratio:1}
+.vd{position:absolute;left:-31%;top:5%;width:92%;aspect-ratio:1;border-radius:50%;background:repeating-radial-gradient(circle,#0e0e0e 0 2px,#1d1d1d 2px 4px);box-shadow:0 4px 10px rgba(0,0,0,.4);z-index:0;transition:transform .35s}
+.vd::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0 20%,rgba(255,255,255,.17) 25%,transparent 30% 70%,rgba(255,255,255,.17) 75%,transparent 80%);pointer-events:none}
+.vd .lb{position:absolute;inset:32%;border-radius:50%;overflow:hidden;border:2px solid var(--lime);z-index:1}
+.vd .lb svg{display:block;width:100%;height:100%}
+.cv{position:relative;z-index:1;width:100%;height:100%;border-radius:6px;overflow:hidden;box-shadow:0 8px 16px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.2)}
+.cv svg.art{display:block;width:100%;height:100%}
+.cv .sb{position:absolute;right:4px;bottom:4px;width:15px;height:15px}
+.card:hover .vd,.card:focus-visible .vd{transform:translateX(-7%) rotate(40deg)}
+.vd.fly{margin:0;transition:none}
+#gramo{position:relative;width:340px;height:250px;margin:2px auto 12px;direction:ltr;transform-origin:top center}
+#gramo svg{position:absolute;left:0;top:0;width:340px;height:250px;overflow:visible;pointer-events:none}
+#gramo svg.gb2{z-index:3}
+#gplat{position:absolute;left:70px;top:47px;width:160px;height:160px;transform:perspective(560px) rotateX(66deg);z-index:2}
+#gplat .rec{position:relative;width:100%;height:100%;border-radius:50%;background:repeating-radial-gradient(circle,#0b0b0b 0 2px,#1b1b1b 2px 4px);box-shadow:0 0 0 3px #1a1a1a}
+#gplat .rec::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(transparent 0 20%,rgba(255,255,255,.2) 25%,transparent 30% 70%,rgba(255,255,255,.2) 75%,transparent 80%)}
+#gplat .lb{position:absolute;inset:33%;border-radius:50%;overflow:hidden;border:2px solid var(--lime);background:var(--lime);z-index:1}
+#gplat .lb svg{position:static;width:100%;height:100%;display:block}
+#gplat .rec i{position:absolute;left:50%;top:50%;width:6%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:#111;z-index:2}
+#gramo.on #gplat .rec{animation:sp 1.5s linear infinite}
+#garm{transform-origin:258px 112px;transition:transform .7s ease;transform:rotate(32deg)}
+#gramo.on #garm{transform:rotate(0deg)}
+#gramo.on .horn{animation:hv .16s ease-in-out infinite alternate}
+@keyframes hv{to{transform:translateY(-1.5px)}}
+#gmouth{position:absolute;left:313px;top:34px;width:0;height:0;z-index:4}
+.nt{position:absolute;left:-10px;top:-12px;font-size:26px;line-height:1;color:#000;pointer-events:none;animation:nt 2.4s ease-out forwards;text-shadow:0 0 2px rgba(255,255,255,.6),0 0 7px rgba(255,255,255,.3);font-family:"Segoe UI Symbol","Noto Sans Symbols","Apple Symbols",serif}
+@keyframes nt{0%{opacity:0;transform:translate(0,0) scale(.5) rotate(0)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.35) rotate(var(--r))}}
+@media (prefers-reduced-motion:reduce){#gramo.on #gplat .rec,#gramo.on .horn{animation:none}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
@@ -166,7 +198,26 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   <button data-s="games">🎮 Games</button><button data-s="favorites">❤️ Favorite Games</button><button data-s="friends">👥 Friends</button><button data-s="ai">🤖 AI</button><button data-s="support">🎧 Support</button><button data-s="apps">🧰 Apps</button><button data-s="account">👤 Account</button><button data-s="category">🗂️ Category</button><button data-s="settings">⚙️ Settings</button><button data-s="creator">✨ Creator</button>
 </nav>
 <main>
-<section id="games"><h2>Games</h2><p class="sub">یک صفحه‌ی گرامافون را انتخاب کن تا بازی در تب جدید شروع شود.</p><div class="grid" id="gr"></div></section>
+<section id="games"><h2>Games</h2><p class="sub">یک صفحه را انتخاب کن؛ داخل گرامافون می‌چرخد، از شیپور نت‌ها بیرون می‌آیند و بازی شروع می‌شود.</p><div id="gramo" aria-hidden="true">
+<svg class="gb" viewBox="0 0 340 250"><defs>
+<linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6535"/><stop offset="1" stop-color="#5a3517"/></linearGradient>
+<linearGradient id="gwt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58d55"/><stop offset="1" stop-color="#a06f3c"/></linearGradient>
+<linearGradient id="gbr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d77a"/><stop offset=".5" stop-color="#c9a02c"/><stop offset="1" stop-color="#8a6a14"/></linearGradient></defs>
+<ellipse cx="150" cy="241" rx="140" ry="9" fill="rgba(0,0,0,.28)"/>
+<path d="M24 158L52 96H248L276 158Z" fill="url(#gwt)"/>
+<rect x="24" y="158" width="252" height="72" rx="6" fill="url(#gw)"/>
+<g stroke="rgba(40,20,5,.35)" stroke-width="1.2" fill="none"><path d="M34 172H266M30 190H270M34 208H266"/></g>
+<rect x="24" y="158" width="252" height="5" fill="rgba(255,225,170,.3)"/>
+<rect x="38" y="228" width="16" height="10" rx="3" fill="#3a2410"/><rect x="246" y="228" width="16" height="10" rx="3" fill="#3a2410"/>
+<rect x="276" y="176" width="22" height="6" rx="3" fill="url(#gbr)"/><circle cx="300" cy="179" r="6" fill="#222"/>
+<g class="horn"><path d="M236 99C238 78 252 62 270 50L303 22C317 12 336 28 324 46L297 86C281 108 262 124 244 128Z" fill="url(#gbr)" stroke="#7a5a10" stroke-width="2"/>
+<ellipse cx="313" cy="34" rx="15" ry="22" transform="rotate(38 313 34)" fill="#2e2108" stroke="#e7c250" stroke-width="3"/>
+<path d="M242 104C260 100 270 112 268 130" stroke="rgba(255,255,255,.4)" stroke-width="3" fill="none"/></g></svg>
+<div id="gplat"><div class="rec"><div class="lb"></div><i></i></div></div>
+<svg class="gb2" viewBox="0 0 340 250"><g id="garm"><circle cx="258" cy="112" r="8" fill="#555" stroke="#bbb" stroke-width="2"/><path d="M258 112L214 130" stroke="#d6d6d6" stroke-width="5" stroke-linecap="round"/><rect x="204" y="125" width="15" height="9" rx="2" fill="#222" transform="rotate(25 211 129)"/></g></svg>
+<div id="gmouth"></div>
+</div>
+<div class="grid" id="gr"></div></section>
 
 <section id="favorites" hidden><h2>Favorite Games</h2><p class="sub">بازی‌هایی که با ❤ علامت زده‌ای اینجا جمع می‌شوند.</p><div class="grid" id="fgr"></div><p class="sub" id="fempty" style="text-align:center;margin-top:40px">هنوز بازی مورد علاقه‌ای نداری. روی ♡ کنار هر بازی بزن.</p></section>
 
@@ -481,7 +532,8 @@ const GM=[
 {id:'domino',n:'Domino',u:'domino.html',a:'<rect width="100" height="100" fill="#1d4d3a"/><g transform="rotate(-18 50 50)"><rect x="12" y="30" width="76" height="40" rx="6" fill="#fbf6e6" stroke="#8c8470" stroke-width="2"/><path d="M50 30V70" stroke="#8c8470" stroke-width="2"/><g fill="#1c2230"><circle cx="24" cy="40" r="4"/><circle cx="38" cy="60" r="4"/><circle cx="31" cy="50" r="4"/><circle cx="62" cy="40" r="4"/><circle cx="76" cy="40" r="4"/><circle cx="62" cy="60" r="4"/><circle cx="76" cy="60" r="4"/><circle cx="69" cy="50" r="4"/></g></g>'},
 ];
 let fav=LS.get('sl-fav',[]);
-const cardHTML=g=>`<div class="cw"><button class="hrt" data-f="${g.id}" aria-label="Favorite ${g.n}" aria-pressed="${fav.includes(g.id)}">${fav.includes(g.id)?'♥':'♡'}</button><a class="card" href="${g.u}" target="_blank" rel="noopener" data-id="${g.id}"><div class="disc"><div class="lbl"><svg viewBox="0 0 100 100" aria-hidden="true">${g.a}</svg></div><i></i></div><div class="nm">${g.n}</div></a></div>`;
+const SB='<svg class="sb" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#111" stroke="#c6e03c" stroke-width="1.4"/><text x="10" y="13.4" font-size="9" font-weight="700" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif">S</text></svg>';
+const cardHTML=g=>`<div class="cw"><button class="hrt" data-f="${g.id}" aria-label="Favorite ${g.n}" aria-pressed="${fav.includes(g.id)}">${fav.includes(g.id)?'♥':'♡'}</button><a class="card" href="${g.u}" target="_blank" rel="noopener" data-id="${g.id}"><div class="sl"><div class="vd"><div class="lb"><svg viewBox="0 0 100 100" aria-hidden="true">${g.a}</svg></div></div><div class="cv"><svg class="art" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${g.a}</svg>${SB}</div></div><div class="nm">${g.n}</div></a></div>`;
 function renderFav(){const L=GM.filter(g=>fav.includes(g.id));$('fgr').innerHTML=L.map(cardHTML).join('');$('fempty').hidden=L.length>0}
 function toggleFav(id){
   fav=fav.includes(id)?fav.filter(k=>k!==id):fav.concat(id);LS.set('sl-fav',fav);const on=fav.includes(id);
@@ -1236,8 +1288,8 @@ async function sgSearch(q){
     else{$('sgs').textContent=rs.length+' نتیجه';
       $('sgr').innerHTML=rs.map((r,i)=>{const name=r.trackName||r.collectionName,line=sgEsc(r.artistName)+(r.collectionName&&r.trackName?' · '+sgEsc(r.collectionName):''),year=r.releaseDate?(' · '+String(r.releaseDate).slice(0,4)):'';
         return '<div class="row" style="gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(128,128,128,.25)"><img src="'+sgEsc((r.artworkUrl100||'').replace(/^http:/,'https:'))+'" alt="" width="52" height="52" loading="lazy" style="border-radius:8px;flex:none;background:#8884"><div style="flex:1;min-width:0;line-height:1.6"><b>'+sgEsc(name)+'</b><br><small>'+line+year+'</small><br>'+
-          (r.previewUrl?'<button class="al" data-p="'+sgEsc(r.previewUrl)+'" data-i="'+i+'">▶ پیش‌نمایش</button> ':'')+(r.trackViewUrl||r.collectionViewUrl?'<a class="al" target="_blank" rel="noopener" href="'+sgEsc(r.trackViewUrl||r.collectionViewUrl)+'">Apple Music</a> ':'')+
-          sgLinks(r.artistName+' '+name)+'</div></div>'}).join('')}
+          (r.previewUrl?'<button class="al" data-p="'+sgEsc(r.previewUrl)+'" data-i="'+i+'">▶ پیش‌نمایش</button> ':'')+(r.trackViewUrl||r.collectionViewUrl?'<a class="al" target="_blank" rel="noopener" href="'+sgEsc(r.trackViewUrl||r.collectionViewUrl)+'">🛒 خرید / دانلود قانونی</a> ':'')+
+          sgLinks(r.artistName+' '+name)+' <a class="al" target="_blank" rel="noopener" href="https://genius.com/search?q='+encodeURIComponent(r.artistName+' '+name)+'">📜 Genius</a> <a class="al" target="_blank" rel="noopener" href="https://www.musixmatch.com/search/'+encodeURIComponent(r.artistName+' '+name)+'">📜 Musixmatch</a></div></div>'}).join('')}
   }catch(e){$('sgs').innerHTML='اتصال به سرویس جستجو برقرار نشد. از این لینک‌ها استفاده کن:<br>'+sgLinks(q)}
   sgBusy=false;
 }
@@ -1459,11 +1511,48 @@ modal.addEventListener('click',e=>{if(e.target===modal)close()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
 try{const q=new URLSearchParams(location.search).get('game');if(q&&FR[q])setTimeout(()=>open(q),400)}catch(e){}
 addEventListener('message',e=>{if(e.data==='sl-close')close()});
+
+/* ---- گرامافون: چرخیدن صفحه و نت‌های مشکی ---- */
+let gBusy=false,gNoteT=0;
+(function(){const gr=document.getElementById('gramo');if(gr){const z=Math.min(1,(innerWidth-16)/340);if(z<1){gr.style.zoom=z}}})();
+function gNotes(on){
+  clearInterval(gNoteT);if(!on)return;const m=document.getElementById('gmouth'),ch=['♪','♫','♬','♩'];
+  const one=()=>{const n=document.createElement('span');n.className='nt';n.textContent=ch[Math.floor(Math.random()*ch.length)];n.style.setProperty('--dx',(20+Math.random()*90)+'px');n.style.setProperty('--dy',(-(70+Math.random()*90))+'px');n.style.setProperty('--r',((Math.random()-.5)*50)+'deg');m.appendChild(n);setTimeout(()=>n.remove(),2500)};
+  one();gNoteT=setInterval(one,230);
+}
+function gramoPlay(id,card){
+  const gr=document.getElementById('gramo'),plat=document.getElementById('gplat'),g=GM.find(q=>q.id===id);
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(gBusy)return;
+  if(!gr||!g||!plat.offsetParent||reduce||!card.querySelector('.vd')){open(id);return}
+  gBusy=true;
+  const go=()=>{
+    const src=card.querySelector('.vd'),r1=src.getBoundingClientRect(),r2=plat.getBoundingClientRect();
+    const fl=src.cloneNode(true);fl.classList.add('fly');
+    Object.assign(fl.style,{position:'fixed',left:r1.left+'px',top:r1.top+'px',width:r1.width+'px',height:r1.height+'px',zIndex:'80',transformOrigin:'50% 50%',pointerEvents:'none'});
+    document.body.appendChild(fl);src.style.visibility='hidden';
+    const cx1=r1.left+r1.width/2,cy1=r1.top+r1.height/2,cx2=r2.left+r2.width/2,cy2=r2.top+r2.height/2,sc=r2.width/r1.width;
+    const done=()=>{
+      fl.remove();src.style.visibility='';
+      plat.querySelector('.lb').innerHTML='<svg viewBox="0 0 100 100">'+g.a+'</svg>';
+      gr.classList.add('on');gNotes(true);
+      setTimeout(()=>{gNotes(false);gr.classList.remove('on');gBusy=false;open(id)},2000);
+    };
+    const anim=fl.animate([
+      {transform:'translate(0,0) scale(1,1) rotate(0deg)'},
+      {transform:`translate(${(cx2-cx1)*.5}px,${(cy2-cy1)*.5-40}px) scale(${(1+sc)/2},${(1+sc*.37)/2}) rotate(200deg)`,offset:.55},
+      {transform:`translate(${cx2-cx1}px,${cy2-cy1}px) scale(${sc},${sc*.37}) rotate(400deg)`}
+    ],{duration:800,easing:'cubic-bezier(.3,.7,.3,1)',fill:'forwards'});
+    anim.onfinish=done;anim.oncancel=done;
+  };
+  if(window.scrollY>30){window.scrollTo({top:0,behavior:'smooth'});setTimeout(go,450)}else go();
+}
 document.addEventListener('click',e=>{
   const a=e.target.closest('.card,.ailink');if(!a)return;
   const id=a.dataset.id;if(!FR[id])return;
   if(e.defaultPrevented)return; // زمان بازی تمام شده
-  e.preventDefault();open(id);
+  e.preventDefault();
+  if(a.classList.contains('card'))gramoPlay(id,a);else open(id);
 });
 })();
 

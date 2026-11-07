@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Road Rider — موتورسواری لابه‌لای ترافیک، سبقت بگیر و از تصادف فرار کن. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Road Rider</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1b2a3a;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.pad{direction:ltr;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:10px;z-index:20}
+.pad button{width:74px;height:74px;border-radius:18px;border:2px solid rgba(255,255,255,.7);background:rgba(0,0,0,.42);color:#fff;font-size:28px;touch-action:none;cursor:pointer}
+.pad button.dn{background:rgba(255,255,255,.4)}
+#pl{left:10px}#pr{right:10px}
+.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,20,30,.84);color:#fff;text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.8rem}.ov p{margin:0;line-height:1.9;max-width:420px}
+.ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="pad" id="pl"><button id="bl" aria-label="چپ">◀</button><button id="br" aria-label="راست">▶</button></div>
+<div class="pad" id="pr"><button id="bb" aria-label="ترمز">🛑</button><button id="bg" aria-label="گاز">⏩</button></div>
+<div class="ov" id="ov"><h2 id="oh">🏍 Road Rider</h2><p id="op">گاز را نگه دار، لابه‌لای ماشین‌ها سبقت بگیر و از تصادف فرار کن!<br>سبقت‌های خیلی نزدیک امتیاز اضافه دارند.<br><small>رایانه: کلیدهای جهت‌دار ← → (خط) · ↑ گاز · ↓ ترمز</small></p><button id="ob">شروع</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const LANES=4,LW=1.9,CAMY=1.55,CAMZ=-5.5,VMAX=58,CC=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#fdd835','#eceff1','#26a69a'];
+let W,H,F,HZ,state='menu',cars=[],lane=1,px=1,v=20,dist=0,score=0,best=0,t=0,gas=false,brake=false,near=0,nearT=0,spawnT=0,lean=0;
+try{best=+localStorage.getItem('sl-roadrider')||0}catch(e){}
+const bt={l:false,r:false};
+function fit(){W=cv.width=innerWidth;H=cv.height=innerHeight;F=Math.min(W*1.05,H*.62);HZ=H*.36}
+const LX=l=>(l-(LANES-1)/2)*LW;
+const P=(wx,wy,wz)=>{const z=wz-CAMZ;if(z<.3)return null;const s=F/z;return[W/2+wx*s,HZ+(CAMY-wy)*s,s]};
+function reset(){cars=[];lane=1;px=1;v=22;dist=0;score=0;near=0;t=0;spawnT=0;state='play';for(let i=0;i<6;i++)spawn(40+i*24)}
+function spawn(z){
+  const l=Math.floor(Math.random()*LANES);
+  if(cars.some(c=>c.lane===l&&Math.abs(c.z-z)<28))return;
+  const around=cars.filter(c=>Math.abs(c.z-z)<18).length;if(around>=LANES-2)return;
+  cars.push({lane:l,z,v:16+Math.random()*18,col:CC[Math.floor(Math.random()*CC.length)],len:4.3,truck:Math.random()<.18,passed:false});
+}
+function step(dt){
+  t+=dt;if(state!=='play')return;
+  if(gas)v=Math.min(VMAX,v+16*dt);else v=Math.max(14,v-4*dt);
+  if(brake)v=Math.max(10,v-30*dt);
+  dist+=v*dt;score=Math.floor(dist/10)+near*50;
+  px+=(lane-px)*Math.min(1,10*dt);lean=(lane-px);
+  spawnT-=dt*(v/30);if(spawnT<=0){spawnT=.9+Math.random()*.9;spawn(150+Math.random()*60)}
+  cars.forEach(c=>{
+    const prev=c.z;c.z+=(c.v-v)*dt;
+    if(prev>0&&c.z<=0&&!c.passed){c.passed=true;const d=Math.abs(px-c.lane);if(d>.55&&d<1.35){near++;nearT=1;beep(900,.08,'triangle')}}
+    const len=c.truck?8:c.len;if(c.z<1.2&&c.z+len>-1.2&&Math.abs(px-c.lane)<.7){crash()}
+  });
+  cars=cars.filter(c=>c.z>-40&&c.z<260);
+  nearT=Math.max(0,nearT-dt);
+}
+function crash(){if(state!=='play')return;state='over';beep(100,.5,'sawtooth',.1);if(score>best){best=score;try{localStorage.setItem('sl-roadrider',best)}catch(e){}}
+  setTimeout(()=>{$('oh').textContent='💥 تصادف!';$('op').innerHTML='امتیاز: '+fa(score)+' · سبقت نزدیک: '+fa(near)+'<br>بهترین: '+fa(best);$('ob').textContent='دوباره';$('ov').style.display='flex'},500)}
+function quad(a,b,c,d,col){if(!a||!b||!c||!d)return;x.fillStyle=col;x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.lineTo(c[0],c[1]);x.lineTo(d[0],d[1]);x.closePath();x.fill()}
+function box(cx,w,h,z0,z1,col,roof){const x0=cx-w/2,x1=cx+w/2,fl=P(x0,0,z0),fr=P(x1,0,z0),tl=P(x0,h,z0),tr=P(x1,h,z0),bl=P(x0,h,z1),br=P(x1,h,z1);if(!fl)return;quad(tl,tr,br,bl,roof);quad(fl,fr,tr,tl,col)}
+function draw(){
+  let g=x.createLinearGradient(0,0,0,HZ+20);g.addColorStop(0,'#2a4a78');g.addColorStop(1,'#ffc58a');x.fillStyle=g;x.fillRect(0,0,W,HZ+20);
+  for(let i=0;i<10;i++){const bx=((i*131-dist*3)%(W+160)+W+160)%(W+160)-80,bh=30+(i*47)%80;x.fillStyle='rgba(20,30,60,.7)';x.fillRect(bx,HZ-bh,60,bh+4)}
+  x.fillStyle='#2f6b3a';x.fillRect(0,HZ,W,H-HZ);
+  const rl=-LANES*LW/2-.5,rr=LANES*LW/2+.5;
+  quad(P(rl,0,-5),P(rr,0,-5),P(rr,0,220),P(rl,0,220),'#3b4048');
+  quad(P(rl-.3,0,-5),P(rl,0,-5),P(rl,0,220),P(rl-.3,0,220),'#e0e0e0');quad(P(rr,0,-5),P(rr+.3,0,-5),P(rr+.3,0,220),P(rr,0,220),'#e0e0e0');
+  // خط‌چین
+  for(let l=1;l<LANES;l++){const cx=LX(l)-LW/2;for(let k=0;k<30;k++){const z=((k*8-dist%8));quad(P(cx-.06,0,z),P(cx+.06,0,z),P(cx+.06,0,z+3.6),P(cx-.06,0,z+3.6),'rgba(255,255,255,.85)')}}
+  // تیرهای کنار جاده
+  for(let k=0;k<20;k++){const z=((k*14-dist%14));[rl-1.2,rr+1.2].forEach(wx=>{const a=P(wx,0,z),b=P(wx,2.6,z);if(a&&b){x.strokeStyle='#555';x.lineWidth=Math.max(1,a[2]*.07);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke()}})}
+  // ماشین‌ها (دور → نزدیک) و موتور
+  const list=cars.slice().sort((a,b)=>b.z-a.z);let drewP=false;
+  const bike=()=>{
+    const cx=LX(px),a=P(cx,0,0),b=P(cx,1.3,0);if(!a||!b)return;const s=a[2],hh=a[1]-b[1];
+    x.save();x.translate(a[0],a[1]);x.rotate(lean*.28);
+    x.fillStyle='rgba(0,0,0,.3)';x.beginPath();x.ellipse(0,0,s*.4,s*.08,0,0,7);x.fill();
+    x.fillStyle='#111';x.fillRect(-s*.09,-s*.55,s*.18,s*.55); // چرخ عقب
+    x.fillStyle='#e53935';x.fillRect(-s*.2,-s*.95,s*.4,s*.4);
+    x.fillStyle='#263238';x.fillRect(-s*.14,-s*1.5,s*.28,s*.52); // راکب
+    x.fillStyle='#ffd54f';x.beginPath();x.arc(0,-s*1.62,s*.15,0,7);x.fill();
+    x.fillStyle='#ff5252';x.fillRect(-s*.1,-s*.62,s*.2,s*.07);x.restore();
+  };
+  list.forEach(c=>{
+    if(!drewP&&c.z<0){bike();drewP=true}
+    const cx=LX(c.lane),h=c.truck?2.6:1.35,w=c.truck?1.5:1.3,len=c.truck?8:c.len;
+    x.globalAlpha=Math.max(0,Math.min(1,1.2-c.z/200));
+    box(cx,w,h,c.z,c.z+len,c.col,'rgba(255,255,255,.28)');
+    const a=P(cx-w/2,.5,c.z),b=P(cx+w/2,.5,c.z);if(a&&b){x.fillStyle='#ff1744';x.fillRect(a[0]+2,a[1]-a[2]*.1,a[2]*.22,a[2]*.12);x.fillRect(b[0]-a[2]*.22-2,a[1]-a[2]*.1,a[2]*.22,a[2]*.12)}
+    x.globalAlpha=1;
+  });
+  if(!drewP)bike();
+  // HUD
+  x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 15px Tahoma,sans-serif';x.textBaseline='middle';x.textAlign='right';x.fillText('امتیاز '+fa(score),W-10,17);
+  x.textAlign='center';x.fillText(fa(Math.round(v*3.6))+' km/h',W/2,17);x.textAlign='left';x.fillText('بهترین '+fa(best),104,17);
+  if(nearT>0){x.globalAlpha=nearT;x.font='bold 24px Tahoma,sans-serif';x.fillStyle='#ffeb3b';x.textAlign='center';x.fillText('سبقت نزدیک! +۵۰',W/2,H*.3);x.globalAlpha=1}
+}
+function act(k){if(state!=='play')return;if(k==='l'&&lane>0){lane--;beep(300,.04)}else if(k==='r'&&lane<LANES-1){lane++;beep(340,.04)}}
+let sx0=0,sid=null;
+cv.addEventListener('pointerdown',e=>{sid=e.pointerId;sx0=e.clientX});
+cv.addEventListener('pointermove',e=>{if(e.pointerId!==sid)return;const dx=e.clientX-sx0;if(Math.abs(dx)>36){act(dx>0?'r':'l');sx0=e.clientX}});
+cv.addEventListener('pointerup',()=>sid=null);cv.addEventListener('pointercancel',()=>sid=null);
+function hold(id,on,off){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();b.classList.add('dn');try{b.setPointerCapture(e.pointerId)}catch(_){}on()});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>{if(b.classList.contains('dn')){b.classList.remove('dn');off()}}))}
+hold('bl',()=>act('l'),()=>{});hold('br',()=>act('r'),()=>{});hold('bg',()=>gas=true,()=>gas=false);hold('bb',()=>brake=true,()=>brake=false);
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a'){act('l');e.preventDefault()}else if(e.key==='ArrowRight'||e.key==='d'){act('r');e.preventDefault()}else if(e.key==='ArrowUp'||e.key==='w'){gas=true;e.preventDefault()}else if(e.key==='ArrowDown'||e.key==='s'){brake=true;e.preventDefault()}});
+addEventListener('keyup',e=>{if(e.key==='ArrowUp'||e.key==='w')gas=false;if(e.key==='ArrowDown'||e.key==='s')brake=false});
+$('ob').onclick=()=>{$('ov').style.display='none';reset()};
+let last=0;function loop(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
+addEventListener('resize',fit);fit();requestAnimationFrame(loop);
+window.__rr={reset,step,act,set gas(v){gas=v},get cars(){return cars},get state(){return state},get lane(){return lane},get px(){return px},get score(){return score},get v(){return v},draw,LANES};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

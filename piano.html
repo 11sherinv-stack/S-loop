@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="شبیه‌ساز پیانو — کیبورد چندلمسی با ضبط، آموزش و چند ساز. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Piano</title>
+<style>
+:root{--bg:#1b1424;--ink:#f1e9ff;--card:#2a2038;--btn:#a06bff;--btnink:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:radial-gradient(circle at 50% 0,#3a2b52,var(--bg));color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:4px 6px;max-width:560px}
+button,select{font:inherit;font-size:.82rem;border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:7px 11px;cursor:pointer}
+button.on{background:var(--btn);color:var(--btnink)}
+.msg{min-height:1.4em;font-size:.88rem;text-align:center}
+.stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;justify-content:flex-end}
+#kb{position:relative;display:flex;height:min(46vh,300px);width:100%;direction:ltr;margin-bottom:max(8px,env(safe-area-inset-bottom,0px));touch-action:none}
+.w{position:relative;flex:1;background:linear-gradient(#fff,#e9e3f5);border:1px solid #444;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;color:#555;font-size:.7rem;min-width:0}
+.w.act{background:linear-gradient(#d7c4ff,#b99aff)}
+.w.hint{background:linear-gradient(#fff7b0,#ffd54f)}
+.k{position:absolute;top:0;height:62%;width:60%;background:linear-gradient(#333,#000);border-radius:0 0 6px 6px;z-index:2;transform:translateX(50%);right:0;color:#aaa;font-size:.6rem;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+.k.act{background:linear-gradient(#7a4fe0,#4a2a9a)}
+.k.hint{background:linear-gradient(#e6b800,#a07800)}
+#roll{flex:1;width:100%;min-height:0}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🎹 پیانو</h1>
+<div class="bar"><select id="ins"><option value="piano">پیانو</option><option value="organ">ارگ</option><option value="bell">زنگ</option><option value="synth">سینتی‌سایزر</option></select><button id="o-">◀ اکتاو</button><span id="ol" style="align-self:center;font-size:.85rem"></span><button id="o+">اکتاو ▶</button><button id="sus">پدال</button><button id="nn">نام نت</button></div>
+<div class="bar"><button id="rec">⏺ ضبط</button><button id="pl">▶ پخش ضبط</button><select id="sg"><option value="">🎓 آموزش آهنگ…</option><option value="ode">سرود شادی</option><option value="twk">ستاره‌ی کوچولو</option><option value="jb">جینگل بلز</option><option value="eli">برای الیز (آغاز)</option></select><button id="dm">🔊 نمونه</button></div>
+<div class="msg" id="ms"></div>
+<div class="stage"><div style="flex:1;min-height:0"></div><div id="kb"></div></div>
+<script>
+const $=i=>document.getElementById(i);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+let ac=null,master=null;
+function A(){if(!ac){const X=window.AudioContext||window.webkitAudioContext;ac=new X();master=ac.createGain();master.gain.value=.8*GV;const cmp=ac.createDynamicsCompressor();master.connect(cmp);cmp.connect(ac.destination)}if(ac.state==='suspended')ac.resume();return ac}
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],FA={'C':'دو','D':'ر','E':'می','F':'فا','G':'سل','A':'لا','B':'سی'};
+const isBlack=n=>[1,3,6,8,10].includes(n%12);
+const midiF=m=>440*Math.pow(2,(m-69)/12);
+let ins='piano',sustain=false,showN=false,oct=4,voices=new Map(),recOn=false,recEv=[],recT0=0,learn=null,li=0;
+/* صدا */
+const INS={
+ piano:{part:[[1,1],[2,.5],[3,.22],[4,.12],[5,.07]],type:'sine',a:.004,d:.9,s:.0,r:.35,dur:1.8},
+ organ:{part:[[1,1],[2,.6],[3,.4],[4,.3]],type:'sine',a:.02,d:.1,s:.8,r:.12,dur:99},
+ bell:{part:[[1,1],[2.76,.5],[5.4,.3],[8.9,.15]],type:'sine',a:.002,d:1.6,s:0,r:.6,dur:2.4},
+ synth:{part:[[1,1]],type:'sawtooth',a:.01,d:.2,s:.5,r:.2,dur:99,filter:1800}
+};
+function start(m){
+  const c=A(),P=INS[ins],f=midiF(m),t=c.currentTime,g=c.createGain();g.gain.setValueAtTime(0,t);
+  const peak=.34/Math.sqrt(P.part.length);g.gain.linearRampToValueAtTime(peak,t+P.a);g.gain.exponentialRampToValueAtTime(Math.max(.0005,peak*(P.s||.0005)+.0004),t+P.a+P.d);
+  let out=g;if(P.filter){const fl=c.createBiquadFilter();fl.type='lowpass';fl.frequency.value=P.filter;g.connect(fl);out=fl}
+  out.connect(master);const os=[];
+  P.part.forEach(([h,a])=>{const o=c.createOscillator(),pg=c.createGain();o.type=P.type;o.frequency.value=f*h;pg.gain.value=a;o.connect(pg);pg.connect(g);o.start(t);os.push(o)});
+  return{g,os,t,P};
+}
+function stop(v){const c=A(),t=c.currentTime,r=v.P.r+(sustain?.9:0);v.g.gain.cancelScheduledValues(t);v.g.gain.setValueAtTime(Math.max(.0002,v.g.gain.value),t);v.g.gain.exponentialRampToValueAtTime(.0002,t+r);v.os.forEach(o=>o.stop(t+r+.05))}
+function noteOn(m,src){if(voices.has(src))noteOff(src);const v=start(m);v.m=m;voices.set(src,v);paint(m,true);if(recOn)recEv.push({t:performance.now()-recT0,m,on:1});learnCheck(m)}
+function noteOff(src){const v=voices.get(src);if(!v)return;voices.delete(src);stop(v);paint(v.m,false);if(recOn)recEv.push({t:performance.now()-recT0,m:v.m,on:0})}
+/* صفحه‌کلید */
+const kb=$('kb');let keys={};
+function build(){
+  kb.innerHTML='';keys={};const first=12*(oct+1),n=14;let wi=0;
+  for(let i=0;i<24;i++){const m=first+i;if(isBlack(m))continue;
+    const w=document.createElement('div');w.className='w';w.dataset.m=m;keys[m]=w;kb.appendChild(w);
+    const nm=m%12;w.textContent=showN?(FA[NAMES[nm]]):'';
+    const nx=m+1;if(isBlack(nx)&&nx<first+24){const k=document.createElement('div');k.className='k';k.dataset.m=nx;keys[nx]=k;w.appendChild(k);k.textContent=showN?NAMES[nx%12]:''}
+  }
+  $('ol').textContent='C'+oct+'–B'+(oct+1);
+  if(learn)hintNext();
+}
+function paint(m,on){const e=keys[m];if(e)e.classList.toggle('act',on)}
+function keyAt(x,y){const e=document.elementFromPoint(x,y);return e&&e.dataset&&e.dataset.m?+e.dataset.m:null}
+const ptrs=new Map();
+kb.addEventListener('pointerdown',e=>{e.preventDefault();const m=keyAt(e.clientX,e.clientY);if(m==null)return;ptrs.set(e.pointerId,m);noteOn(m,'p'+e.pointerId);try{kb.setPointerCapture(e.pointerId)}catch(_){}});
+kb.addEventListener('pointermove',e=>{if(!ptrs.has(e.pointerId))return;const m=keyAt(e.clientX,e.clientY);if(m!=null&&m!==ptrs.get(e.pointerId)){noteOff('p'+e.pointerId);ptrs.set(e.pointerId,m);noteOn(m,'p'+e.pointerId)}});
+const up=e=>{if(ptrs.has(e.pointerId)){ptrs.delete(e.pointerId);noteOff('p'+e.pointerId)}};
+kb.addEventListener('pointerup',up);kb.addEventListener('pointercancel',up);
+/* کیبورد رایانه */
+const KM={a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12,o:13,l:14,p:15,';':16};
+addEventListener('keydown',e=>{if(e.repeat)return;const k=KM[e.key.toLowerCase()];if(k!=null)noteOn(12*(oct+1)+k,'k'+e.key)});
+addEventListener('keyup',e=>{noteOff('k'+e.key)});
+/* کنترل‌ها */
+$('ins').onchange=e=>ins=e.target.value;
+$('o-').onclick=()=>{oct=Math.max(1,oct-1);build()};$('o+').onclick=()=>{oct=Math.min(6,oct+1);build()};
+$('sus').onclick=e=>{sustain=!sustain;e.target.classList.toggle('on',sustain)};
+$('nn').onclick=e=>{showN=!showN;e.target.classList.toggle('on',showN);build()};
+/* ضبط و پخش */
+$('rec').onclick=e=>{if(!recOn){recOn=true;recEv=[];recT0=performance.now();e.target.textContent='⏹ توقف';e.target.classList.add('on');say('در حال ضبط…')}else{recOn=false;e.target.textContent='⏺ ضبط';e.target.classList.remove('on');say(recEv.length?('ضبط شد: '+recEv.filter(x=>x.on).length+' نت'):'چیزی ضبط نشد')}};
+function playEv(ev,after){if(!ev.length)return say('اول چیزی ضبط کن');const t0=performance.now(),tm=[];
+  ev.forEach(x=>tm.push(setTimeout(()=>{x.on?noteOn(x.m,'r'+x.m):noteOff('r'+x.m)},x.t)));
+  const end=ev[ev.length-1].t+600;tm.push(setTimeout(()=>{after&&after()},end));return tm}
+$('pl').onclick=()=>{playEv(recEv)};
+function say(t){$('ms').textContent=t}
+/* آموزش آهنگ‌ها (آهنگ‌های قدیمی و آزاد) — [نت MIDI نسبی از C4، طول] */
+const SONGS={
+ ode:'4 4 5 7 7 5 4 2 0 0 2 4 4 2 2 4 4 5 7 7 5 4 2 0 0 2 4 2 0 0',
+ twk:'0 0 7 7 9 9 7 5 5 4 4 2 2 0 7 7 5 5 4 4 2 7 7 5 5 4 4 2 0 0 7 7 9 9 7 5 5 4 4 2 2 0',
+ jb:'4 4 4 4 4 4 4 7 0 2 4 5 5 5 5 5 4 4 4 4 2 2 4 2 7 4 4 4 4 4 4 4 7 0 2 4 5 5 5 5 5 4 4 4 7 7 5 2 0',
+ eli:'16 15 16 15 16 11 14 12 9 0 4 9 11 4 8 11 12 4 16 15 16 15 16 11 14 12 9'
+};
+function demoMs(seq){const o=[];let t=0;seq.forEach(r=>{const m=60+r;o.push({t,m,on:1});o.push({t:t+340,m,on:0});t+=420});return o}
+$('sg').onchange=e=>{const k=e.target.value;if(!k){learn=null;build();return say('')}learn=SONGS[k].split(' ').map(Number);li=0;oct=4;build();say('نت زردرنگ را بزن (۱/'+learn.length+')')};
+$('dm').onclick=()=>{if(!learn)return say('اول یک آهنگ را برای آموزش انتخاب کن');playEv(demoMs(learn))};
+function hintNext(){Object.values(keys).forEach(k=>k.classList.remove('hint'));if(!learn||li>=learn.length)return;const m=60+learn[li];if(keys[m])keys[m].classList.add('hint');else{if(m>=12*(oct+2)){oct++;build()}else if(m<12*(oct+1)){oct--;build()}}}
+function learnCheck(m){if(!learn||li>=learn.length)return;if(m===60+learn[li]){li++;if(li>=learn.length){say('🎉 آهنگ تمام شد!');learn=null;Object.values(keys).forEach(k=>k.classList.remove('hint'));return}say('درست! ('+(li+1)+'/'+learn.length+')');hintNext()}}
+build();
+window.__pn={noteOn,noteOff,get voices(){return voices},SONGS,midiF,build,get keys(){return keys},set learn(v){learn=v},get li(){return li},learnCheck,hintNext};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

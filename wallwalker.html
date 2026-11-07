@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Wall Walker — روی کف و سقف بدو؛ با هر لمس جاذبه برعکس می‌شود. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Wall Walker</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#14102a;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(14,10,36,.86);color:#fff;text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.8rem}.ov p{margin:0;line-height:1.9;max-width:420px}
+.ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="ov" id="ov"><h2 id="oh">🧗 Wall Walker</h2><p id="op">کاراکتر روی کف و سقف می‌دود. هر لمس جاذبه را برعکس می‌کند و او را به سمت مقابل می‌اندازد.<br>از میخ‌ها، ستون‌ها و جاهایی که کف یا سقف ندارد دور بمان و سکه جمع کن!<br><small>رایانه: Space یا کلیک</small></p><button id="ob">شروع</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let W,H,FY,CY,PX,PS=26,state='menu',obs=[],dist=0,coins=0,best=0,t=0,speed=270,nextX=700,side=0,py,vy=0,flying=false,trail=[];
+try{best=+localStorage.getItem('sl-wallwalker')||0}catch(e){}
+function fit(){W=cv.width=innerWidth;H=cv.height=innerHeight;FY=H*.8;CY=H*.2;PX=W*.27}
+function reset(){obs=[];dist=0;coins=0;speed=270;nextX=W*.9;side=0;py=FY-PS/2;vy=0;flying=false;trail=[];state='play';t=0;spawnTo(dist+W*2.5)}
+function spawnTo(lim){
+  while(nextX<lim){
+    const r=Math.random(),s=Math.random()<.5?0:1;
+    const early=dist<600;
+    if(r<.3)obs.push({t:'spike',x:nextX,w:36+Math.floor(Math.random()*2)*30,s}),nextX+=330+Math.random()*120;
+    else if(r<.55)obs.push({t:'pillar',x:nextX,w:34,s,h:70+Math.random()*50}),nextX+=360+Math.random()*100;
+    else if(r<.75&&!early)obs.push({t:'gap',x:nextX,w:110+Math.random()*60,s}),nextX+=420+Math.random()*100;
+    else{obs.push({t:'coin',x:nextX,s,c:3});nextX+=260}
+    // سکه‌ی کنار موانع روی سطح مقابل
+    if(Math.random()<.5)obs.push({t:'coin',x:nextX-170,s:1-s,c:1});
+  }
+}
+function surfaceY(s){return s===0?FY:CY}
+function step(dt){
+  t+=dt;if(state!=='play')return;
+  speed=Math.min(470,270+dist/18);dist+=speed*dt;
+  const target=surfaceY(side)+(side===0?-PS/2:PS/2);
+  if(flying){vy=(side===0?-1:1)*Math.abs(vy||1200);py+=vy*dt;
+    if((side===0&&py>=target)||(side===1&&py<=target)){py=target;flying=false;vy=0}}
+  else py=target;
+  trail.push([dist,py]);if(trail.length>40)trail.shift();
+  spawnTo(dist+W*2.5);
+  const wx=dist+PX;
+  for(const o of obs){
+    const rel=o.x-wx;
+    if(o.t==='coin'){if(!o.got&&Math.abs(rel)<24){const cy=o.s===0?FY-60:CY+60;if(Math.abs(py-cy)<46){o.got=true;coins++;beep(900,.05,'triangle')}}continue}
+    // برخورد با اجسام
+    const l=o.x-wx,r=l+o.w,hit=l<PS*.45&&r>-PS*.45;
+    if(!hit)continue;
+    const top=py-PS/2,bot=py+PS/2;
+    if(o.t==='spike'){const sy=o.s===0?[FY-30,FY]:[CY,CY+30];if(bot>sy[0]&&top<sy[1]){return crash()}}
+    else if(o.t==='pillar'){const sy=o.s===0?[FY-o.h,FY]:[CY,CY+o.h];if(bot>sy[0]&&top<sy[1]){return crash()}}
+    else if(o.t==='gap'){if(!flying&&side===o.s&&(l<-PS*.0&&false)===false&&l<PS*.05&&r>-PS*.05){return crash(true)}}
+  }
+  obs=obs.filter(o=>o.x+(o.w||0)>wx-W);
+}
+function crash(fall){if(state!=='play')return;state='over';beep(110,.4,'sawtooth',.1);const sc=Math.floor(dist/10)+coins*5;if(sc>best){best=sc;try{localStorage.setItem('sl-wallwalker',best)}catch(e){}}
+  setTimeout(()=>{$('oh').textContent=fall?'🕳 افتادی!':'💥 خوردی!';$('op').innerHTML='امتیاز: '+fa(sc)+' · سکه: '+fa(coins)+'<br>بهترین: '+fa(best);$('ob').textContent='دوباره';$('ov').style.display='flex'},450)}
+function flip(){if(state!=='play'||flying)return;side=1-side;flying=true;vy=side===0?1300:-1300;beep(side?500:350,.07,'triangle')}
+function draw(){
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1c1640');g.addColorStop(1,'#2d1f55');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<40;i++){const sx=((i*173-dist*.15)%W+W)%W,sy=((i*97)%H);x.fillRect(sx,sy,2,2)}
+  // کف و سقف
+  const wx=dist+PX;
+  const gaps=obs.filter(o=>o.t==='gap');
+  const strip=(y,h,s)=>{x.fillStyle='#5b4a9e';x.fillRect(0,y,W,h);x.fillStyle='#8a78d8';x.fillRect(0,s===0?y:y+h-5,W,5);
+    gaps.filter(q=>q.s===s).forEach(q=>{const gx=q.x-dist;x.fillStyle='#14102a';x.fillRect(gx,y-1,q.w,h+2);x.fillStyle='rgba(255,80,80,.35)';x.fillRect(gx,y,q.w,h)})};
+  strip(FY,H-FY,0);strip(0,CY,1);
+  // خطوط حرکت
+  x.strokeStyle='rgba(255,255,255,.07)';for(let i=0;i<30;i++){const lx=((i*90-dist)%(W+90)+W+90)%(W+90)-90;x.beginPath();x.moveTo(lx,CY);x.lineTo(lx,FY);x.stroke()}
+  obs.forEach(o=>{
+    const sx=o.x-dist;if(sx>W+80||sx+(o.w||0)<-80)return;
+    if(o.t==='spike'){x.fillStyle='#ff5a5a';const n=Math.max(1,Math.round(o.w/18)),by=o.s===0?FY:CY,dir=o.s===0?-1:1;for(let i=0;i<n;i++){x.beginPath();x.moveTo(sx+i*o.w/n,by);x.lineTo(sx+(i+.5)*o.w/n,by+dir*30);x.lineTo(sx+(i+1)*o.w/n,by);x.fill()}}
+    else if(o.t==='pillar'){const by=o.s===0?FY-o.h:CY;x.fillStyle='#ffb74d';x.fillRect(sx,by,o.w,o.h);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(sx,by,o.w,6);x.strokeStyle='#7a4a00';x.lineWidth=2;x.strokeRect(sx,by,o.w,o.h)}
+    else if(o.t==='coin'&&!o.got){const cy=o.s===0?FY-60:CY+60;for(let i=0;i<o.c;i++){x.fillStyle='#ffd600';x.beginPath();x.ellipse(sx+i*28,cy,9*Math.abs(Math.cos(t*4+i)),9,0,0,7);x.fill()}}
+  });
+  // ردّ
+  for(let i=1;i<trail.length;i++){x.fillStyle='rgba(120,200,255,'+(i/trail.length*.35)+')';x.fillRect(PX-(dist-trail[i][0]),trail[i][1]-3,6,6)}
+  // کاراکتر
+  const run=Math.sin(t*20)*5;x.save();x.translate(PX,py);if(side===1)x.scale(1,-1);
+  x.fillStyle='rgba(0,0,0,.25)';x.fillRect(-10,PS/2-2,22,3);
+  x.fillStyle='#37c8ff';x.fillRect(-9,-8,18,16);x.fillStyle='#ffe0b2';x.fillRect(-8,-PS/2-2,16,13);
+  x.fillStyle='#222';x.fillRect(2,-PS/2+3,3,4);
+  x.fillStyle='#1565c0';if(flying){x.fillRect(-10,8,6,10);x.fillRect(4,8,6,10)}else{x.fillRect(-9+run,8,7,10);x.fillRect(3-run,8,7,10)}
+  x.restore();
+  x.fillStyle='rgba(0,0,0,.4)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 15px Tahoma,sans-serif';x.textBaseline='middle';x.textAlign='right';x.fillText('امتیاز '+fa(Math.floor(dist/10)+coins*5),W-10,17);x.textAlign='center';x.fillText('🪙 '+fa(coins),W/2,17);x.textAlign='left';x.fillText('بهترین '+fa(best),104,17);
+}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();flip()});
+addEventListener('keydown',e=>{if(e.key===' '||e.key==='ArrowUp'||e.key==='ArrowDown'){flip();e.preventDefault()}});
+$('ob').onclick=()=>{$('ov').style.display='none';reset()};
+let last=0;function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
+addEventListener('resize',fit);fit();py=FY-PS/2;requestAnimationFrame(loop);
+window.__ww={reset,step,flip,get obs(){return obs},get state(){return state},get dist(){return dist},get side(){return side},get flying(){return flying},get coins(){return coins},PX:()=>PX,draw};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

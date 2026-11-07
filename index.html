@@ -181,7 +181,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 #gramo.on #garm{transform:rotate(0deg)}
 #gramo.on .horn{animation:hv .16s ease-in-out infinite alternate}
 @keyframes hv{to{transform:translateY(-1.5px)}}
-#gmouth{position:absolute;left:313px;top:34px;width:0;height:0;z-index:4}
+#gmouth{position:absolute;left:316px;top:34px;width:0;height:0;z-index:4}
 .nt{position:absolute;left:-10px;top:-12px;font-size:26px;line-height:1;color:#000;pointer-events:none;animation:nt 2.4s ease-out forwards;text-shadow:0 0 2px rgba(255,255,255,.6),0 0 7px rgba(255,255,255,.3);font-family:"Segoe UI Symbol","Noto Sans Symbols","Apple Symbols",serif}
 @keyframes nt{0%{opacity:0;transform:translate(0,0) scale(.5) rotate(0)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.35) rotate(var(--r))}}
 @media (prefers-reduced-motion:reduce){#gramo.on #gplat .rec,#gramo.on .horn{animation:none}}
@@ -202,7 +202,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <svg class="gb" viewBox="0 0 340 250"><defs>
 <linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6535"/><stop offset="1" stop-color="#5a3517"/></linearGradient>
 <linearGradient id="gwt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58d55"/><stop offset="1" stop-color="#a06f3c"/></linearGradient>
-<linearGradient id="gbr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d77a"/><stop offset=".5" stop-color="#c9a02c"/><stop offset="1" stop-color="#8a6a14"/></linearGradient></defs>
+<linearGradient id="gbr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d77a"/><stop offset=".5" stop-color="#c9a02c"/><stop offset="1" stop-color="#8a6a14"/></linearGradient><linearGradient id="ghb" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#8d6a15"/><stop offset=".45" stop-color="#d9aa35"/><stop offset=".7" stop-color="#f6dd8c"/><stop offset="1" stop-color="#b68a20"/></linearGradient><linearGradient id="ghn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ebc85f"/><stop offset="1" stop-color="#7d5e10"/></linearGradient><radialGradient id="gin" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#140d02"/><stop offset=".7" stop-color="#3a2a08"/><stop offset="1" stop-color="#6b4e12"/></radialGradient></defs>
 <ellipse cx="150" cy="241" rx="140" ry="9" fill="rgba(0,0,0,.28)"/>
 <path d="M24 158L52 96H248L276 158Z" fill="url(#gwt)"/>
 <rect x="24" y="158" width="252" height="72" rx="6" fill="url(#gw)"/>
@@ -210,9 +210,16 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <rect x="24" y="158" width="252" height="5" fill="rgba(255,225,170,.3)"/>
 <rect x="38" y="228" width="16" height="10" rx="3" fill="#3a2410"/><rect x="246" y="228" width="16" height="10" rx="3" fill="#3a2410"/>
 <rect x="276" y="176" width="22" height="6" rx="3" fill="url(#gbr)"/><circle cx="300" cy="179" r="6" fill="#222"/>
-<g class="horn"><path d="M236 99C238 78 252 62 270 50L303 22C317 12 336 28 324 46L297 86C281 108 262 124 244 128Z" fill="url(#gbr)" stroke="#7a5a10" stroke-width="2"/>
-<ellipse cx="313" cy="34" rx="15" ry="22" transform="rotate(38 313 34)" fill="#2e2108" stroke="#e7c250" stroke-width="3"/>
-<path d="M242 104C260 100 270 112 268 130" stroke="rgba(255,255,255,.4)" stroke-width="3" fill="none"/></g></svg>
+<g class="horn">
+<path d="M224 122C224 108 236 99 247 99L264 99C264 112 259 124 250 131L236 136C229 134 224 130 224 122Z" fill="url(#ghn)" stroke="#6b4e0f" stroke-width="1.6"/>
+<rect x="226" y="108" width="40" height="8" rx="3" fill="url(#gbr)" stroke="#6b4e0f" stroke-width="1" transform="rotate(-10 246 112)"/>
+<path d="M246 104C250 82 266 60 290 38L306 14C326 8 340 34 330 54C316 82 288 112 262 124C256 126 250 118 246 104Z" fill="url(#ghb)" stroke="#6b4e0f" stroke-width="2"/>
+<g fill="none" stroke="rgba(90,60,5,.4)" stroke-width="1.4"><ellipse cx="258" cy="106" rx="5" ry="9" transform="rotate(40 258 106)"/><ellipse cx="272" cy="88" rx="8" ry="14" transform="rotate(40 272 88)"/><ellipse cx="288" cy="68" rx="11" ry="19" transform="rotate(40 288 68)"/><ellipse cx="303" cy="50" rx="14" ry="23" transform="rotate(40 303 50)"/></g>
+<path d="M252 100C262 78 280 56 300 30" stroke="rgba(255,255,255,.6)" stroke-width="3" fill="none" stroke-linecap="round"/>
+<path d="M262 119C284 104 308 76 322 50" stroke="rgba(0,0,0,.25)" stroke-width="3" fill="none" stroke-linecap="round"/>
+<ellipse cx="316" cy="34" rx="16" ry="25" transform="rotate(40 316 34)" fill="url(#gin)" stroke="#f1d27a" stroke-width="3.5"/>
+<ellipse cx="316" cy="34" rx="16" ry="25" transform="rotate(40 316 34)" fill="none" stroke="#7a5a10" stroke-width="1"/>
+<path d="M301 21C305 11 316 7 324 11" stroke="rgba(255,255,255,.75)" stroke-width="2" fill="none" stroke-linecap="round"/></g></svg>
 <div id="gplat"><div class="rec"><div class="lb"></div><i></i></div></div>
 <svg class="gb2" viewBox="0 0 340 250"><g id="garm"><circle cx="258" cy="112" r="8" fill="#555" stroke="#bbb" stroke-width="2"/><path d="M258 112L214 130" stroke="#d6d6d6" stroke-width="5" stroke-linecap="round"/><rect x="204" y="125" width="15" height="9" rx="2" fill="#222" transform="rotate(25 211 129)"/></g></svg>
 <div id="gmouth"></div>
@@ -249,7 +256,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <section id="apps" hidden>
   <h2>Apps</h2>
   <div id="apps-home"><p class="sub">برنامه‌های کاربردی S loop</p>
-    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
+    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
   </div>
   <div id="notes-app" hidden>
     <div id="nlist-wrap">
@@ -312,13 +319,37 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
       </div>
     </div>
   </div>
-    <div id="shz-app" hidden>
+    <div id="chat-app" hidden>
+    <div class="sr"><button class="al" data-back="1">← Apps</button><b>💬 پیام‌رسان</b><span id="cst" class="sub"></span></div>
+    <div class="box" id="clist">
+      <div class="sub" id="cmy"></div>
+      <div id="cfr" style="margin-top:6px"></div>
+      <div class="sub" style="margin-top:8px;line-height:1.8;font-size:.76rem">دوست را در بخش Friends با آیدی اضافه کن. پیام‌ها رمزنگاری می‌شوند ولی از یک سرور عمومی عبور می‌کنند؛ برای محرمانگی بیشتر در هر گفتگو با 🔑 یک «رمز گفتگو»ی مشترک بگذار. دوست باید آنلاین باشد یا بعداً وارد شود.</div>
+    </div>
+    <div class="box" id="cchat" hidden>
+      <div class="sr"><button class="al" id="cbk" aria-label="بازگشت">←</button><b id="cname"></b><button class="al" id="ccode" aria-label="رمز گفتگو">🔑</button></div>
+      <div id="cmsgs" style="height:46vh;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:6px"></div>
+      <div class="prow"><input id="cin" type="text" placeholder="پیام…" maxlength="500" aria-label="پیام" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="csend">ارسال</button></div>
+    </div>
+  </div>
+  <div id="br-app" hidden>
+    <div class="sr"><button class="al" data-back="1">← Apps</button><b>🌐 مرورگر (Google)</b><span></span></div>
+    <div class="box">
+      <div class="prow"><input id="bru" type="search" placeholder="جستجو در گوگل یا آدرس سایت…" aria-label="آدرس" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="brgo">برو</button></div>
+      <div class="tabs"><button class="al" id="brb" aria-label="عقب">◀</button><button class="al" id="brf2" aria-label="جلو">▶</button><button class="al" id="brr" aria-label="بارگذاری دوباره">↻</button><button class="al" id="bro" aria-label="باز کردن در تب جدید">↗ تب جدید</button><button class="al" id="brm" aria-label="نشان‌دار کردن">⭐</button></div>
+      <div class="tabs" id="brt"><button data-u="https://www.google.com/webhp?igu=1&hl=fa">Google</button><button data-u="https://fa.m.wikipedia.org">ویکی‌پدیا</button><button data-u="https://html.duckduckgo.com/html/">DuckDuckGo</button></div>
+      <div class="tabs" id="brk"></div>
+      <iframe id="brf" title="مرورگر" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" style="width:100%;height:52vh;border:0;border-radius:12px;background:#fff"></iframe>
+      <div class="sub" id="brs" style="line-height:1.7">اگر سایتی داخل برنامه نمایش داده نشد (بعضی سایت‌ها اجازه نمی‌دهند)، «↗ تب جدید» را بزن.</div>
+    </div>
+  </div>
+  <div id="shz-app" hidden>
     <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎧 تشخیص آهنگ</b><span></span></div>
     <div class="box ctr">
       <button id="shzgo" aria-label="بخوان تا پیدا کنم" style="width:128px;height:128px;border-radius:50%;font-size:2.5rem;border:0;cursor:pointer;background:linear-gradient(135deg,#4b6bff,#a855f7);color:#fff;box-shadow:0 0 0 0 rgba(120,100,255,.5)">🎤</button>
       <div class="sub" style="margin-top:8px">چند کلمه از متن آهنگ را بخوان (یا زمزمه‌ی کلمات) تا پیدایش کنم</div>
       <div class="tabs" id="shzl"><button data-l="fa-IR" class="on">فارسی</button><button data-l="en-US">English</button></div>
-      <div class="prow"><input id="shzq" type="search" placeholder="یا بخشی از متن آهنگ / اسم را بنویس…" aria-label="متن آهنگ" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="shzfind">پیدا کن</button></div>
+      <div class="prow"><input id="shzq" type="search" placeholder="یا بخشی از متن آهنگ / اسم را بنویس…" aria-label="متن آهنگ" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="shzfind">پیدا کن</button><button class="al" id="shzgg" aria-label="گوگل">🔎 گوگل</button></div><div id="shzsg" class="sub"></div><div class="prow" style="margin-top:8px"><button class="al" id="shzlive">🎧 شنود مداوم (آهنگ در حال پخش اطراف)</button></div><div class="sub" style="font-size:.72rem;line-height:1.7">مرورگر اجازه‌ی شنیدن صدای خودِ گوشی یا کار در پس‌زمینه را نمی‌دهد؛ گوشی را کنار پخش‌کننده بگذار و صفحه را روشن نگه دار (در این حالت صفحه خودش روشن می‌ماند).</div>
       <div class="prow" id="shzfp" hidden style="margin-top:8px"><button class="al" id="shzrec">🎧 تشخیص از روی صدای موسیقی (ضبط ۱۰ ثانیه)</button></div>
       <div id="shzs" class="sub" role="status" style="margin-top:6px"></div>
     </div>
@@ -342,7 +373,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   <div id="song-app" hidden>
     <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎵 جستجوی آهنگ</b><span></span></div>
     <div class="box">
-      <div class="prow"><input id="sgq" type="search" placeholder="اسم آهنگ یا خواننده…" aria-label="جستجوی آهنگ" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#ccc);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="sgo">جستجو</button></div>
+      <div class="prow"><input id="sgq" type="search" placeholder="اسم آهنگ یا خواننده…" aria-label="جستجوی آهنگ" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid var(--line,#ccc);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="sgo">جستجو</button><button class="al" id="sgg" aria-label="گوگل">🔎 گوگل</button></div><div id="sgsg" class="sub"></div>
       <div class="tabs" id="sgt"><button data-e="song" class="on">آهنگ</button><button data-e="artist">خواننده</button><button data-e="album">آلبوم</button></div>
       <div id="sgh" class="sub"></div>
       <div id="sgs" class="sub" role="status"></div>
@@ -443,7 +474,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 </main>
 <div id="sfw"><div class="sbub" id="sbub" role="button" tabindex="0">چه کمکی از دستم بر می‌آید؟<button id="sbx" aria-label="Close">×</button></div><button id="sfab" aria-label="Support" title="Support">🎧</button></div>
 <div id="spop" hidden><div class="sph"><b>🎧 پشتیبانی S loop</b><button id="spx" aria-label="Close">×</button></div><div class="smsgs" id="sm"></div><div class="schips" id="sc"></div><div class="aiin"><input type="text" id="si" placeholder="چه کمکی از دستم بر می‌آید؟" autocomplete="off" aria-label="پیام پشتیبانی"><button class="pr" id="ss">ارسال</button></div></div>
-<div id="ring" hidden><div class="rbox"><div class="rbell">⏰</div><h2 id="ringt"></h2><p id="rings" style="margin:0"></p><div class="prow"><button class="pr" id="ringok">خاموش</button><button class="al" id="ringsnz">۵ دقیقه بعد</button></div></div></div><div id="toast"></div><div id="sl-game-modal" role="dialog" aria-modal="true" aria-label="بازی"><div class="sl-game-box"><div class="sl-game-top"><h2 id="sl-game-title">بازی</h2><button class="al" id="sl-game-close">✕ بستن</button></div><div id="sl-game-content"></div></div></div><noscript><ul><li><a href="snake.html">Snake Advanced</a></li><li><a href="arena.html">Arena Battle</a></li><li><a href="2048.html">2048</a></li><li><a href="tetris.html">Tetris</a></li><li><a href="dino.html">Dino Run</a></li><li><a href="flappy.html">Flappy Bird Advanced</a></li><li><a href="maze.html">Maze</a></li><li><a href="sudoku.html">Sudoku</a></li><li><a href="candy.html">Candy Match</a></li><li><a href="breakout.html">Breakout</a></li><li><a href="tictactoe.html">Tic Tac Toe</a></li><li><a href="chess.html">Chess</a></li><li><a href="memory.html">Memory Cards</a></li><li><a href="ludo.html">Ludo</a></li><li><a href="snakeladder.html">Snakes &amp; Ladders</a></li><li><a href="uno.html">UNO</a></li><li><a href="airhockey.html">Air Hockey</a></li><li><a href="skyraid.html">Sky Raid</a></li><li><a href="happybird.html">Happy Bird</a></li><li><a href="seabattle.html">Sea Battle</a></li><li><a href="riverjet.html">River Jet</a></li><li><a href="truthdare.html">Truth or Dare</a></li><li><a href="solitaire.html">Solitaire</a></li><li><a href="raiders.html">Clan Raiders</a></li><li><a href="pinball.html">Pinball</a></li><li><a href="rps.html">Rock Paper Scissors</a></li><li><a href="pixelhero.html">Pixel Hero</a></li><li><a href="watersort.html">Water Sort</a></li><li><a href="rubik.html">Rubik Cube</a></li><li><a href="connect4.html">Connect 4</a></li><li><a href="hoopshot.html">Hoop Shot</a></li><li><a href="knifethrow.html">Knife Throw</a></li><li><a href="checkers.html">Checkers</a></li><li><a href="soccerpool.html">Soccer Pool</a></li><li><a href="cupgame.html">Cup Game</a></li><li><a href="arrowpuzzle.html">Arrow Puzzle</a></li><li><a href="mathquest.html">Math Quest</a></li><li><a href="eightball.html">8 Ball</a></li><li><a href="woodblock.html">Puzzle Wood Block</a></li><li><a href="blockade.html">Blockade Puzzle</a></li><li><a href="minigolf.html">Mini Golf</a></li><li><a href="domino.html">Domino</a></li><li><a href="blockade2.html">Blockade 2</a></li><li><a href="blockcraft.html">Block Craft</a></li><li><a href="obbyrun.html">Obby Run</a></li><li><a href="strikezone.html">Strike Zone</a></li><li><a href="pixelart.html">Pixel Art</a></li><li><a href="carbrawl.html">Car Brawl</a></li><li><a href="subwaydash.html">Subway Dash</a></li><li><a href="screamhero.html">Scream Hero</a></li><li><a href="counterops.html">Counter Ops</a></li><li><a href="petbuddy.html">Pet Buddy</a></li><li><a href="mahjong.html">Mahjong</a></li><li><a href="iqtest.html">IQ Test</a></li><li><a href="spotit.html">Spot It</a></li><li><a href="blockaway.html">Block Away 3D</a></li><li><a href="wordscapes.html">Word Scapes</a></li><li><a href="carpark.html">Car Park</a></li><li><a href="screwout.html">Screw Out</a></li><li><a href="slingdrift.html">Sling Drift</a></li></ul></noscript>
+<div id="ring" hidden><div class="rbox"><div class="rbell">⏰</div><h2 id="ringt"></h2><p id="rings" style="margin:0"></p><div class="prow"><button class="pr" id="ringok">خاموش</button><button class="al" id="ringsnz">۵ دقیقه بعد</button></div></div></div><div id="toast"></div><div id="sl-game-modal" role="dialog" aria-modal="true" aria-label="بازی"><div class="sl-game-box"><div class="sl-game-top"><h2 id="sl-game-title">بازی</h2><button class="al" id="sl-game-close">✕ بستن</button></div><div id="sl-game-content"></div></div></div><noscript><ul><li><a href="snake.html">Snake Advanced</a></li><li><a href="arena.html">Arena Battle</a></li><li><a href="2048.html">2048</a></li><li><a href="tetris.html">Tetris</a></li><li><a href="dino.html">Dino Run</a></li><li><a href="flappy.html">Flappy Bird Advanced</a></li><li><a href="maze.html">Maze</a></li><li><a href="sudoku.html">Sudoku</a></li><li><a href="candy.html">Candy Match</a></li><li><a href="breakout.html">Breakout</a></li><li><a href="tictactoe.html">Tic Tac Toe</a></li><li><a href="chess.html">Chess</a></li><li><a href="memory.html">Memory Cards</a></li><li><a href="ludo.html">Ludo</a></li><li><a href="snakeladder.html">Snakes &amp; Ladders</a></li><li><a href="uno.html">UNO</a></li><li><a href="airhockey.html">Air Hockey</a></li><li><a href="skyraid.html">Sky Raid</a></li><li><a href="happybird.html">Happy Bird</a></li><li><a href="seabattle.html">Sea Battle</a></li><li><a href="riverjet.html">River Jet</a></li><li><a href="truthdare.html">Truth or Dare</a></li><li><a href="solitaire.html">Solitaire</a></li><li><a href="raiders.html">Clan Raiders</a></li><li><a href="pinball.html">Pinball</a></li><li><a href="rps.html">Rock Paper Scissors</a></li><li><a href="pixelhero.html">Pixel Hero</a></li><li><a href="watersort.html">Water Sort</a></li><li><a href="rubik.html">Rubik Cube</a></li><li><a href="connect4.html">Connect 4</a></li><li><a href="hoopshot.html">Hoop Shot</a></li><li><a href="knifethrow.html">Knife Throw</a></li><li><a href="checkers.html">Checkers</a></li><li><a href="soccerpool.html">Soccer Pool</a></li><li><a href="cupgame.html">Cup Game</a></li><li><a href="arrowpuzzle.html">Arrow Puzzle</a></li><li><a href="mathquest.html">Math Quest</a></li><li><a href="eightball.html">8 Ball</a></li><li><a href="woodblock.html">Puzzle Wood Block</a></li><li><a href="blockade.html">Blockade Puzzle</a></li><li><a href="minigolf.html">Mini Golf</a></li><li><a href="domino.html">Domino</a></li><li><a href="blockade2.html">Blockade 2</a></li><li><a href="blockcraft.html">Block Craft</a></li><li><a href="obbyrun.html">Obby Run</a></li><li><a href="strikezone.html">Strike Zone</a></li><li><a href="pixelart.html">Pixel Art</a></li><li><a href="carbrawl.html">Car Brawl</a></li><li><a href="subwaydash.html">Subway Dash</a></li><li><a href="screamhero.html">Scream Hero</a></li><li><a href="counterops.html">Counter Ops</a></li><li><a href="petbuddy.html">Pet Buddy</a></li><li><a href="mahjong.html">Mahjong</a></li><li><a href="iqtest.html">IQ Test</a></li><li><a href="spotit.html">Spot It</a></li><li><a href="blockaway.html">Block Away 3D</a></li><li><a href="wordscapes.html">Word Scapes</a></li><li><a href="carpark.html">Car Park</a></li><li><a href="screwout.html">Screw Out</a></li><li><a href="slingdrift.html">Sling Drift</a></li><li><a href="roadrider.html">Road Rider</a></li><li><a href="stackbird.html">Stack Bird</a></li><li><a href="piano.html">Piano</a></li><li><a href="wallwalker.html">Wall Walker</a></li></ul></noscript>
 <script>
 const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -512,6 +543,10 @@ const GM=[
 {id:'blockade',n:'Blockade Puzzle',u:'blockade.html',a:'<rect width="100" height="100" fill="#8d6e63"/><rect x="8" y="40" width="40" height="18" rx="5" fill="#e53935"/><rect x="56" y="14" width="18" height="44" rx="5" fill="#1e88e5"/><rect x="56" y="64" width="34" height="18" rx="5" fill="#43a047"/><rect x="14" y="14" width="34" height="18" rx="5" fill="#fb8c00"/><path d="M80 49H96" stroke="#fff" stroke-width="3" stroke-linecap="round"/>'+T(50,92,'EXIT →',9,'#fff')},
 {id:'minigolf',n:'Mini Golf',u:'minigolf.html',a:'<rect width="100" height="100" fill="#2f6b2c"/><path d="M26 10H74V90H26Z" fill="#7bc96f" stroke="#a9733d" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="26" r="6" fill="#111"/><path d="M50 26V8" stroke="#eee" stroke-width="2"/><path d="M50 8L64 13L50 18Z" fill="#e53935"/><circle cx="50" cy="76" r="5" fill="#fff" stroke="#bbb"/><path d="M50 70V44" stroke="#fff" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>'},
 {id:'blockade2',n:'Blockade 2',u:'blockade2.html',a:'<rect width="100" height="100" fill="#1c3b63"/><path d="M10 30H90M10 50H90M10 70H90M30 10V90M50 10V90M70 10V90" stroke="#3a5d8f" stroke-width="1.5"/><rect x="14" y="48" width="30" height="5" rx="1" fill="#3fae5a"/><rect x="58" y="26" width="5" height="30" rx="1" fill="#6b6fb5"/><rect x="40" y="68" width="30" height="5" rx="1" fill="#6b6fb5"/><rect x="72" y="56" width="5" height="26" rx="1" fill="#3fae5a"/><g><rect x="20" y="64" width="14" height="18" fill="#f08a24"/><ellipse cx="27" cy="64" rx="7" ry="3.5" fill="#ffb25c"/><ellipse cx="27" cy="82" rx="7" ry="3.5" fill="#f08a24"/></g><g><rect x="62" y="14" width="14" height="18" fill="#e53935"/><ellipse cx="69" cy="14" rx="7" ry="3.5" fill="#ff7a73"/><ellipse cx="69" cy="32" rx="7" ry="3.5" fill="#e53935"/></g>'},
+{id:'roadrider',n:'Road Rider',u:'roadrider.html',a:'<rect width="100" height="100" fill="#2a4a78"/><rect y="36" width="100" height="64" fill="#2f6b3a"/><path d="M38 36L6 100H94L62 36Z" fill="#3b4048"/><path d="M50 36V100" stroke="#fff" stroke-width="2" stroke-dasharray="6 6"/><rect x="42" y="46" width="14" height="9" rx="2" fill="#1e88e5"/><rect x="63" y="60" width="18" height="12" rx="2" fill="#e53935"/><g transform="translate(40 76)"><rect x="-3" y="2" width="6" height="14" fill="#111"/><rect x="-6" y="-8" width="12" height="10" rx="2" fill="#e53935"/><circle cx="0" cy="-14" r="5" fill="#ffd54f"/></g>'},
+{id:'stackbird',n:'Stack Bird',u:'stackbird.html',a:'<rect width="100" height="100" fill="#79c7f2"/><rect y="58" width="100" height="42" fill="#c9a46c"/><g><rect x="34" y="62" width="32" height="10" fill="#ff5252"/><rect x="34" y="52" width="32" height="10" fill="#ffb300"/><rect x="34" y="42" width="32" height="10" fill="#66bb6a"/></g><ellipse cx="50" cy="30" rx="14" ry="14" fill="#ffd23f"/><circle cx="55" cy="26" r="3" fill="#222"/><path d="M60 31L70 33L60 36Z" fill="#ff8a3d"/><ellipse cx="42" cy="32" rx="5" ry="8" fill="#f6b300"/>'},
+{id:'piano',n:'Piano',u:'piano.html',a:'<rect width="100" height="100" fill="#3a2b52"/><g>'+[0,1,2,3,4,5,6].map(i=>`<rect x="${6+i*12.5}" y="30" width="12" height="62" rx="2" fill="#fff" stroke="#444"/>`).join('')+[0,1,3,4,5].map(i=>`<rect x="${14+i*12.5}" y="30" width="8" height="38" rx="2" fill="#111"/>`).join('')+'</g><text x="50" y="22" font-size="14" text-anchor="middle" fill="#fff">♪ ♫</text>'},
+{id:'wallwalker',n:'Wall Walker',u:'wallwalker.html',a:'<rect width="100" height="100" fill="#1c1640"/><rect y="0" width="100" height="16" fill="#5b4a9e"/><rect y="84" width="100" height="16" fill="#5b4a9e"/><path d="M60 84L66 70L72 84Z" fill="#ff5a5a"/><rect x="18" y="16" width="10" height="26" fill="#ffb74d"/><g transform="translate(46 20)"><rect x="-6" y="-2" width="12" height="12" fill="#37c8ff"/><rect x="-5" y="-12" width="10" height="9" fill="#ffe0b2"/></g><circle cx="80" cy="30" r="5" fill="#ffd600"/>'},
 {id:'wordscapes',n:'Word Scapes',u:'wordscapes.html',a:'<rect width="100" height="100" fill="#7cc9a2"/><g font-family="sans-serif" font-weight="bold" font-size="14" text-anchor="middle"><rect x="14" y="12" width="18" height="18" rx="3" fill="#ffd54f"/><rect x="34" y="12" width="18" height="18" rx="3" fill="#fff"/><rect x="54" y="12" width="18" height="18" rx="3" fill="#ffd54f"/><rect x="34" y="32" width="18" height="18" rx="3" fill="#fff"/><text x="23" y="26" fill="#3b2a00">W</text><text x="43" y="26" fill="#3b2a00">O</text><text x="63" y="26" fill="#3b2a00">R</text></g><circle cx="50" cy="74" r="22" fill="#ffffffaa"/><g font-family="sans-serif" font-weight="bold" font-size="12" text-anchor="middle" fill="#16372a"><text x="50" y="60">D</text><text x="66" y="78">R</text><text x="50" y="92">O</text><text x="34" y="78">W</text></g>'},
 {id:'carpark',n:'Car Park',u:'carpark.html',a:'<rect width="100" height="100" fill="#546e7a"/><path d="M0 34H100M0 67H100M34 0V100M67 0V100" stroke="#ffffff55" stroke-width="2" stroke-dasharray="6 5"/><rect x="8" y="8" width="52" height="20" rx="7" fill="#e53935"/><rect x="40" y="8" width="14" height="20" rx="3" fill="#263238" opacity=".7"/><rect x="72" y="8" width="20" height="52" rx="7" fill="#1e88e5"/><rect x="8" y="72" width="52" height="20" rx="7" fill="#43a047"/><rect x="40" y="40" width="20" height="20" rx="6" fill="#fb8c00"/><path d="M80 64L92 76L80 88" stroke="#fff" stroke-width="3" fill="none"/>'},
 {id:'screwout',n:'Screw Out',u:'screwout.html',a:'<rect width="100" height="100" fill="#f1e6d3"/><g transform="rotate(-12 50 40)"><rect x="12" y="28" width="76" height="22" fill="#c9955c" stroke="#7a4a1c" stroke-width="2"/></g><g transform="rotate(14 50 62)"><rect x="14" y="52" width="72" height="20" fill="#b9824a" stroke="#7a4a1c" stroke-width="2"/></g><g stroke="#fff" stroke-width="1.5"><circle cx="24" cy="38" r="6" fill="#e53935"/><circle cx="76" cy="33" r="6" fill="#1e88e5"/><circle cx="26" cy="64" r="6" fill="#43a047"/><circle cx="74" cy="68" r="6" fill="#fdd835"/></g><g stroke="#0008" stroke-width="2"><path d="M20 38H28M24 34V42M72 33H80M76 29V37"/></g><rect x="14" y="84" width="72" height="10" rx="5" fill="#0003"/>'},
@@ -904,7 +939,7 @@ supRender();
 let notes=LS.get('sl-notes',[]),nCur=null,nQ='',nDelT=0,nTm;
 const NC=['#fff7a8','#ffd1e8','#c9f2e3','#cfe3ff','#e6d6ff'];
 const nSave=()=>LS.set('sl-notes',notes);
-const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app'];
+const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app'];
 function appsHome(){$('apps-home').hidden=false;APPS.forEach(i=>{$(i).hidden=true})}
 function openApp(id){$('apps-home').hidden=true;APPS.forEach(i=>{$(i).hidden=i!==id})}
 function nList(){
@@ -1276,14 +1311,28 @@ function sgGet(url){
       sc.src=url+'&callback='+cb;document.head.appendChild(sc);setTimeout(()=>{if(!done){rej(new Error('timeout'))}},9000)});
   });
 }
+function jsonpCall(url,param){return new Promise((res,rej)=>{const cb='jp'+Date.now()+Math.floor(Math.random()*1e5),sc=document.createElement('script');let to;const cl=()=>{clearTimeout(to);try{delete window[cb]}catch(e){window[cb]=undefined}sc.remove()};window[cb]=d=>{cl();res(d)};sc.onerror=()=>{cl();rej(new Error('net'))};to=setTimeout(()=>{cl();rej(new Error('timeout'))},8000);sc.src=url+(url.indexOf('?')>0?'&':'?')+(param||'callback')+'='+cb;document.head.appendChild(sc)})}
+const sgTok=t=>String(t).toLowerCase().replace(/[^\u0600-\u06FFa-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>1);
+async function songSearch(q,ent,attr){
+  const jobs=[sgGet('https://itunes.apple.com/search?media=music&limit=25&entity='+(ent||'song')+(attr||'')+'&term='+encodeURIComponent(q)).then(j=>j.results||[])];
+  if((ent||'song')==='song')jobs.push(jsonpCall('https://api.deezer.com/search?limit=15&output=jsonp&q='+encodeURIComponent(q),'callback').then(d=>(d.data||[]).map(r=>({trackName:r.title,artistName:r.artist&&r.artist.name,collectionName:r.album&&r.album.title,artworkUrl100:r.album&&r.album.cover_medium,previewUrl:r.preview,trackViewUrl:r.link,_dz:1}))));
+  const all=(await Promise.allSettled(jobs)).flatMap(x=>x.status==='fulfilled'?x.value:[]);
+  const qt=sgTok(q),seen=new Set(),out=[];
+  all.forEach(r=>{const name=r.trackName||r.collectionName;if(!name)return;const key=sgTok(name+' '+(r.artistName||'')).join(' ');if(seen.has(key))return;seen.add(key);
+    const tt=[...new Set(sgTok(name+' '+(r.artistName||'')+' '+(r.collectionName||'')))];let hit=0;qt.forEach(w=>{if(tt.includes(w))hit++;else if(tt.some(z=>z.includes(w)||w.includes(z)))hit+=.5});
+    r._s=(qt.length?hit/qt.length:0)+(r.previewUrl?.05:0)+(r._dz?0:.02);out.push(r)});
+  out.sort((a,b)=>b._s-a._s);return out;
+}
+function sgAttach(inp,box,pick){let tm=0;inp.addEventListener('input',()=>{clearTimeout(tm);const q=inp.value.trim();if(q.length<2){box.innerHTML='';return}
+  tm=setTimeout(async()=>{try{const d=await jsonpCall('https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&hl=fa&q='+encodeURIComponent(q),'jsonp');const list=((d&&d[1])||[]).map(x=>x[0]).slice(0,6);if(inp.value.trim()!==q)return;box.innerHTML=list.map(t=>'<button class="al" data-s="'+sgEsc(t)+'" style="margin:2px">'+sgEsc(t)+'</button>').join('')}catch(e){}},180)});
+  box.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;box.innerHTML='';pick(b.dataset.s)})}
 async function sgSearch(q){
   q=(q||$('sgq').value).trim();if(!q||sgBusy)return;$('sgq').value=q;sgBusy=true;sgA.pause();sgPlay=null;
   $('sgs').textContent='در حال جستجو…';$('sgr').innerHTML='';
   sgRecent=[q,...sgRecent.filter(t=>t!==q)].slice(0,6);LS.set('sl-song-recent',sgRecent);sgHist();
   const ent=sgEnt==='album'?'album':'song',attr=sgEnt==='artist'?'&attribute=artistTerm':'';
   try{
-    const j=await sgGet('https://itunes.apple.com/search?media=music&limit=30&entity='+ent+attr+'&term='+encodeURIComponent(q));
-    const rs=(j.results||[]);
+    const rs=await songSearch(q,ent,attr);
     if(!rs.length){$('sgs').innerHTML='نتیجه‌ای پیدا نشد. در این سایت‌ها هم بگرد:<br>'+sgLinks(q)}
     else{$('sgs').textContent=rs.length+' نتیجه';
       $('sgr').innerHTML=rs.map((r,i)=>{const name=r.trackName||r.collectionName,line=sgEsc(r.artistName)+(r.collectionName&&r.trackName?' · '+sgEsc(r.collectionName):''),year=r.releaseDate?(' · '+String(r.releaseDate).slice(0,4)):'';
@@ -1319,7 +1368,7 @@ function shzCard(r,main){
 }
 async function shzFind(q){
   q=(q||'').trim();if(!q||shzBusy)return;shzBusy=true;$('shzq').value=q;shzSay('در حال جستجو برای «'+q+'»…');$('shzr').hidden=true;
-  let rs=[];try{const j=await sgGet('https://itunes.apple.com/search?media=music&limit=6&entity=song&term='+encodeURIComponent(q));rs=j.results||[]}catch(e){}
+  let rs=[];try{rs=(await songSearch(q,'song','')).slice(0,6)}catch(e){}
   const g='https://www.google.com/search?q='+encodeURIComponent('"'+q+'" lyrics'),yt='https://www.youtube.com/results?search_query='+encodeURIComponent(q);
   let h='<div class="tabs"><a class="al" target="_blank" rel="noopener" href="'+g+'">🔎 جستجوی دقیق این متن در گوگل</a><a class="al" target="_blank" rel="noopener" href="'+yt+'">▶ YouTube</a></div>';
   if(rs.length){h+='<div class="sub">بهترین حدس:</div>'+shzCard(rs[0],true)+(rs.length>1?'<details><summary class="sub">نتیجه‌های دیگر ('+(rs.length-1)+')</summary>'+rs.slice(1).map(r=>shzCard(r,false)).join('')+'</details>':'');
@@ -1357,6 +1406,24 @@ $('shzl').addEventListener('click',e=>{const b=e.target.closest('[data-l]');if(!
 $('shzclr').onclick=()=>{shzHist=[];LS.set('sl-shz-hist',[]);shzH()};
 function shzToSearch(e){const b=e.target.closest('[data-a]');if(!b)return;openApp('song-app');sgHist();$('sgq').value=b.dataset.a;sgSearch(b.dataset.a)}
 $('shzh').addEventListener('click',shzToSearch);
+let shzLive=false,shzWake=null,shzT=0,shzLastQ='';
+async function shzLiveToggle(){
+  if(shzLive){shzLive=false;try{shzRecog&&shzRecog.stop()}catch(e){}if(shzWake){try{shzWake.release()}catch(e){}shzWake=null}$('shzlive').classList.remove('on');shzSay('شنود مداوم متوقف شد');return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){shzSay('این مرورگر تشخیص گفتار ندارد (Chrome را امتحان کن)');return}
+  shzLive=true;$('shzlive').classList.add('on');try{if(navigator.wakeLock)shzWake=await navigator.wakeLock.request('screen')}catch(e){}
+  shzSay('🎧 شنود مداوم فعال است… هر بار که چند کلمه شنیده شود، خودکار جستجو می‌کنم');
+  const run=()=>{if(!shzLive)return;const r=new SR();r.lang=shzLang;r.continuous=true;r.interimResults=true;shzRecog=r;
+    r.onresult=e=>{let t='';for(const res of e.results)t+=res[0].transcript+' ';t=t.trim();$('shzq').value=t;const w=t.split(/\s+/).filter(Boolean);
+      if(w.length>=3){clearTimeout(shzT);shzT=setTimeout(()=>{const q=w.slice(-8).join(' ');if(q!==shzLastQ){shzLastQ=q;shzFind(q)}},1100)}};
+    r.onend=()=>{shzRecog=null;if(shzLive)setTimeout(run,250)};r.onerror=()=>{};try{r.start()}catch(e){}};
+  run();
+}
+$('shzlive').onclick=shzLiveToggle;
+$('shzgg').onclick=()=>{const q=$('shzq').value.trim();window.open('https://www.google.com/search?q='+encodeURIComponent(q?('"'+q+'" lyrics'):'تشخیص آهنگ'),'_blank','noopener')};
+$('sgg').onclick=()=>{const q=$('sgq').value.trim();window.open('https://www.google.com/search?q='+encodeURIComponent(q?(q+' آهنگ'):'جدیدترین آهنگ‌ها'),'_blank','noopener')};
+sgAttach($('shzq'),$('shzsg'),t=>{$('shzq').value=t;shzFind(t)});
+sgAttach($('sgq'),$('sgsg'),t=>{$('sgq').value=t;sgSearch(t)});
+
 /* ---- Route (Google Maps) ---- */
 let mpMode='driving',mpFav=LS.get('sl-map-fav',{});if(!mpFav||typeof mpFav!=='object')mpFav={};
 const mpEnc=encodeURIComponent;
@@ -1383,6 +1450,94 @@ $('mpf').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(b.dataset.g){$('mpd').value=mpFav[b.dataset.g];mpPreview()}
   else if(b.dataset.d){delete mpFav[b.dataset.d];LS.set('sl-map-fav',mpFav);mpFavs()}
   else if(b.dataset.s){const v=$('mpd').value.trim();if(!v){$('mps').textContent='اول آدرس را در «مقصد» بنویس';return}mpFav[b.dataset.s]=v;LS.set('sl-map-fav',mpFav);mpFavs()}});
+
+/* ---- Messenger: MQTT عمومی + رمزنگاری AES-GCM ---- */
+const CH_URLS=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+let chWS=null,chOK=false,chUrl=0,chPid=1,chBuf=new Uint8Array(0),chPing=0,chQueue=[],chCur=null,chRetry=0,chUnread=LS.get('sl-chat-unread',{}),chCodes=LS.get('sl-chat-codes',{}),chExtra=LS.get('sl-chat-extra',[]),chKeys={};
+const chEnc=new TextEncoder(),chDec=new TextDecoder();
+const chStr=t=>{const b=chEnc.encode(t);return Uint8Array.from([b.length>>8,b.length&255,...b])};
+function chCat(...a){let n=0;a.forEach(x=>n+=x.length);const o=new Uint8Array(n);let p=0;a.forEach(x=>{o.set(x,p);p+=x.length});return o}
+function chLen(n){const o=[];do{let d=n%128;n=Math.floor(n/128);if(n>0)d|=128;o.push(d)}while(n>0);return Uint8Array.from(o)}
+const chPkt=(h,body)=>chCat(Uint8Array.from([h]),chLen(body.length),body);
+const chTopic=id=>'sloop-chat/v1/'+id;
+const b64=u=>{let s='';u.forEach(c=>s+=String.fromCharCode(c));return btoa(s)},unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+function chSend(u){if(chWS&&chWS.readyState===1)chWS.send(u)}
+function chSub(){const id=chPid++&65535||1;chSend(chPkt(0x82,chCat(Uint8Array.from([id>>8,id&255]),chStr(chTopic(myId)),Uint8Array.from([1]))))}
+function chPublish(topic,payload){const id=chPid++&65535||1;chSend(chPkt(0x32,chCat(chStr(topic),Uint8Array.from([id>>8,id&255]),chEnc.encode(payload))))}
+function chFlush(){while(chQueue.length&&chOK){const q=chQueue.shift();chPublish(q.topic,q.payload)}}
+function chState(){const e=$('cst');if(e)e.textContent=chOK?'🟢 آنلاین':(chWS?'🟡 در حال اتصال…':'🔴 قطع')}
+function chConnect(){
+  if(chWS&&(chWS.readyState===0||chWS.readyState===1))return;
+  try{chWS=new WebSocket(CH_URLS[chUrl%CH_URLS.length],'mqtt')}catch(e){chWS=null;return}
+  chWS.binaryType='arraybuffer';chBuf=new Uint8Array(0);chState();
+  chWS.onopen=()=>{chSend(chPkt(0x10,chCat(chStr('MQTT'),Uint8Array.from([4,0,0,30]),chStr('sloop-'+myId))))};
+  chWS.onmessage=e=>chOnData(e.data);
+  chWS.onclose=()=>{chOK=false;chWS=null;clearInterval(chPing);chState();if(!document.hidden||true){chUrl++;chRetry=setTimeout(()=>{if(!$('chat-app').hidden)chConnect()},3000)}};
+  chWS.onerror=()=>{try{chWS.close()}catch(e){}};
+}
+function chOnData(buf){
+  chBuf=chCat(chBuf,new Uint8Array(buf));
+  for(;;){
+    if(chBuf.length<2)return;let i=1,mult=1,len=0,b;
+    do{if(i>=chBuf.length)return;b=chBuf[i++];len+=(b&127)*mult;mult*=128}while(b&128);
+    if(chBuf.length<i+len)return;
+    const type=chBuf[0]>>4,flags=chBuf[0]&15,body=chBuf.slice(i,i+len);chBuf=chBuf.slice(i+len);
+    if(type===2){if(body[1]===0){chOK=true;chSub();chFlush();chState();clearInterval(chPing);chPing=setInterval(()=>chSend(Uint8Array.from([0xC0,0])),25000)}}
+    else if(type===3){const tl=(body[0]<<8)|body[1],topic=chDec.decode(body.slice(2,2+tl));let p=2+tl;const qos=(flags>>1)&3;
+      if(qos>0){const pid=(body[p]<<8)|body[p+1];p+=2;chSend(chPkt(0x40,Uint8Array.from([pid>>8,pid&255])))}
+      chIncoming(topic,body.slice(p))}
+  }
+}
+async function chKey(fid){const code=chCodes[fid]||'',k=fid+'|'+code;if(chKeys[k])return chKeys[k];
+  const pair=[myId,fid].sort().join('|')+'|'+code,mat=await crypto.subtle.importKey('raw',chEnc.encode(pair),'PBKDF2',false,['deriveKey']);
+  return chKeys[k]=await crypto.subtle.deriveKey({name:'PBKDF2',salt:chEnc.encode('sloop-chat-v1'),iterations:60000,hash:'SHA-256'},mat,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function chEncrypt(fid,text){const k=await chKey(fid),iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,chEnc.encode(text)));return{iv:b64(iv),c:b64(ct)}}
+async function chDecrypt(fid,iv,c){try{const k=await chKey(fid);return chDec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(iv)},k,unb64(c)))}catch(e){return null}}
+const chLoad=id=>LS.get('sl-chat-'+id,[]);
+function chSave(id,a){LS.set('sl-chat-'+id,a.slice(-200))}
+async function chIncoming(topic,pl){
+  if(topic!==chTopic(myId))return;let m;try{m=JSON.parse(chDec.decode(pl))}catch(e){return}
+  if(!m||!idOK(m.f)||m.f===myId||!m.iv||!m.c)return;
+  const txt=await chDecrypt(m.f,m.iv,m.c),arr=chLoad(m.f);if(arr.some(x=>x.i===m.i))return;
+  arr.push({m:0,t:m.t||Date.now(),x:txt==null?'🔒 پیام رمزگذاری‌شده (رمز گفتگو با هم یکی نیست)':txt,i:m.i});chSave(m.f,arr);
+  if(!friends.some(f=>f.id===m.f)&&!chExtra.some(f=>f.id===m.f)){chExtra.push({id:m.f,name:String(m.n||m.f).slice(0,20)});LS.set('sl-chat-extra',chExtra)}
+  if(chCur&&chCur.id===m.f&&!$('cchat').hidden)chShowMsgs();else{chUnread[m.f]=(chUnread[m.f]||0)+1;LS.set('sl-chat-unread',chUnread);chList()}
+}
+function chContacts(){const a=friends.map(f=>({id:f.id,name:f.name||f.id}));chExtra.forEach(f=>{if(!a.some(x=>x.id===f.id))a.push(f)});return a}
+function chList(){
+  $('cmy').textContent='آیدی تو: '+myId;const c=chContacts();
+  $('cfr').innerHTML=c.length?c.map(f=>{const last=chLoad(f.id).slice(-1)[0],u=chUnread[f.id]||0;return '<div class="fr" data-c="'+esc(f.id)+'" style="cursor:pointer"><div><b>'+esc(f.name)+'</b><small>'+(last?esc(String(last.x).slice(0,40)):esc(f.id))+'</small></div>'+(u?'<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 8px;font-size:.75rem">'+u+'</span>':'<span>›</span>')+'</div>'}).join(''):'<p class="sub">هنوز دوستی نداری؛ از بخش Friends اضافه کن.</p>';
+}
+function chShowMsgs(){const box=$('cmsgs'),arr=chLoad(chCur.id);box.innerHTML=arr.length?arr.map(x=>'<div style="align-self:'+(x.m?'flex-start':'flex-end')+';max-width:80%;background:'+(x.m?'#4b6bff':'rgba(128,128,128,.28)')+';color:'+(x.m?'#fff':'inherit')+';padding:6px 10px;border-radius:12px;word-break:break-word;line-height:1.7">'+esc(x.x)+'<div style="font-size:.62rem;opacity:.7">'+new Date(x.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(x.m&&x.p?' · ⏳':'')+'</div></div>').join(''):'<div class="sub" style="text-align:center">هنوز پیامی نیست. سلام کن 👋</div>';box.scrollTop=box.scrollHeight}
+function chOpen(id){const f=chContacts().find(q=>q.id===id);if(!f)return;chCur=f;$('cname').textContent=f.name;$('clist').hidden=true;$('cchat').hidden=false;chUnread[id]=0;LS.set('sl-chat-unread',chUnread);chShowMsgs();setTimeout(()=>{try{$('cin').focus()}catch(e){}},50)}
+async function chSendMsg(){
+  const t=$('cin').value.trim();if(!t||!chCur)return;$('cin').value='';
+  if(!window.crypto||!crypto.subtle){toast('رمزنگاری در این مرورگر/آدرس ممکن نیست (نیاز به HTTPS)');return}
+  const e=await chEncrypt(chCur.id,t),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const payload=JSON.stringify({f:myId,n:(P&&P.name)||myId,t:Date.now(),iv:e.iv,c:e.c,i:id});
+  const arr=chLoad(chCur.id);arr.push({m:1,t:Date.now(),x:t,p:!chOK,i:id});chSave(chCur.id,arr);
+  if(chOK)chPublish(chTopic(chCur.id),payload);else{chQueue.push({topic:chTopic(chCur.id),payload});chConnect()}
+  chShowMsgs();
+}
+$('app-chat').onclick=()=>{openApp('chat-app');$('clist').hidden=false;$('cchat').hidden=true;chCur=null;chList();chConnect();chState()};
+$('cfr').addEventListener('click',e=>{const r=e.target.closest('[data-c]');if(r)chOpen(r.dataset.c)});
+$('cbk').onclick=()=>{$('cchat').hidden=true;$('clist').hidden=false;chCur=null;chList()};
+$('csend').onclick=chSendMsg;$('cin').addEventListener('keydown',e=>{if(e.key==='Enter')chSendMsg()});
+$('ccode').onclick=()=>{if(!chCur)return;const v=prompt('رمز گفتگوی مشترک با «'+chCur.name+'»\n(هر دو نفر باید دقیقاً یک رمز وارد کنید؛ خالی = پیش‌فرض ضعیف)',chCodes[chCur.id]||'');if(v===null)return;chCodes[chCur.id]=v.trim();LS.set('sl-chat-codes',chCodes);chKeys={};toast('رمز گفتگو ذخیره شد')};
+/* ---- Browser (Google) ---- */
+let brHist=[],brIdx=-1,brMarks=LS.get('sl-br-marks',[]);if(!Array.isArray(brMarks))brMarks=[];
+function brUrl(v){v=v.trim();if(!v)return null;if(/^https?:\/\//i.test(v))return v;if(/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(v))return 'https://'+v;return 'https://www.google.com/search?igu=1&hl=fa&q='+encodeURIComponent(v)}
+function brShow(url,push){$('brf').src=url;if(push){brHist=brHist.slice(0,brIdx+1);brHist.push(url);brIdx=brHist.length-1}$('bru').value=url.indexOf('google.com/search?igu=1')>0?decodeURIComponent(url.split('&q=')[1]||''):url}
+function brGo(v){const u=brUrl(v);if(u)brShow(u,true)}
+function brMk(){$('brk').innerHTML=brMarks.map((m,i)=>'<button data-u="'+esc(m)+'">⭐ '+esc(m.replace(/^https?:\/\/(www\.)?/,'').slice(0,22))+'</button><button class="al" data-d="'+i+'" aria-label="حذف">✕</button>').join('')}
+$('app-br').onclick=()=>{openApp('br-app');brMk();if(!brHist.length)brShow('https://www.google.com/webhp?igu=1&hl=fa',true)};
+$('brgo').onclick=()=>brGo($('bru').value);$('bru').addEventListener('keydown',e=>{if(e.key==='Enter')brGo($('bru').value)});
+$('brb').onclick=()=>{if(brIdx>0){brIdx--;brShow(brHist[brIdx],false)}};$('brf2').onclick=()=>{if(brIdx<brHist.length-1){brIdx++;brShow(brHist[brIdx],false)}};
+$('brr').onclick=()=>{if(brHist[brIdx])brShow(brHist[brIdx],false)};
+$('bro').onclick=()=>{const u=brHist[brIdx]||brUrl($('bru').value);if(u)window.open(u.replace('&igu=1','').replace('?igu=1&','?').replace('/webhp?igu=1&','/webhp?'),'_blank','noopener')};
+$('brm').onclick=()=>{const u=brHist[brIdx];if(u&&!brMarks.includes(u)){brMarks.unshift(u);brMarks=brMarks.slice(0,8);LS.set('sl-br-marks',brMarks);brMk();toast('نشان‌دار شد ✓')}};
+$('brt').addEventListener('click',e=>{const b=e.target.closest('[data-u]');if(b)brShow(b.dataset.u,true)});
+$('brk').addEventListener('click',e=>{const d=e.target.closest('[data-d]');if(d){brMarks.splice(+d.dataset.d,1);LS.set('sl-br-marks',brMarks);brMk();return}const b=e.target.closest('[data-u]');if(b)brShow(b.dataset.u,true)});
 /* ---- Essay topics ---- */
 const ESS={'اجتماعی':['اگر یک روز بدون اینترنت زندگی کنیم','ارزش وقت‌شناسی در زندگی','کمک به همسایه‌ها و اهمیت همدلی','شهری که دوستش دارم','چرا باید قانون را رعایت کنیم؟','نقش مطالعه در پیشرفت جامعه','یک روز در یک بازار قدیمی','رفتار درست در فضای مجازی'],
 'علمی و فناوری':['اگر ربات‌ها همکلاسی ما بودند','زندگی در سال ۲۱۰۰','مهم‌ترین اختراع به نظر من','فایده‌ها و ضررهای بازی‌های رایانه‌ای','اگر می‌توانستم به فضا سفر کنم','هوش مصنوعی و آینده‌ی شغل‌ها','دنیای بدون برق','کنجکاوی، آغاز دانایی'],
@@ -1488,7 +1643,7 @@ renderProfile();renderStats();musicBtn();renderTime();go('games');settle();rende
 if(musicOn)toast('🎵 برای شروع موسیقی یک بار روی صفحه بزن');
 // S Loop mini games — صفحه‌های مستقل داخل مودال باز می‌شوند تا موسیقی‌ی صفحه‌ی اصلی قطع نشود
 (()=>{
-const FR={reversi:['reversi.html','ریورسی'],hanafuda:['hanafuda.html','هانافودا — کوی‌کوی'],pingpong:['pingpong.html','پینگ‌پونگ'],triplesort:['match-triple-sort.html','Triple Tile Puzzle'],antistress:['anti-stress.html','Anti Stress'],minesweeper:['minesweeper.html','Minesweeper — مین‌روب'],snakeio:['snake-io.html','Snake.io'],jigsaw:['jigsaw.html','پازل تکه‌ای'],dobble:['dobble.html','Dobble'],golpooch:['gol-ya-pooch.html','گل یا پوچ'],bingo:['bingo.html','Bingo — بینگو'],backgammon:['backgammon.html','تخته نرد'],pantomime:['pantomime.html','پانتومیم'],penalty:['penalty.html','پنالتی'],fruitslice:['fruit-slice.html','برش میوه'],birdjump:['bird-jump.html','پرنده‌ی جهنده'],spy:['spy.html','Spy — جاسوس'],moneymaker:['money-maker.html','Money Maker'],woodblock:['woodblock.html','Puzzle Wood Block'],blockade:['blockade.html','Blockade Puzzle'],minigolf:['minigolf.html','مینی‌گلف'],domino:['domino.html','دومینو'],blockade2:['blockade2.html','Blockade 2'],blockcraft:['blockcraft.html','Block Craft'],obbyrun:['obbyrun.html','Obby Run'],strikezone:['strikezone.html','Strike Zone'],pixelart:['pixelart.html','Pixel Art'],carbrawl:['carbrawl.html','Car Brawl'],subwaydash:['subwaydash.html','Subway Dash'],screamhero:['screamhero.html','Scream Hero'],counterops:['counterops.html','Counter Ops'],petbuddy:['petbuddy.html','Pet Buddy'],mahjong:['mahjong.html','Mahjong'],iqtest:['iqtest.html','IQ Test'],spotit:['spotit.html','Spot It'],blockaway:['blockaway.html','Block Away 3D'],wordscapes:['wordscapes.html','Word Scapes'],carpark:['carpark.html','Car Park'],screwout:['screwout.html','Screw Out'],slingdrift:['slingdrift.html','Sling Drift']};
+const FR={reversi:['reversi.html','ریورسی'],hanafuda:['hanafuda.html','هانافودا — کوی‌کوی'],pingpong:['pingpong.html','پینگ‌پونگ'],triplesort:['match-triple-sort.html','Triple Tile Puzzle'],antistress:['anti-stress.html','Anti Stress'],minesweeper:['minesweeper.html','Minesweeper — مین‌روب'],snakeio:['snake-io.html','Snake.io'],jigsaw:['jigsaw.html','پازل تکه‌ای'],dobble:['dobble.html','Dobble'],golpooch:['gol-ya-pooch.html','گل یا پوچ'],bingo:['bingo.html','Bingo — بینگو'],backgammon:['backgammon.html','تخته نرد'],pantomime:['pantomime.html','پانتومیم'],penalty:['penalty.html','پنالتی'],fruitslice:['fruit-slice.html','برش میوه'],birdjump:['bird-jump.html','پرنده‌ی جهنده'],spy:['spy.html','Spy — جاسوس'],moneymaker:['money-maker.html','Money Maker'],woodblock:['woodblock.html','Puzzle Wood Block'],blockade:['blockade.html','Blockade Puzzle'],minigolf:['minigolf.html','مینی‌گلف'],domino:['domino.html','دومینو'],blockade2:['blockade2.html','Blockade 2'],blockcraft:['blockcraft.html','Block Craft'],obbyrun:['obbyrun.html','Obby Run'],strikezone:['strikezone.html','Strike Zone'],pixelart:['pixelart.html','Pixel Art'],carbrawl:['carbrawl.html','Car Brawl'],subwaydash:['subwaydash.html','Subway Dash'],screamhero:['screamhero.html','Scream Hero'],counterops:['counterops.html','Counter Ops'],petbuddy:['petbuddy.html','Pet Buddy'],mahjong:['mahjong.html','Mahjong'],iqtest:['iqtest.html','IQ Test'],spotit:['spotit.html','Spot It'],blockaway:['blockaway.html','Block Away 3D'],wordscapes:['wordscapes.html','Word Scapes'],carpark:['carpark.html','Car Park'],screwout:['screwout.html','Screw Out'],slingdrift:['slingdrift.html','Sling Drift'],roadrider:['roadrider.html','Road Rider'],stackbird:['stackbird.html','Stack Bird'],piano:['piano.html','Piano'],wallwalker:['wallwalker.html','Wall Walker']};
 const modal=document.getElementById('sl-game-modal'),box=modal.querySelector('.sl-game-box'),content=document.getElementById('sl-game-content'),title=document.getElementById('sl-game-title');
 let cur=null,t0=0;
 function close(){

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Tomb Walker — با کشیدن انگشت در هزارتوی نئونی بلغز، نقطه جمع کن و از میخ‌ها دور بمان. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Tomb Walker</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0a0618;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center;color:#e6fbff}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.hud{display:flex;gap:16px;font-size:.9rem;margin:8px 0 2px;padding-top:env(safe-area-inset-top,0px)}
+.wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+canvas{touch-action:none}
+.bar{margin:6px 0 12px}
+button{font:inherit;border:0;background:#1e2a55;color:#cfe;border-radius:10px;padding:9px 16px;cursor:pointer}
+.ov{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(10,6,24,.86);text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.7rem;color:#ffd54f}.ov p{margin:0;line-height:1.9;max-width:420px}
+.ov button{background:#ffb300;color:#2a1c00;padding:12px 28px}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="hud"><span>مرحله <b id="lv">۱</b></span><span>⚪ <b id="dt">۰</b></span><span>★ <b id="st">۰</b>/۳</span></div>
+<div class="wrap"><canvas id="c"></canvas></div>
+<div class="bar"><button id="rs">⟲ شروع دوباره</button></div>
+<div class="ov" id="ov"><div style="font-size:2.4rem">🏺</div><h2 id="oh"></h2><p id="op"></p><button id="ob">ادامه</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.05,ty='square',v=.04){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const DIRS={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
+let level=1,GW,GH,wall,dots,stars,spikes,start,exit,hero,CS=30,over=false,anim=null,nDots=0,nStars=0,tot=0,trail=[];
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function slideFrom(px,py,dir,sp,ex,wl){ // مسیر لغزش: خانه‌های عبوری و علت توقف
+  const path=[];let x_=px,y_=py;const[dx,dy]=DIRS[dir];
+  for(;;){const nx=x_+dx,ny=y_+dy;if(nx<0||ny<0||nx>=GW||ny>=GH||wl[ny][nx])break;x_=nx;y_=ny;path.push([x_,y_]);
+    if(sp.has(x_+','+y_))return{path,end:[x_,y_],dead:true};if(ex[0]===x_&&ex[1]===y_)return{path,end:[x_,y_],win:true}}
+  return{path,end:[x_,y_]};
+}
+function solvable(wl,sp,st,ex){const seen=new Set([st.join()]),q=[[st[0],st[1],0]];let far=null;
+  while(q.length){const[a,b,d]=q.shift();for(const dir in DIRS){const r=slideFrom(a,b,dir,sp,ex,wl);if(r.dead)continue;if(r.win)return d+1;const k=r.end.join();if(!seen.has(k)){seen.add(k);q.push([r.end[0],r.end[1],d+1])}}}return 0}
+function gen(){
+  const mw=Math.min(6,3+Math.floor(level/3)),mh=Math.min(9,4+Math.floor(level/2));GW=mw*2+1;GH=mh*2+1;
+  for(let tries=0;tries<300;tries++){
+    const R=rng(level*1009+tries*37+Date.now()%977);
+    const wl=Array.from({length:GH},()=>Array(GW).fill(true));
+    const vis=Array.from({length:mh},()=>Array(mw).fill(false)),stack=[[0,0]];vis[0][0]=true;wl[1][1]=false;
+    while(stack.length){const[cx,cy]=stack[stack.length-1],nb=[[1,0],[-1,0],[0,1],[0,-1]].filter(([a,b])=>{const nx=cx+a,ny=cy+b;return nx>=0&&ny>=0&&nx<mw&&ny<mh&&!vis[ny][nx]});
+      if(!nb.length){stack.pop();continue}const[a,b]=nb[Math.floor(R()*nb.length)],nx=cx+a,ny=cy+b;vis[ny][nx]=true;wl[ny*2+1][nx*2+1]=false;wl[cy*2+1+b][cx*2+1+a]=false;stack.push([nx,ny])}
+    // حلقه‌ها و اتاق‌ها: چند دیوار را بردار
+    for(let k=0;k<Math.floor(mw*mh*.45);k++){const wx=1+Math.floor(R()*(GW-2)),wy=1+Math.floor(R()*(GH-2));if(wl[wy][wx])wl[wy][wx]=false}
+    const floors=[];for(let j=0;j<GH;j++)for(let i=0;i<GW;i++)if(!wl[j][i])floors.push([i,j]);
+    const st=[1,1];
+    // خروج: دورترین خانه‌ی قابل‌رسیدن (بر اساس شمار حرکت لغزشی)
+    const sp=new Set();const cand=floors.filter(([i,j])=>!(i===1&&j===1));
+    const ex=cand[Math.floor(R()*cand.length)];
+    // میخ‌ها
+    const nsp=Math.min(2+Math.floor(level*.8),Math.floor(floors.length*.12));
+    for(let i=0;i<nsp;i++){const f=floors[Math.floor(R()*floors.length)];if(!(f[0]===1&&f[1]===1)&&!(f[0]===ex[0]&&f[1]===ex[1]))sp.add(f.join())}
+    const mv=solvable(wl,sp,st,ex);if(mv<2+Math.min(6,Math.floor(level/2)))continue;
+    wall=wl;spikes=sp;start=st;exit=ex;
+    dots=new Set();floors.forEach(([i,j])=>{if(R()<.5&&!sp.has(i+','+j)&&!(i===1&&j===1)&&!(i===ex[0]&&j===ex[1]))dots.add(i+','+j)});
+    stars=new Set();const pool=floors.filter(([i,j])=>!sp.has(i+','+j)&&!(i===1&&j===1)&&!(i===ex[0]&&j===ex[1]));for(let k=0;k<3&&pool.length;k++){const f=pool.splice(Math.floor(R()*pool.length),1)[0];stars.add(f.join());dots.delete(f.join())}
+    return true;
+  }
+  return false;
+}
+function start_(){if(!gen()){level=1;gen()}hero={x:start[0],y:start[1],px:start[0],py:start[1]};over=false;anim=null;nDots=0;nStars=0;tot=dots.size;trail=[];fit();upd()}
+function fit(){const w=Math.min(innerWidth-12,560),h=innerHeight-120;CS=Math.max(14,Math.floor(Math.min(w/GW,h/GH)));cv.width=GW*CS;cv.height=GH*CS}
+function upd(){$('lv').textContent=fa(level);$('dt').textContent=fa(nDots);$('st').textContent=fa(nStars)}
+function move(dir){
+  if(over||anim)return;const r=slideFrom(hero.x,hero.y,dir,spikes,exit,wall);if(!r.path.length)return;
+  anim={path:r.path,i:0,t:0,res:r};beep(300,.04);
+}
+function finishAnim(){const r=anim.res;hero.x=r.end[0];hero.y=r.end[1];hero.px=hero.x;hero.py=hero.y;const res=r;anim=null;
+  if(res.dead){over=true;beep(100,.4,'sawtooth',.08);setTimeout(()=>show('💀 به میخ خوردی','دوباره امتحان کن','دوباره',()=>start_()),300)}
+  else if(res.win){over=true;beep(900,.25);setTimeout(()=>show('🎉 به خروجی رسیدی!','نقطه‌ها: '+fa(nDots)+'/'+fa(tot)+' · ستاره: '+fa(nStars)+'/۳','مرحله‌ی بعد',()=>{level++;start_()}),250)}}
+function show(h,p,b,fn){$('oh').textContent=h;$('op').textContent=p;$('ob').textContent=b;$('ob').onclick=()=>{$('ov').style.display='none';fn()};$('ov').style.display='flex'}
+function step(dt){
+  if(!anim)return;anim.t+=dt*16;
+  while(anim.t>=1&&anim){anim.t-=1;const c=anim.path[anim.i];anim.i++;const k=c.join();
+    if(dots.has(k)){dots.delete(k);nDots++;beep(700+nDots*5,.03,'triangle',.03)}
+    if(stars.has(k)){stars.delete(k);nStars++;beep(1100,.08,'triangle')}
+    trail.push(c);if(trail.length>30)trail.shift();upd();
+    hero.px=c[0];hero.py=c[1];if(anim.i>=anim.path.length){finishAnim();break}}
+  if(anim){const c=anim.path[Math.min(anim.i,anim.path.length-1)],p=anim.i>0?anim.path[anim.i-1]:[hero.x,hero.y];hero.px=p[0]+(c[0]-p[0])*anim.t;hero.py=p[1]+(c[1]-p[1])*anim.t}
+}
+function draw(){
+  x.fillStyle='#0a0618';x.fillRect(0,0,cv.width,cv.height);
+  for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){if(wall[j][i]){x.fillStyle='#1b2a66';x.fillRect(i*CS,j*CS,CS,CS);x.strokeStyle='#4de1ff';x.lineWidth=1.5;x.strokeRect(i*CS+1.5,j*CS+1.5,CS-3,CS-3)}}
+  x.shadowBlur=0;
+  dots.forEach(k=>{const[i,j]=k.split(',').map(Number);x.fillStyle='#e6fbff';x.beginPath();x.arc(i*CS+CS/2,j*CS+CS/2,CS*.1,0,7);x.fill()});
+  stars.forEach(k=>{const[i,j]=k.split(',').map(Number);x.fillStyle='#ffd54f';x.font=(CS*.8)+'px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('★',i*CS+CS/2,j*CS+CS/2+1)});
+  spikes.forEach(k=>{const[i,j]=k.split(',').map(Number);x.fillStyle='#ff4b6b';for(let q=0;q<3;q++){x.beginPath();x.moveTo(i*CS+q*CS/3+1,j*CS+CS-3);x.lineTo(i*CS+(q+.5)*CS/3,j*CS+CS*.3);x.lineTo(i*CS+(q+1)*CS/3-1,j*CS+CS-3);x.fill()}});
+  // خروج
+  const ex=exit;x.strokeStyle='#7dff9b';x.lineWidth=3;x.beginPath();x.arc(ex[0]*CS+CS/2,ex[1]*CS+CS/2,CS*.34+Math.sin(performance.now()/200)*2,0,7);x.stroke();x.fillStyle='rgba(125,255,155,.25)';x.fill();
+  // ردّ
+  trail.forEach((c,i)=>{x.fillStyle='rgba(255,213,79,'+(i/trail.length*.25)+')';x.fillRect(c[0]*CS+CS*.25,c[1]*CS+CS*.25,CS*.5,CS*.5)});
+  // قهرمان
+  x.fillStyle='#ffd54f';x.fillRect(hero.px*CS+CS*.14,hero.py*CS+CS*.14,CS*.72,CS*.72);x.fillStyle='#3a2a00';x.fillRect(hero.px*CS+CS*.3,hero.py*CS+CS*.34,CS*.12,CS*.12);x.fillRect(hero.px*CS+CS*.58,hero.py*CS+CS*.34,CS*.12,CS*.12);x.fillRect(hero.px*CS+CS*.36,hero.py*CS+CS*.62,CS*.28,CS*.08);
+}
+let sx=0,sy=0,sid=null;
+cv.addEventListener('pointerdown',e=>{sid=e.pointerId;sx=e.clientX;sy=e.clientY});
+cv.addEventListener('pointermove',e=>{if(e.pointerId!==sid)return;const dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))>26){move(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'));sid=null}});
+cv.addEventListener('pointerup',()=>sid=null);cv.addEventListener('pointercancel',()=>sid=null);
+addEventListener('keydown',e=>{const m={ArrowUp:'u',w:'u',ArrowDown:'d',s:'d',ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r'}[e.key];if(m){move(m);e.preventDefault()}});
+$('rs').onclick=()=>start_();
+let last=0;function loop(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
+addEventListener('resize',fit);
+start_();requestAnimationFrame(loop);
+window.__tw={get wall(){return wall},get spikes(){return spikes},get exit(){return exit},get start(){return start},slideFrom,solvable,gen,set level(v){level=v},start_,move,step,get hero(){return hero},get over(){return over},get GW(){return GW},get GH(){return GH}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

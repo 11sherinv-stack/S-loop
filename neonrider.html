@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Neon Rider — موتورسواری نئونی روی تپه‌ها؛ فلیپ بزن، ستاره جمع کن و سرت را به زمین نزن. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Neon Rider</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#12002a;overscroll-behavior:none}
+body{font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+.pad{direction:ltr;position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;gap:10px;z-index:20}
+.pad button{width:96px;height:80px;border-radius:20px;border:2px solid #ff4bd8;background:rgba(40,0,70,.55);color:#ff9bec;font-size:30px;touch-action:none;cursor:pointer;box-shadow:0 0 14px rgba(255,75,216,.5)}
+.pad button.dn{background:rgba(255,75,216,.45);color:#fff}
+#pl{left:12px}#pr{right:12px}
+.ov{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(18,0,42,.88);color:#fff;text-align:center;padding:16px}
+.ov h2{margin:0;font-size:1.8rem;color:#ffd54f;text-shadow:0 0 14px #ff9800}.ov p{margin:0;line-height:1.9;max-width:420px}
+.ov button{font:inherit;border:0;border-radius:12px;padding:12px 30px;background:#ffb300;color:#2a1c00;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<a class="back" href="index.html">&larr; S loop</a>
+<div class="pad" id="pl"><button id="bb" aria-label="ترمز / خم به جلو">⏪</button></div>
+<div class="pad" id="pr"><button id="bg" aria-label="گاز / خم به عقب">⏩</button></div>
+<div class="ov" id="ov"><h2 id="oh">⚡ Neon Rider</h2><p id="op">گاز را نگه دار و روی تپه‌های نئونی برو.<br>در هوا با دکمه‌ها موتور را بچرخان و فلیپ بزن؛ سرت را به زمین نزن!<br><small>رایانه: → گاز · ← ترمز</small></p><button id="ob">شروع</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.06,ty='square',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const STEP=16,GRAV=1450,I=1700,DRIVE=640,MAXV=640;
+let W,H,T=[],state='menu',bike,cam=0,camY=0,stars=[],score=0,best=0,flips=0,airRot=0,stCnt=0,msg='',msgT=0,t=0,inp=0,gas=false,brk=false,parts=[];
+try{best=+localStorage.getItem('sl-neonrider')||0}catch(e){}
+const WR=[{lx:-30,ly:12,r:14,t:'w'},{lx:30,ly:12,r:14,t:'w'},{lx:-12,ly:-2,r:9,t:'c'},{lx:14,ly:-2,r:9,t:'c'},{lx:2,ly:-30,r:9,t:'h'}];
+function terrain(i){ // ارتفاع نقطه‌ی i (y رو به پایین)
+  const xx=i*STEP;if(xx<450)return 420;
+  const r=Math.min(1,(xx-450)/700),k=Math.min(1,(xx-450)/4000),A1=16+k*110,A2=5+k*36;
+  return 420-r*(A1*Math.sin((xx-450)/270)+A2*Math.sin((xx-450)/105)+Math.sin((xx-450)/900)*30*k);
+}
+function ensure(xmax){while(T.length*STEP<xmax){const i=T.length;let y=terrain(i);if(i>0){const d=y-T[i-1];if(Math.abs(d)>12)y=T[i-1]+Math.sign(d)*12}T.push(y)}}
+function groundAt(px){ensure(px+600);const i=Math.max(0,Math.floor(px/STEP)),a=T[i],b=T[i+1],u=(px-i*STEP)/STEP,y=a+(b-a)*u,s=(b-a)/STEP,l=Math.hypot(s,1);return{y,nx:s/l,ny:-1/l,ax:i*STEP,ay:a}}
+function reset(){T=[];ensure(1400);bike={x:200,y:300,a:0,vx:0,vy:0,w:0,gr:0,wr:0};cam=0;camY=300;stars=[];for(let i=0;i<40;i++)stars.push({x:900+i*260+Math.random()*80,got:false});score=0;flips=0;airRot=0;stCnt=0;state='play';parts=[];t=0;bike.y=groundAt(200).y-40}
+const cross=(ax,ay,bx,by)=>ax*by-ay*bx;
+function imp(c,rx,ry,jx,jy){c.vx+=jx;c.vy+=jy;c.w+=cross(rx,ry,jx,jy)/I}
+function cp(c,k){const q=WR[k],ca=Math.cos(c.a),sa=Math.sin(c.a);return[c.x+q.lx*ca-q.ly*sa,c.y+q.lx*sa+q.ly*ca]}
+function stepBike(dt,input){
+  const c=bike;c.gr=0;
+  for(let k=0;k<WR.length;k++){
+    const q=WR[k],[px,py]=cp(c,k),g=groundAt(px);let nx=g.nx,ny=g.ny;
+    const sd=(px-g.ax)*nx+(py-g.ay)*ny;
+    if(sd<q.r){
+      const pen=q.r-sd;c.x+=nx*pen*.8;c.y+=ny*pen*.8;
+      const prx=px-nx*q.r-c.x,pry=py-ny*q.r-c.y,vx=c.vx-c.w*pry,vy=c.vy+c.w*prx,vn=vx*nx+vy*ny;
+      if(vn<0){const e=q.t==='w'?.12:.2,den=1+Math.pow(cross(prx,pry,nx,ny),2)/I,j=-(1+e)*vn/den;imp(c,prx,pry,j*nx,j*ny);
+        if(q.t==='h')return crash();
+        const tx=-ny,ty=nx,vt=vx*tx+vy*ty,mu=q.t==='w'?.015:.7,den2=1+Math.pow(cross(prx,pry,tx,ty),2)/I;let jt=-vt/den2;const lim=mu*j;jt=Math.max(-lim,Math.min(lim,jt));imp(c,prx,pry,jt*tx,jt*ty)}
+      else if(q.t==='h')return crash();
+      if(q.t==='w'){c.gr++;
+        if(k===0&&input>0&&c.vx<MAXV){const tx=-ny,ty=nx;imp(c,prx,pry,tx*DRIVE*dt,ty*DRIVE*dt)}
+        if(input<0){c.vx*=1-4*dt;c.vy*=1-.5*dt}}
+    }
+  }
+  if(c.gr===0){c.w+=-input*9*dt}else{c.w*=1-2.2*dt}
+  c.w=Math.max(-9,Math.min(9,c.w));
+  c.vy+=GRAV*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.a+=c.w*dt;c.wr+=c.vx*dt/14;
+  if(c.gr===0){airRot+=c.w*dt;if(Math.abs(airRot)>=Math.PI*1.8){flips++;airRot=0;score+=100;say('فلیپ! +۱۰۰');beep(900,.12,'triangle')}}
+  else airRot*=.9;
+  if(c.a>Math.PI)c.a-=2*Math.PI;if(c.a<-Math.PI)c.a+=2*Math.PI;
+}
+function step(dt){
+  t+=dt;msgT=Math.max(0,msgT-dt);if(state!=='play')return;
+  inp=(gas||keyR?1:0)-(brk||keyL?1:0);
+  const sub=5,d=dt/sub;for(let s=0;s<sub&&state==='play';s++)stepBike(d,inp);
+  if(state!=='play')return;
+  score=Math.max(score,Math.floor(bike.x/10)+stCnt*25+flips*100);
+  stars.forEach(s=>{if(!s.got&&Math.abs(bike.x-s.x)<40){const g=groundAt(s.x);if(Math.abs(bike.y-(g.y-70-Math.sin(s.x*.01)*30))<70){s.got=true;stCnt++;beep(1100,.07,'triangle')}}});
+  cam+=((bike.x-W*.3)-cam)*Math.min(1,6*dt);camY+=((bike.y-H*.55)-camY)*Math.min(1,4*dt);
+  if(bike.y>1500)crash();
+}
+const keys={};let keyR=false,keyL=false;
+function say(m){msg=m;msgT=1.2}
+function crash(){if(state!=='play')return;state='over';beep(90,.5,'sawtooth',.1);for(let i=0;i<20;i++)parts.push({x:bike.x,y:bike.y,vx:(Math.random()-.5)*500,vy:-Math.random()*400,l:.8});
+  if(score>best){best=score;try{localStorage.setItem('sl-neonrider',best)}catch(e){}}
+  setTimeout(()=>{$('oh').textContent='💥 سرت خورد!';$('op').innerHTML='امتیاز: '+fa(score)+' · فلیپ: '+fa(flips)+' · ستاره: '+fa(stCnt)+'<br>بهترین: '+fa(best);$('ob').textContent='دوباره';$('ov').style.display='flex'},600)}
+function drawBike(){
+  const c=bike;x.save();x.translate(c.x-cam,c.y-camY);x.rotate(c.a);
+  // چرخ‌های درخشان
+  [[-30,12],[30,12]].forEach(([lx,ly])=>{const g=x.createRadialGradient(lx,ly,2,lx,ly,22);g.addColorStop(0,'#ffffff');g.addColorStop(.35,'#fff176');g.addColorStop(1,'rgba(255,193,7,0)');x.fillStyle=g;x.beginPath();x.arc(lx,ly,22,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(lx,ly,9,0,7);x.fill();x.strokeStyle='rgba(255,160,0,.8)';x.lineWidth=2;x.beginPath();x.arc(lx,ly,13,c.wr,c.wr+4.2);x.stroke()});
+  // بدنه‌ی زاویه‌دار طلایی
+  x.fillStyle='#f5a623';x.strokeStyle='#ffe082';x.lineWidth=1.5;x.beginPath();x.moveTo(-26,6);x.lineTo(-8,-14);x.lineTo(16,-18);x.lineTo(38,2);x.lineTo(26,8);x.lineTo(2,2);x.lineTo(-14,10);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#ffca28';x.beginPath();x.moveTo(-8,-14);x.lineTo(8,-26);x.lineTo(18,-18);x.lineTo(16,-18);x.closePath();x.fill();
+  x.fillStyle='#8a4b00';x.beginPath();x.moveTo(-6,-4);x.lineTo(20,-4);x.lineTo(10,4);x.lineTo(-10,4);x.closePath();x.fill();
+  // راکب
+  x.fillStyle='#ffd54f';x.beginPath();x.arc(2,-30,8,0,7);x.fill();x.fillStyle='#6a1b9a';x.fillRect(-4,-24,12,12);
+  x.restore();
+}
+function draw(){
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a0038');g.addColorStop(1,'#3b0a5a');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<40;i++){x.fillRect(((i*173-cam*.1)%W+W)%W,(i*91)%(H*.7),2,2)}
+  if(!bike)return;
+  ensure(cam+W+400);
+  const i0=Math.max(0,Math.floor(cam/STEP)-1),i1=Math.floor((cam+W)/STEP)+2;
+  x.beginPath();x.moveTo(i0*STEP-cam,H+200);for(let i=i0;i<=i1;i++)x.lineTo(i*STEP-cam,T[i]-camY);x.lineTo(i1*STEP-cam,H+200);x.closePath();x.fillStyle='rgba(40,0,70,.85)';x.fill();
+  x.shadowColor='#ff4bd8';x.shadowBlur=14;x.strokeStyle='#ff7be9';x.lineWidth=4;x.beginPath();for(let i=i0;i<=i1;i++){const px=i*STEP-cam,py=T[i]-camY;i===i0?x.moveTo(px,py):x.lineTo(px,py)}x.stroke();x.shadowBlur=0;
+  stars.forEach(s=>{if(s.got||s.x<cam-30||s.x>cam+W+30)return;const gy=groundAt(s.x).y-70-Math.sin(s.x*.01)*30;x.fillStyle='#ffee58';x.font='22px sans-serif';x.textAlign='center';x.fillText('★',s.x-cam,gy-camY+8)});
+  if(state!=='over')drawBike();
+  parts.forEach(p=>{p.l-=.016;p.x+=p.vx*.016;p.y+=p.vy*.016;p.vy+=900*.016;x.fillStyle='rgba(255,200,80,'+Math.max(0,p.l)+')';x.fillRect(p.x-cam,p.y-camY,5,5)});
+  x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,0,W,34);x.fillStyle='#fff';x.font='bold 15px Tahoma,sans-serif';x.textBaseline='middle';x.textAlign='right';x.fillText('امتیاز '+fa(score),W-10,17);x.textAlign='center';x.fillText('★ '+fa(stCnt)+'   فلیپ '+fa(flips),W/2,17);x.textAlign='left';x.fillText('بهترین '+fa(best),104,17);
+  if(msgT>0){x.globalAlpha=Math.min(1,msgT);x.font='bold 26px Tahoma,sans-serif';x.fillStyle='#ffee58';x.textAlign='center';x.fillText(msg,W/2,H*.28);x.globalAlpha=1}
+}
+function hold(id,on,off){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.classList.add('dn');try{b.setPointerCapture(e.pointerId)}catch(_){}on()});['pointerup','pointercancel','pointerleave'].forEach(t=>b.addEventListener(t,()=>{b.classList.remove('dn');off()}))}
+hold('bg',()=>gas=true,()=>gas=false);hold('bb',()=>brk=true,()=>brk=false);
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='d'){keyR=true;e.preventDefault()}else if(e.key==='ArrowLeft'||e.key==='a'){keyL=true;e.preventDefault()}});
+addEventListener('keyup',e=>{if(e.key==='ArrowRight'||e.key==='d')keyR=false;if(e.key==='ArrowLeft'||e.key==='a')keyL=false});
+$('ob').onclick=()=>{$('ov').style.display='none';reset()};
+function fit(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+let last=0;function loop(ts){const dt=Math.min(.033,(ts-last)/1000||0);last=ts;step(dt);draw();requestAnimationFrame(loop)}
+addEventListener('resize',fit);fit();T=[];ensure(1400);requestAnimationFrame(loop);
+window.__nr={reset,step,get bike(){return bike},get state(){return state},get score(){return score},set gas(v){gas=v},set brk(v){brk=v},get flips(){return flips},get stars(){return stCnt}};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

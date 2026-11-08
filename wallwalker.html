@@ -44,7 +44,7 @@ function step(dt){
   t+=dt;if(state!=='play')return;
   speed=Math.min(470,270+dist/18);dist+=speed*dt;
   const target=surfaceY(side)+(side===0?-PS/2:PS/2);
-  if(flying){vy=(side===0?-1:1)*Math.abs(vy||1200);py+=vy*dt;
+  if(flying){py+=vy*dt;
     if((side===0&&py>=target)||(side===1&&py<=target)){py=target;flying=false;vy=0}}
   else py=target;
   trail.push([dist,py]);if(trail.length>40)trail.shift();

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="description" content="Sort It — مایع‌های رنگی را در لوله‌ها مرتب کن تا هر لوله یک رنگ شود. بازی آنلاین رایگان از S loop">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Sort It</title>
+<style>
+:root{--bg:#e6f2f7;--ink:#10333f;--card:#fff;--btn:#26a69a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f2230;--ink:#e3f3f9;--card:#193446;--btn:#4fd1c5}}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:8px 0 2px;font-size:1.05rem}
+.info{display:flex;gap:14px;font-size:.88rem;margin:2px 0}
+.wrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#bd{display:flex;flex-wrap:wrap;gap:18px 12px;justify-content:center;max-width:520px;padding:0 10px}
+.tb{position:relative;width:46px;height:176px;border:3px solid #7aa9b8;border-top:none;border-radius:0 0 24px 24px;background:rgba(255,255,255,.35);display:flex;flex-direction:column-reverse;overflow:hidden;cursor:pointer;transition:transform .15s}
+.tb.sel{transform:translateY(-14px)}
+.tb.done{box-shadow:0 0 0 3px #66bb6a inset}
+.ly{height:25%;width:100%}
+.bar{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;border:0;background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px;cursor:pointer}
+button:disabled{opacity:.4}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+.ov div{background:var(--card);padding:22px 28px;border-radius:16px;text-align:center;line-height:2;max-width:88vw}
+.ov button{background:var(--btn);color:#fff;padding:10px 26px}
+</style>
+</head>
+<body>
+<a class="back" href="index.html">&larr; S loop</a>
+<h1>🧪 Sort It</h1>
+<div class="info"><span>مرحله <b id="lv">۱</b></span><span>حرکت <b id="mv">۰</b></span></div>
+<div class="wrap"><div id="bd"></div></div>
+<div class="bar"><button id="un">↩︎ برگشت</button><button id="rs">⟲ دوباره</button><button id="ad">➕ لوله‌ی اضافه</button></div>
+<div class="ov" id="ov"><div><h2 id="oh"></h2><p id="op"></p><button id="ob">ادامه</button></div></div>
+<script>
+const $=i=>document.getElementById(i);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
+const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let au;function beep(f,d=.05,ty='sine',v=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();if(au.state==='suspended')au.resume();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const COL=['#e53935','#1e88e5','#43a047','#fdd835','#8e24aa','#fb8c00','#00acc1','#ec407a','#6d4c41','#9ccc65'],CAP=4;
+let tubes=[],level=1,moves=0,sel=-1,hist=[],added=false,orig=null;
+function rng(s){return()=>(s=(s*1664525+1013904223)>>>0)/4294967296}
+function pour(t,i,j){ // تلاش برای ریختن i→j؛ برمی‌گرداند تعداد
+  const a=t[i],b=t[j];if(i===j||!a.length||b.length>=CAP)return 0;const c=a[a.length-1];if(b.length&&b[b.length-1]!==c)return 0;
+  let n=0;while(a.length&&a[a.length-1]===c&&b.length<CAP){b.push(a.pop());n++}return n}
+function solve(t0,limit=40000){
+  const key=t=>t.map(x=>x.join('')).sort().join('|'),seen=new Set([key(t0)]);let nodes=0;
+  const done=t=>t.every(x=>x.length===0||(x.length===CAP&&x.every(c=>c===x[0])));
+  const stack=[t0];
+  while(stack.length&&nodes++<limit){
+    const t=stack.pop();if(done(t))return true;
+    for(let i=0;i<t.length;i++)for(let j=0;j<t.length;j++){
+      if(i===j||!t[i].length)continue;
+      if(t[j].length===0&&t[i].every(c=>c===t[i][0]))continue; // بی‌فایده
+      const n=t.map(x=>x.slice());if(!pour(n,i,j))continue;const k=key(n);if(seen.has(k))continue;seen.add(k);stack.push(n)}
+  }
+  return false;
+}
+function gen(){
+  const nc=Math.min(9,3+Math.floor((level+1)/2));
+  for(let tries=0;tries<80;tries++){
+    const R=rng(level*131+tries*17+Date.now()%911),all=[];for(let c=0;c<nc;c++)for(let k=0;k<CAP;k++)all.push(c);
+    for(let i=all.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[all[i],all[j]]=[all[j],all[i]]}
+    const t=[];for(let i=0;i<nc;i++)t.push(all.slice(i*CAP,(i+1)*CAP));t.push([],[]);
+    if(t.some(x=>x.every(c=>c===x[0])&&x.length===CAP))continue;
+    if(solve(t.map(x=>x.slice()),30000)){tubes=t;return}
+  }
+  const t=[];for(let c=0;c<nc;c++)t.push(Array(CAP).fill(c));t.push([],[]);tubes=t; // پشتیبان (به‌هم می‌ریزد)
+  for(let k=0;k<60;k++){const i=Math.floor(Math.random()*t.length),j=Math.floor(Math.random()*t.length);if(i!==j&&t[i].length&&t[j].length<CAP)t[j].push(t[i].pop())}
+}
+function start(){gen();orig=tubes.map(x=>x.slice());moves=0;sel=-1;hist=[];added=false;$('ad').disabled=false;render()}
+function render(){
+  $('lv').textContent=fa(level);$('mv').textContent=fa(moves);
+  const b=$('bd');b.innerHTML='';
+  tubes.forEach((t,i)=>{const d=document.createElement('div');d.className='tb'+(i===sel?' sel':'')+(t.length===CAP&&t.every(c=>c===t[0])?' done':'');d.dataset.i=i;d.setAttribute('role','button');d.setAttribute('aria-label','لوله '+(i+1));
+    t.forEach(c=>{const l=document.createElement('div');l.className='ly';l.style.background=COL[c];d.appendChild(l)});b.appendChild(d)});
+}
+function check(){if(tubes.every(t=>t.length===0||(t.length===CAP&&t.every(c=>c===t[0])))){let best=0;try{best=+localStorage.getItem('sl-sortit')||0;if(level>best)localStorage.setItem('sl-sortit',level)}catch(e){}beep(900,.3);$('oh').textContent='🎉 مرتب شد!';$('op').textContent='مرحله '+fa(level)+' با '+fa(moves)+' حرکت';$('ob').textContent='مرحله‌ی بعد';$('ob').onclick=()=>{$('ov').style.display='none';level++;start()};setTimeout(()=>$('ov').style.display='flex',300)}}
+$('bd').addEventListener('click',e=>{const d=e.target.closest('.tb');if(!d)return;const i=+d.dataset.i;
+  if(sel<0){if(tubes[i].length){sel=i;beep(500,.04);render()}return}
+  if(sel===i){sel=-1;render();return}
+  const snap=tubes.map(x=>x.slice()),n=pour(tubes,sel,i);
+  if(n){hist.push(snap);moves++;beep(300+n*60,.12);sel=-1;render();check()}else{beep(150,.08,'square',.04);sel=tubes[i].length?i:-1;render()}});
+$('un').onclick=()=>{if(!hist.length)return;tubes=hist.pop();moves=Math.max(0,moves-1);sel=-1;render()};
+$('rs').onclick=()=>{tubes=orig.map(x=>x.slice());moves=0;sel=-1;hist=[];added=false;$('ad').disabled=false;render()};
+$('ad').onclick=()=>{if(added)return;added=true;tubes.push([]);$('ad').disabled=true;render()};
+start();
+window.__so2={get tubes(){return tubes},pour,solve,gen,set level(v){level=v},start,CAP};
+</script>
+<script>
+/* S Loop — اعلان‌ها (window.slNotify) و موسیقی پس‌زمینه (فقط برای بازی مستقل؛ داخل index موسیقی از صفحه‌ی اصلی پخش می‌شود) */
+(function(){
+  var g=function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+  window.slNotify=function(title,body,tag){
+    try{
+      if(!g('sl-notif',false)||!('Notification' in window)||Notification.permission!=='granted')return Promise.resolve(false);
+      var opt={body:body||'',tag:tag||'sloop',icon:'icon.png',badge:'icon.png',lang:'fa',dir:'rtl',vibrate:[150,80,150]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)
+        return navigator.serviceWorker.getRegistration().then(function(r){if(r)return r.showNotification(title,opt).then(function(){return true});new Notification(title,opt);return true}).catch(function(){try{new Notification(title,opt);return true}catch(e){return false}});
+      new Notification(title,opt);return Promise.resolve(true);
+    }catch(e){return Promise.resolve(false)}
+  };
+  if(window.top!==window) return;
+  var on=g('sl-music',true), vol=Math.max(0,Math.min(1,g('sl-mv',40)/100));
+  var a=new Audio('music.mp3'); a.loop=true; a.volume=vol; a.preload='auto';
+  var b=document.createElement('button'); b.setAttribute('aria-label','موسیقی');
+  b.style.cssText='position:fixed;left:8px;top:8px;z-index:999;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;cursor:pointer;line-height:1';
+  var paint=function(){b.textContent=on?'🔊':'🔇'};
+  var go=function(){if(on&&a.paused){var p=a.play();if(p&&p.catch)p.catch(function(){})}};
+  b.addEventListener('click',function(e){e.stopPropagation();on=!on;try{localStorage.setItem('sl-music',JSON.stringify(on))}catch(_){}on?go():a.pause();paint()});
+  ['pointerdown','keydown','touchend'].forEach(function(ev){addEventListener(ev,go,{passive:true})});
+  document.addEventListener('visibilitychange',function(){document.hidden?a.pause():go()});
+  paint(); document.body.appendChild(b); go();
+})();
+</script>
+</body>
+</html>

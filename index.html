@@ -198,7 +198,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   <button data-s="games">🎮 Games</button><button data-s="favorites">❤️ Favorite Games</button><button data-s="friends">👥 Friends</button><button data-s="ai">🤖 AI</button><button data-s="support">🎧 Support</button><button data-s="apps">🧰 Apps</button><button data-s="account">👤 Account</button><button data-s="category">🗂️ Category</button><button data-s="settings">⚙️ Settings</button><button data-s="creator">✨ Creator</button>
 </nav>
 <main>
-<section id="games"><h2>Games</h2><p class="sub">یک صفحه را انتخاب کن؛ داخل گرامافون می‌چرخد، از شیپور نت‌ها بیرون می‌آیند و بازی شروع می‌شود.</p><div id="gramo" aria-hidden="true">
+<section id="games"><h2>Games</h2><p class="sub">آخرین بازی‌ای که بازی کردی روی گرامافون می‌چرخد. یک صفحه را انتخاب کن؛ داخل گرامافون می‌چرخد، از شیپور نت‌ها بیرون می‌آیند و بازی شروع می‌شود.</p><div id="gramo" aria-hidden="true">
 <svg class="gb" viewBox="0 0 340 250"><defs>
 <linearGradient id="gw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a6535"/><stop offset="1" stop-color="#5a3517"/></linearGradient>
 <linearGradient id="gwt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58d55"/><stop offset="1" stop-color="#a06f3c"/></linearGradient>
@@ -256,7 +256,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <section id="apps" hidden>
   <h2>Apps</h2>
   <div id="apps-home"><p class="sub">برنامه‌های کاربردی S loop</p>
-    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
+    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><button class="app" id="app-tuner"><span>🎻</span><b>Violin Tuner</b><small>کوک‌کن ویولن</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
   </div>
   <div id="notes-app" hidden>
     <div id="nlist-wrap">
@@ -420,6 +420,19 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
       <div id="fweek" style="display:flex;gap:6px;align-items:flex-end;height:70px;direction:ltr"></div>
     </div>
   </div>
+<div id="tuner-app" hidden>
+    <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎻 تیونر ویولن</b><span></span></div>
+    <div class="box ctr" style="direction:ltr">
+      <svg viewBox="0 0 200 125" style="width:100%;max-width:340px"><path d="M15 105A85 85 0 0 1 185 105" fill="none" stroke="rgba(128,128,128,.4)" stroke-width="10" stroke-linecap="round"/><path d="M88 22A85 85 0 0 1 112 22" fill="none" stroke="#2fd56b" stroke-width="10"/><g stroke="currentColor" stroke-width="2" opacity=".6"><path d="M100 14V24M45 33L50 40M155 33L150 40"/></g><text x="12" y="122" font-size="10" fill="currentColor" opacity=".7">♭</text><text x="182" y="122" font-size="10" fill="currentColor" opacity=".7">♯</text><g id="tn-nd" style="transform-origin:100px 105px;transition:transform .15s"><path d="M100 105L100 28" stroke="#e53935" stroke-width="3" stroke-linecap="round"/><circle cx="100" cy="105" r="7" fill="#e53935"/></g></svg>
+      <div id="tn-note" style="font-size:3.2rem;font-weight:800;line-height:1">—</div>
+      <div id="tn-hz" style="opacity:.75;font-size:.9rem">0.0 Hz</div>
+      <div id="tn-msg" style="margin:8px 0;min-height:2.4em;font-weight:700;direction:rtl">میکروفن را روشن کن و یک سیم را بنواز</div>
+      <div id="tn-strs" style="display:flex;gap:8px;justify-content:center;margin:8px 0"></div>
+      <button class="pr" id="tn-go">🎤 شروع</button>
+      <div style="margin-top:10px;direction:rtl">فرکانس A4: <button class="al" id="tn-m">−</button> <b id="tn-a4">۴۴۰</b> Hz <button class="al" id="tn-p">+</button></div>
+      <p class="sub" style="font-size:.74rem;margin:8px 0 0;direction:rtl">روی هر سیم بزن تا صدای مرجع پخش شود و هدف کوک همان سیم شود (دوباره بزن تا حالت خودکار). برای تغییر کم از پیچ ریز (fine tuner) و برای تغییر زیاد از گوشی/پیچ استفاده کن. سیم‌ها از چپ: سل G3، ر D4، لا A4، می E5.</p>
+    </div>
+  </div>
 <div id="rec-app" hidden>
     <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎙 ضبط صدا</b><span></span></div>
     <div class="box ctr"><div id="rtime" class="bigt">۰۰:۰۰</div><canvas id="rlvl" width="300" height="40" style="width:100%;max-width:300px"></canvas><div style="margin-top:8px"><button class="pr" id="rrec">⏺ شروع ضبط</button></div><p class="sub" id="rmsg" style="font-size:.76rem;margin:8px 0 0">برای شروع، اجازه‌ی میکروفن را بده. ضبط‌ها فقط روی همین دستگاه ذخیره می‌شوند.</p></div>
@@ -491,6 +504,9 @@ const B=l=>l.map(([x,y,c])=>`<rect x="${x}" y="${y}" width="13" height="13" fill
 const sud=()=>{let s='<rect width="100" height="100" fill="#fbfbfd"/>';for(let i=0;i<=9;i++){const p=5+i*10;s+=`<path d="M${p} 5V95M5 ${p}H95" stroke="#2b3345" stroke-width="${i%3?.6:2}"/>`}[[0,0,5],[1,2,3],[3,1,8],[4,4,6],[6,3,2],[7,7,9],[8,5,4],[2,6,7],[5,8,1]].forEach(([c,r,v])=>s+=`<text x="${10+c*10}" y="${r*10+14}" font-size="8" text-anchor="middle" fill="#2d6cdf">${v}</text>`);return s};
 const T=(x,y,t,f,c)=>`<text x="${x}" y="${y}" font-size="${f}" font-weight="700" text-anchor="middle" fill="${c}">${t}</text>`;
 const GM=[
+{id:'pacman',n:'Pac-Man',u:'pacman.html',a:'<rect width="100" height="100" fill="#0a0a2a"/><path d="M40 50L82 28A44 44 0 1 0 82 72Z" fill="#ffd400"/><circle cx="44" cy="30" r="5" fill="#111"/><circle cx="90" cy="50" r="3.5" fill="#ffd9a0"/><rect x="2" y="2" width="96" height="96" rx="6" fill="none" stroke="#2f5bff" stroke-width="3"/>'},
+{id:'citybloxx',n:'City Bloxx',u:'citybloxx.html',a:'<rect width="100" height="100" fill="#8fd0ff"/><rect y="86" width="100" height="14" fill="#5a7d3a"/><rect x="34" y="70" width="32" height="16" fill="#ef5350"/><rect x="36" y="54" width="30" height="16" fill="#ffa726"/><rect x="33" y="38" width="32" height="16" fill="#66bb6a"/><rect x="36" y="22" width="30" height="16" fill="#42a5f5"/><path d="M50 0V12" stroke="#333" stroke-width="2"/><rect x="40" y="10" width="20" height="10" fill="#ab47bc"/><g fill="#ffe9a8"><rect x="40" y="75" width="6" height="7"/><rect x="54" y="59" width="6" height="7"/><rect x="42" y="43" width="6" height="7"/></g>'},
+{id:'matchsort3d',n:'Match Triple Sort 3D',u:'matchsort3d.html',a:'<rect width="100" height="100" fill="#c68b4e"/><rect y="46" width="100" height="6" fill="#8a5a2a"/><rect y="92" width="100" height="8" fill="#8a5a2a"/><g><rect x="8" y="24" width="14" height="22" rx="3" fill="#3d8bff"/><rect x="26" y="26" width="16" height="20" rx="2" fill="#7ed348"/><rect x="46" y="24" width="14" height="22" rx="3" fill="#ff9a2e"/><rect x="66" y="28" width="22" height="18" rx="3" fill="#f0403f"/><rect x="8" y="70" width="18" height="22" rx="3" fill="#a777e6"/><rect x="30" y="72" width="14" height="20" rx="6" fill="#ff8fb3"/><rect x="50" y="70" width="18" height="22" rx="3" fill="#2fc9b6"/><rect x="72" y="72" width="16" height="20" rx="3" fill="#ffd84a"/></g>'},
 {id:'snake',n:'Snake Advanced',u:'snake.html',a:'<rect width="100" height="100" fill="#1d4d2b"/><path d="M15 72H55V38H30V22H80" fill="none" stroke="#9be564" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="78" cy="19" r="1.8" fill="#111"/><circle cx="84" cy="19" r="1.8" fill="#111"/><circle cx="78" cy="78" r="6" fill="#e5533d"/>'},
 {id:'arena',n:'Arena Battle',u:'arena.html',a:'<rect width="100" height="100" fill="#7fb069"/><rect y="45" width="100" height="11" fill="#4a90d9"/><rect x="40" y="43" width="20" height="15" fill="#a1764a"/><circle cx="26" cy="20" r="9" fill="#c94c4c"/><circle cx="74" cy="20" r="9" fill="#c94c4c"/><circle cx="26" cy="80" r="9" fill="#3f6fd1"/><circle cx="74" cy="80" r="9" fill="#3f6fd1"/><circle cx="50" cy="32" r="5" fill="#c94c4c"/><circle cx="50" cy="68" r="5" fill="#3f6fd1"/>'+T(50,56,'⚔️',13,'#fff')},
 {id:'g2048',n:'2048',u:'2048.html',a:'<rect width="100" height="100" fill="#b9c0cf"/><rect x="10" y="10" width="38" height="38" rx="5" fill="#e8d98a"/><rect x="52" y="10" width="38" height="38" rx="5" fill="#f4c06a"/><rect x="10" y="52" width="38" height="38" rx="5" fill="#ee9a5a"/><rect x="52" y="52" width="38" height="38" rx="5" fill="#e7b730"/>'+T(29,37,'2',20,'#333')+T(71,37,'4',20,'#333')+T(29,79,'8',20,'#fff')+T(71,76,'2048',13,'#fff')},
@@ -951,7 +967,7 @@ supRender();
 let notes=LS.get('sl-notes',[]),nCur=null,nQ='',nDelT=0,nTm;
 const NC=['#fff7a8','#ffd1e8','#c9f2e3','#cfe3ff','#e6d6ff'];
 const nSave=()=>LS.set('sl-notes',notes);
-const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app'];
+const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app','tuner-app'];
 function appsHome(){$('apps-home').hidden=false;APPS.forEach(i=>{$(i).hidden=true})}
 function openApp(id){$('apps-home').hidden=true;APPS.forEach(i=>{$(i).hidden=i!==id})}
 function nList(){
@@ -1729,7 +1745,7 @@ renderProfile();renderStats();musicBtn();renderTime();go('games');settle();rende
 if(musicOn)toast('🎵 برای شروع موسیقی یک بار روی صفحه بزن');
 // S Loop mini games — صفحه‌های مستقل داخل مودال باز می‌شوند تا موسیقی‌ی صفحه‌ی اصلی قطع نشود
 (()=>{
-const FR={reversi:['reversi.html','ریورسی'],hanafuda:['hanafuda.html','هانافودا — کوی‌کوی'],pingpong:['pingpong.html','پینگ‌پونگ'],triplesort:['match-triple-sort.html','Triple Tile Puzzle'],antistress:['anti-stress.html','Anti Stress'],minesweeper:['minesweeper.html','Minesweeper — مین‌روب'],snakeio:['snake-io.html','Snake.io'],jigsaw:['jigsaw.html','پازل تکه‌ای'],dobble:['dobble.html','Dobble'],golpooch:['gol-ya-pooch.html','گل یا پوچ'],bingo:['bingo.html','Bingo — بینگو'],backgammon:['backgammon.html','تخته نرد'],pantomime:['pantomime.html','پانتومیم'],penalty:['penalty.html','پنالتی'],fruitslice:['fruit-slice.html','برش میوه'],birdjump:['bird-jump.html','پرنده‌ی جهنده'],spy:['spy.html','Spy — جاسوس'],moneymaker:['money-maker.html','Money Maker'],woodblock:['woodblock.html','Puzzle Wood Block'],blockade:['blockade.html','Blockade Puzzle'],minigolf:['minigolf.html','مینی‌گلف'],domino:['domino.html','دومینو'],blockade2:['blockade2.html','Blockade 2'],blockcraft:['blockcraft.html','Block Craft'],obbyrun:['obbyrun.html','Obby Run'],strikezone:['strikezone.html','Strike Zone'],pixelart:['pixelart.html','Pixel Art'],carbrawl:['carbrawl.html','Car Brawl'],subwaydash:['subwaydash.html','Subway Dash'],screamhero:['screamhero.html','Scream Hero'],counterops:['counterops.html','Counter Ops'],petbuddy:['petbuddy.html','Pet Buddy'],mahjong:['mahjong.html','Mahjong'],iqtest:['iqtest.html','IQ Test'],spotit:['spotit.html','Spot It'],blockaway:['blockaway.html','Block Away 3D'],wordscapes:['wordscapes.html','Word Scapes'],carpark:['carpark.html','Car Park'],screwout:['screwout.html','Screw Out'],slingdrift:['slingdrift.html','Sling Drift'],roadrider:['roadrider.html','Road Rider'],stackbird:['stackbird.html','Stack Bird'],piano:['piano.html','Piano'],wallwalker:['wallwalker.html','Wall Walker'],neonrider:['neonrider.html','Neon Rider'],tombwalker:['tombwalker.html','Tomb Walker'],flowconnect:['flowconnect.html','Flow Connect'],sortit:['sortit.html','Sort It']};
+const FR={pacman:['pacman.html','Pac-Man'],citybloxx:['citybloxx.html','City Bloxx'],matchsort3d:['matchsort3d.html','Match Triple Sort 3D'],reversi:['reversi.html','ریورسی'],hanafuda:['hanafuda.html','هانافودا — کوی‌کوی'],pingpong:['pingpong.html','پینگ‌پونگ'],triplesort:['match-triple-sort.html','Triple Tile Puzzle'],antistress:['anti-stress.html','Anti Stress'],minesweeper:['minesweeper.html','Minesweeper — مین‌روب'],snakeio:['snake-io.html','Snake.io'],jigsaw:['jigsaw.html','پازل تکه‌ای'],dobble:['dobble.html','Dobble'],golpooch:['gol-ya-pooch.html','گل یا پوچ'],bingo:['bingo.html','Bingo — بینگو'],backgammon:['backgammon.html','تخته نرد'],pantomime:['pantomime.html','پانتومیم'],penalty:['penalty.html','پنالتی'],fruitslice:['fruit-slice.html','برش میوه'],birdjump:['bird-jump.html','پرنده‌ی جهنده'],spy:['spy.html','Spy — جاسوس'],moneymaker:['money-maker.html','Money Maker'],woodblock:['woodblock.html','Puzzle Wood Block'],blockade:['blockade.html','Blockade Puzzle'],minigolf:['minigolf.html','مینی‌گلف'],domino:['domino.html','دومینو'],blockade2:['blockade2.html','Blockade 2'],blockcraft:['blockcraft.html','Block Craft'],obbyrun:['obbyrun.html','Obby Run'],strikezone:['strikezone.html','Strike Zone'],pixelart:['pixelart.html','Pixel Art'],carbrawl:['carbrawl.html','Car Brawl'],subwaydash:['subwaydash.html','Subway Dash'],screamhero:['screamhero.html','Scream Hero'],counterops:['counterops.html','Counter Ops'],petbuddy:['petbuddy.html','Pet Buddy'],mahjong:['mahjong.html','Mahjong'],iqtest:['iqtest.html','IQ Test'],spotit:['spotit.html','Spot It'],blockaway:['blockaway.html','Block Away 3D'],wordscapes:['wordscapes.html','Word Scapes'],carpark:['carpark.html','Car Park'],screwout:['screwout.html','Screw Out'],slingdrift:['slingdrift.html','Sling Drift'],roadrider:['roadrider.html','Road Rider'],stackbird:['stackbird.html','Stack Bird'],piano:['piano.html','Piano'],wallwalker:['wallwalker.html','Wall Walker'],neonrider:['neonrider.html','Neon Rider'],tombwalker:['tombwalker.html','Tomb Walker'],flowconnect:['flowconnect.html','Flow Connect'],sortit:['sortit.html','Sort It']};
 const modal=document.getElementById('sl-game-modal'),box=modal.querySelector('.sl-game-box'),content=document.getElementById('sl-game-content'),title=document.getElementById('sl-game-title');
 let cur=null,t0=0;
 function close(){
@@ -1740,7 +1756,7 @@ function close(){
   if(s>=5){stats[id]=(stats[id]||0)+s;LS.set('sl-stats',stats);renderStats();addUsage(s)}
 }
 function open(id){
-  const f=FR[id];if(!f)return;
+  const f=FR[id];if(!f)return;gSet(id);
   cur=id;t0=Date.now();try{localStorage.removeItem('sl-pending')}catch(e){}
   title.textContent=f[1];box.classList.add('fr');
   content.innerHTML='';const fr=document.createElement('iframe');
@@ -1758,7 +1774,7 @@ let gBusy=false,gNoteT=0;
 (function(){const gr=document.getElementById('gramo');if(gr){const z=Math.min(1,(innerWidth-16)/340);if(z<1){gr.style.zoom=z}}})();
 function gNotes(on){
   clearInterval(gNoteT);if(!on)return;const m=document.getElementById('gmouth'),ch=['♪','♫','♬','♩'];
-  const one=()=>{const n=document.createElement('span');n.className='nt';n.textContent=ch[Math.floor(Math.random()*ch.length)];n.style.setProperty('--dx',(20+Math.random()*90)+'px');n.style.setProperty('--dy',(-(70+Math.random()*90))+'px');n.style.setProperty('--r',((Math.random()-.5)*50)+'deg');m.appendChild(n);setTimeout(()=>n.remove(),2500)};
+  const one=()=>{if(document.hidden||$('games').hidden)return;const n=document.createElement('span');n.className='nt';n.textContent=ch[Math.floor(Math.random()*ch.length)];n.style.setProperty('--dx',(20+Math.random()*90)+'px');n.style.setProperty('--dy',(-(70+Math.random()*90))+'px');n.style.setProperty('--r',((Math.random()-.5)*50)+'deg');m.appendChild(n);setTimeout(()=>n.remove(),2500)};
   one();gNoteT=setInterval(one,230);
 }
 function gramoPlay(id,card){
@@ -1777,7 +1793,7 @@ function gramoPlay(id,card){
       fl.remove();src.style.visibility='';
       plat.querySelector('.lb').innerHTML='<svg viewBox="0 0 100 100">'+g.a+'</svg>';
       gr.classList.add('on');gNotes(true);
-      setTimeout(()=>{gNotes(false);gr.classList.remove('on');gBusy=false;open(id)},2000);
+      setTimeout(()=>{gBusy=false;open(id)},2000);
     };
     const anim=fl.animate([
       {transform:'translate(0,0) scale(1,1) rotate(0deg)'},
@@ -1788,6 +1804,10 @@ function gramoPlay(id,card){
   };
   if(window.scrollY>30){window.scrollTo({top:0,behavior:'smooth'});setTimeout(go,450)}else go();
 }
+function gSet(id){try{localStorage.setItem('sl-last-game',JSON.stringify(id))}catch(e){}
+  const gr=document.getElementById('gramo'),plat=document.getElementById('gplat'),g=GM.find(q=>q.id===id);if(!gr||!plat||!g)return;
+  plat.querySelector('.lb').innerHTML='<svg viewBox="0 0 100 100">'+g.a+'</svg>';gr.classList.add('on');gNotes(true)}
+setTimeout(()=>{try{const l=JSON.parse(localStorage.getItem('sl-last-game')||'null');if(l)gSet(l)}catch(e){}},0);
 document.addEventListener('click',e=>{
   const a=e.target.closest('.card,.ailink');if(!a)return;
   const id=a.dataset.id;if(!FR[id])return;
@@ -1806,6 +1826,39 @@ if ('serviceWorker' in navigator) {
       .catch(error => console.error('S Loop service worker registration failed:', error));
   });
 }
+</script>
+<script>
+/* ---- Apps: Violin Tuner ---- */
+(function(){
+const STR=[['G3',196],['D4',293.66],['A4',440],['E5',659.25]],NM=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+let a4=LS.get('sl-tuner-a4',440),ctx,an,buf,stream,raf=0,run=false,man=-1,hist=[],toneUntil=0;
+const sf=i=>STR[i][1]*a4/440;
+function strs(){$('tn-strs').innerHTML=STR.map((s,i)=>'<button class="al" data-i="'+i+'" style="'+(man===i?'outline:3px solid var(--tq)':'')+'">'+s[0]+'</button>').join('');$('tn-a4').textContent=fa(a4)}
+function tone(f){try{ctx=ctx||new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();const o=ctx.createOscillator(),l=ctx.createBiquadFilter(),g=ctx.createGain(),t=ctx.currentTime;o.type='sawtooth';o.frequency.value=f;l.type='lowpass';l.frequency.value=f*4;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.05);g.gain.exponentialRampToValueAtTime(.0001,t+2);o.connect(l);l.connect(g);g.connect(ctx.destination);o.start();o.stop(t+2.1);toneUntil=performance.now()+1800}catch(e){}}
+$('tn-strs').onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const i=+b.dataset.i;man=man===i?-1:i;if(man>=0)tone(sf(i));strs()};
+$('tn-m').onclick=()=>{a4=Math.max(430,a4-1);LS.set('sl-tuner-a4',a4);strs()};$('tn-p').onclick=()=>{a4=Math.min(450,a4+1);LS.set('sl-tuner-a4',a4);strs()};
+function pitch(b,sr){const n=b.length;let r=0;for(let i=0;i<n;i++)r+=b[i]*b[i];if(Math.sqrt(r/n)<.01)return -1;
+  const mn=Math.floor(sr/1500),mx=Math.min(Math.floor(sr/150),n>>1),nd=new Float32Array(mx+2);
+  for(let l=mn-1;l<=mx+1;l++){let s=0,m=0;for(let i=0;i<n-l;i++){s+=b[i]*b[i+l];m+=b[i]*b[i]+b[i+l]*b[i+l]}nd[l]=m?2*s/m:0}
+  const pk=[];let neg=false;for(let l=mn;l<=mx;l++){if(nd[l]<0)neg=true;if(neg&&nd[l]>0&&nd[l]>=nd[l-1]&&nd[l]>nd[l+1])pk.push(l)}
+  if(!pk.length)return -1;const top=Math.max(...pk.map(l=>nd[l]));if(top<.5)return -1;const l=pk.find(l=>nd[l]>=.88*top),a=nd[l-1],c=nd[l+1],d=nd[l],sh=(a-c)/(2*(a-2*d+c)||1);return sr/(l+(isFinite(sh)?sh:0))}
+function show(f){hist.push(f);if(hist.length>5)hist.shift();const h=[...hist].sort((a,b)=>a-b),fr=h[h.length>>1];
+  let ti=man;if(ti<0){let bd=1e9;STR.forEach((s,i)=>{const c=Math.abs(1200*Math.log2(fr/sf(i)));if(c<bd){bd=c;ti=i}})}
+  const cents=1200*Math.log2(fr/sf(ti)),mid=Math.round(69+12*Math.log2(fr/a4));
+  $('tn-note').textContent=NM[(mid%12+12)%12]+(Math.floor(mid/12)-1);$('tn-hz').textContent=fr.toFixed(1)+' Hz · هدف '+STR[ti][0]+' ('+cents.toFixed(0)+' cent)';
+  const cl=Math.max(-50,Math.min(50,cents));$('tn-nd').style.transform='rotate('+(cl*1.2)+'deg)';
+  const m=$('tn-msg');if(Math.abs(cents)<=5){m.textContent='✅ کوک است';m.style.color='#2fd56b'}else if(Math.abs(cents)>120){m.textContent='این صدا به سیم '+STR[ti][0]+' نزدیک نیست؛ سیم دیگری را بنواز';m.style.color=''}else if(cents<0){m.textContent='⬆ پایین است — کمی سفت‌تر کن';m.style.color='#ffb300'}else{m.textContent='⬇ بالا است — کمی شل‌تر کن';m.style.color='#ff7043'}}
+function loop(){if(!run)return;if($('tuner-app').hidden||$('apps').hidden){stop();return}
+  if(performance.now()>toneUntil){an.getFloatTimeDomainData(buf);const f=pitch(buf,ctx.sampleRate);if(f>0)show(f);else hist=[]}
+  raf=requestAnimationFrame(loop)}
+async function go(){try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  ctx=ctx||new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')await ctx.resume();an=ctx.createAnalyser();an.fftSize=4096;buf=new Float32Array(2048);
+  const a2=an;buf=new Float32Array(an.fftSize);ctx.createMediaStreamSource(stream).connect(an);run=true;$('tn-go').textContent='⏹ توقف';$('tn-msg').textContent='یک سیم را آرام و ممتد بنواز…';loop()}catch(e){toast('اجازه‌ی میکروفن لازم است')}}
+function stop(){run=false;cancelAnimationFrame(raf);try{stream&&stream.getTracks().forEach(t=>t.stop())}catch(e){}stream=null;$('tn-go').textContent='🎤 شروع'}
+$('tn-go').onclick=()=>run?stop():go();
+$('app-tuner').onclick=()=>{openApp('tuner-app');strs()};
+strs();
+})();
 </script>
 <div id="callov" style="position:fixed;inset:0;z-index:9999;background:#0b1020;color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center">
 <video id="cvr" autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000"></video>

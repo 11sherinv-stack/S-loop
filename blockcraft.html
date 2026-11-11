@@ -26,6 +26,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 #top button{background:rgba(0,0,0,.5);color:#fff;border:0;border-radius:14px;padding:6px 10px;font:12px Tahoma,sans-serif;cursor:pointer}
 #vit{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 36px);z-index:15;font-size:15px;text-shadow:0 0 3px #000;color:#fff;pointer-events:none;line-height:1.3;direction:ltr}
 #hint{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:8px 14px;border-radius:12px;font-size:13px;text-align:center;line-height:1.8;max-width:90vw;z-index:20;pointer-events:none;transition:opacity .6s}
+#map{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 132px);width:88px;height:88px;border:2px solid rgba(255,255,255,.55);border-radius:50%;z-index:14;background:#0006;pointer-events:none}
 #dmg{position:fixed;inset:0;background:rgba(200,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:10}
 #inv{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40;display:none;align-items:center;justify-content:center}
 #inv>div{background:#2b2118;color:#f3e6d2;border-radius:16px;padding:14px;width:min(94vw,440px);max-height:84vh;overflow:auto}
@@ -40,11 +41,11 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 <canvas id="c"></canvas>
 <a class="back" href="index.html">&larr; S loop</a>
 <div id="cross"></div><div id="mine"><i></i></div><div id="jb"><div id="jk"></div></div><div id="dmg"></div>
-<div id="vit"></div>
+<div id="vit"></div><canvas id="map" width="88" height="88"></canvas>
 <div id="top"><button id="bInv">🎒 ساخت و کوله‌پشتی</button><button id="bMode">⚔️ بقا</button><button id="rst">🌍 دنیای جدید</button></div>
 <div class="btns"><button id="bBreak" aria-label="شکستن / حمله">⛏</button><button id="bPlace" aria-label="گذاشتن / خوردن">🧱</button><button id="bJump" aria-label="پرش / شنا">⬆</button><button id="bFly" aria-label="پرواز" style="display:none">✈</button><button id="bDown" aria-label="پایین" style="visibility:hidden">⬇</button></div>
 <div id="hot"></div>
-<div id="hint">با انگشت چپ حرکت کن، با انگشت راست دور و بر را ببین<br>⛏ نگه دار تا بشکند یا به موجودات حمله کنی · 🧱 می‌گذارد / غذا می‌خورد<br>درخت و سنگ جمع کن، 🎒 ابزار بساز، شب‌ها مراقب زامبی‌ها باش!<br><small>رایانه: WASD، ماوس، چپ‌کلیک نگه‌دار / راست‌کلیک، Space، F پرواز، E کوله‌پشتی</small></div>
+<div id="hint">با انگشت چپ حرکت کن، با انگشت راست دور و بر را ببین<br>⛏ نگه دار تا بشکند یا به موجودات حمله کنی · 🧱 می‌گذارد / غذا می‌خورد<br>درخت و سنگ جمع کن، 🎒 ابزار و زره بساز، مراقب گرسنگی، زامبی و کریپر باش! TNT را بشکن تا منفجر شود 💥<br><small>رایانه: WASD، ماوس، چپ‌کلیک نگه‌دار / راست‌کلیک، Space، F پرواز، E کوله‌پشتی</small></div>
 <div id="inv"><div><button id="invX" style="float:left">✕</button><h3>🎒 کوله‌پشتی</h3><div class="chips" id="ichips"></div><h3>🛠 ابزار</h3><div class="chips" id="itools"></div><h3>⚒ ساخت</h3><div id="irec"></div></div></div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
@@ -55,12 +56,12 @@ let au;function beep(f,d=.05,ty='square',v=.05){try{au=au||new(window.AudioConte
 const fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 /* ---------- بلوک‌ها ---------- */
 // id: [نام، رنگ، سختی(ثانیه با دست)، ابزار مناسب، حداقل سطح ابزار، دراپ]
-const BL={1:['چمن',[96,168,58],.9,'s',0,2],2:['خاک',[139,92,52],.75,'s',0,2],3:['سنگ',[132,132,134],7,'p',1,16],4:['چوب',[110,76,40],3,'a',0,4],5:['برگ',[56,140,46],.3,'',0,5],6:['تخته',[190,142,76],3,'a',0,6],7:['آجر',[170,72,60],8,'p',1,7],8:['شن',[226,210,140],.75,'s',0,8],9:['آب',[40,110,200],0,'',0,0],10:['شیشه',[200,230,240],.45,'',0,0],11:['زغال‌سنگ',[70,70,72],7,'p',1,'coal'],12:['سنگ آهن',[190,150,120],12,'p',2,12],13:['سنگ طلا',[235,200,60],12,'p',3,13],14:['الماس',[90,220,230],14,'p',3,'diamond'],15:['برف',[240,245,250],.3,'s',0,15],16:['سنگ‌فرش',[110,110,112],7,'p',1,16],17:['پشم',[210,60,60],1.2,'',0,17],18:['سنگ پایه',[40,40,44],1e9,'',9,0]};
-const PLACE=[1,2,3,4,5,6,7,8,10,15,16,17,9];
-const TOOLN={p:['','کلنگ چوبی','کلنگ سنگی','کلنگ آهنی','کلنگ الماسی'],a:['','تبر چوبی','تبر سنگی','تبر آهنی','تبر الماسی'],s:['','بیل چوبی','بیل سنگی','بیل آهنی','بیل الماسی'],w:['','شمشیر چوبی','شمشیر سنگی','شمشیر آهنی','شمشیر الماسی']};
-const TOOLK={p:'کلنگ',a:'تبر',s:'بیل',w:'شمشیر'};
+const BL={1:['چمن',[96,168,58],.9,'s',0,2],2:['خاک',[139,92,52],.75,'s',0,2],3:['سنگ',[132,132,134],7,'p',1,16],4:['چوب',[110,76,40],3,'a',0,4],5:['برگ',[56,140,46],.3,'',0,5],6:['تخته',[190,142,76],3,'a',0,6],7:['آجر',[170,72,60],8,'p',1,7],8:['شن',[226,210,140],.75,'s',0,8],9:['آب',[40,110,200],0,'',0,0],10:['شیشه',[200,230,240],.45,'',0,0],11:['زغال‌سنگ',[70,70,72],7,'p',1,'coal'],12:['سنگ آهن',[190,150,120],12,'p',2,12],13:['سنگ طلا',[235,200,60],12,'p',3,13],14:['الماس',[90,220,230],14,'p',3,'diamond'],15:['برف',[240,245,250],.3,'s',0,15],16:['سنگ‌فرش',[110,110,112],7,'p',1,16],17:['پشم',[210,60,60],1.2,'',0,17],18:['سنگ پایه',[40,40,44],1e9,'',9,0],19:['کاکتوس',[40,140,60],.4,'',0,19],20:['TNT',[205,50,40],.3,'',0,20]};
+const PLACE=[1,2,3,4,5,6,7,8,10,15,16,17,19,20,9];
+const TOOLN={p:['','کلنگ چوبی','کلنگ سنگی','کلنگ آهنی','کلنگ الماسی'],a:['','تبر چوبی','تبر سنگی','تبر آهنی','تبر الماسی'],s:['','بیل چوبی','بیل سنگی','بیل آهنی','بیل الماسی'],w:['','شمشیر چوبی','شمشیر سنگی','شمشیر آهنی','شمشیر الماسی']};TOOLN.r=['','زره پشمی','','زره آهنی','زره الماسی'];
+const TOOLK={p:'کلنگ',a:'تبر',s:'بیل',w:'شمشیر',r:'زره'};
 const SPEED=[1,2,4,6,8];
-const ITEMN={stick:'چوب‌دستی',coal:'زغال',diamond:'الماس',meat:'گوشت خام',cooked:'گوشت پخته',iron:'شمش آهن',gold:'شمش طلا'};
+const ITEMN={stick:'چوب‌دستی',coal:'زغال',diamond:'الماس',meat:'گوشت خام',cooked:'گوشت پخته',iron:'شمش آهن',gold:'شمش طلا',gunpowder:'باروت'};
 /* ---------- نویز و ساخت دنیا ---------- */
 function h2(a,b,s){let h=Math.imul(a,374761393)+Math.imul(b,668265263)+Math.imul(s,1442695041);h=Math.imul(h^(h>>>13),1274126177);return((h^(h>>>16))>>>0)/4294967296}
 function vn(a,b,s){const ai=Math.floor(a),bi=Math.floor(b),af=a-ai,bf=b-bi,u=af*af*(3-2*af),v=bf*bf*(3-2*bf);const p=h2(ai,bi,s),q=h2(ai+1,bi,s),r=h2(ai,bi+1,s),t=h2(ai+1,bi+1,s);return p+(q-p)*u+(r-p)*v+(p-q-r+t)*u*v}
@@ -98,12 +99,13 @@ function genWorld(){
     const th=4+Math.floor(R()*2);for(let y=h;y<h+th;y++)world[idx(tx,y,tz)]=4;
     for(let dy=th-2;dy<=th+1;dy++){const r=dy>=th?1:2;for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){if(Math.abs(dx)+Math.abs(dz)>r+1)continue;const a=tx+dx,c=tz+dz,yy=h+dy;if(yy<SY&&!world[idx(a,yy,c)])world[idx(a,yy,c)]=5}}
   }
+  extras();
 }
 function get(a,b,c){if(a<0||a>=SX||c<0||c>=SZ||b<0)return 18;if(b>=SY)return 0;return world[idx(a,b,c)]}
 const solidAt=(a,b,c)=>{const v=get(a,b,c);return v!==0&&v!==9};
 /* ---------- بازیکن و حالت ---------- */
 let px=0,py=0,pz=0,vx=0,vy=0,vz=0,yaw=0,pitch=-.15,ground=false,fly=false,hp=20,air=10,fallY=0,hurtT=0,creative=false,tm=.12,hurtCool=0;
-let inv={},tools={p:0,a:0,s:0,w:0},sel=0,mods={};
+let inv={},tools={p:0,a:0,s:0,w:0,r:0},sel=0,mods={};
 const keys={},joy={x:0,y:0};let jumpHeld=false,downHeld=false,breakHeld=false;
 function spawnPoint(){let bx=SX>>1,bz=SZ>>1,bd=1e9;for(let z=10;z<SZ-10;z++)for(let xx=10;xx<SX-10;xx++){const h=hmap[z*SX+xx];if(h>SEA+1&&h<24&&world[idx(xx,h-1,z)]===1){const d=Math.hypot(xx-SX/2,z-SZ/2);if(d<bd){bd=d;bx=xx;bz=z}}}return[bx+.5,hmap[bz*SX+bx]+.01,bz+.5]}
 function spawn(){[px,py,pz]=spawnPoint();vx=vy=vz=0;fallY=py}
@@ -132,7 +134,7 @@ function physics(dt){
   if(!creative){if(headWet){air-=dt*.9;if(air<=0){air=0;hurtCool-=dt;if(hurtCool<=0){damage(2);hurtCool=1}}}else air=Math.min(10,air+dt*4)}
   hurtT=Math.max(0,hurtT-dt);
 }
-function damage(d){if(creative||d<=0)return;hp-=d;hurtT=.4;$('dmg').style.opacity=.9;setTimeout(()=>$('dmg').style.opacity=0,200);beep(110,.15,'sawtooth',.08);if(hp<=0){hp=20;air=10;spawn();say('مردی! دوباره در نقطه‌ی شروع هستی')}}
+function damage(d){if(creative||d<=0)return;d=Math.max(1,Math.round(d*(1-tools.r*.17)));hp-=d;hurtT=.4;$('dmg').style.opacity=.9;setTimeout(()=>$('dmg').style.opacity=0,200);beep(110,.15,'sawtooth',.08);if(hp<=0){hp=20;air=10;food=20;spawn();say('مردی! دوباره در نقطه‌ی شروع هستی')}}
 /* ---------- پرتو ---------- */
 let H_x,H_y,H_z,H_f,H_t,H_s,W_sum=0;
 function ray(ox,oy,oz,dx,dy,dz,maxT,tint){
@@ -174,10 +176,11 @@ function shade(bl,fa_,hx,hy,hz,t){
   else if(bl===4){if(fa_===1){const dxr=u-.5,dzr=v-.5,rr=Math.sqrt(dxr*dxr+dzr*dzr);m*=(((rr*10)|0)&1)?.9:1.05;r=170;g=130;b=76}else m*=(tu&1)?.85:1}
   else if(bl===5){m=.7+(nz&63)/110}
   else if(bl>=11&&bl<=14){if((nz&7)>=2){r=132;g=132;b=134;m=.84+(nz&31)/100}else m=1.15}
-  else if(bl===10){m=(tu===0||tu===7||tv===0||tv===7)?1.05:.8}
+  else if(bl===10){m=(tu===0||tu===7||tv===0||tv===7)?1.05:.8}else if(bl===19){m*=((tu&3)===1||tv===0)?.72:1.06}else if(bl===20){if(tv>=2&&tv<=5){r=238;g=238;b=238}else if((tu&3)===0)m*=.82}
   const fsh=fa_===1?(H_s<0?1:.55):fa_===0?.82:.68;m*=fsh*(.3+.7*dayL);
   let R=r*m,G=g*m,B=b*m;
   if(H_x===tcx&&H_y===tcy&&H_z===tcz){R+=44;G+=44;B+=44}
+  if(bl===20&&tnts.length&&tntLit(H_x,H_y,H_z)&&((performance.now()/130)|0)%2){R+=120;G+=120;B+=120}
   const fog=t>26?Math.min(1,(t-26)/26):0;
   if(fog>0){R+=(185*dayL-R)*fog;G+=(222*dayL-G)*fog;B+=(250*dayL-B)*fog}
   COL[0]=R;COL[1]=G;COL[2]=B;
@@ -210,24 +213,26 @@ const SPR={
  pig:{w:10,h:8,rows:['.PP....PP.','PPPPPPPPPP','PPKPPPPKPP','PPPSSSSPPP','PPPSKKSPPP','PPPSSSSPPP','.PPPPPPPP.','.PP....PP.'],pal:{P:[245,170,180],K:[40,20,20],S:[230,120,140]}},
  cow:{w:10,h:11,rows:['.W......W.','WWWWWWWWWW','WKWWWWWWKW','WWWWWWWWWW','WWNNNNNNWW','.WNKNNKNW.','.WWWWWWWW.','.WWWDDWWW.','.WWDDDDWW.','.WW....WW.','.KK....KK.'],pal:{W:[235,235,235],K:[40,30,30],D:[90,60,40],N:[220,170,160]}}
 };
-const MOB={zombie:{hp:20,w:.3,h:1.8,spd:2.3,host:true},pig:{hp:10,w:.35,h:.9,spd:1.1,host:false},cow:{hp:14,w:.4,h:1.3,spd:1,host:false}};
+SPR.creeper={w:8,h:14,rows:['.GGGGGG.','GGGGGGGG','GKKGGKKG','GKKGGKKG','GGGKKGGG','GGKKKKGG','GGKGGKGG','.GGGGGG.','..GGGG..','..GGGG..','..GGGG..','.GGGGGG.','.GG..GG.','.GG..GG.'],pal:{G:[70,170,60],K:[15,30,15]}};
+SPR.sheep={w:10,h:9,rows:['.WWWWWWWW.','WWWWWWWWWW','WWWWWWWWWW','WWWFFFFWWW','WWFKFFKFWW','.WFFFFFFW.','.WWWWWWWW.','.FF....FF.','.FF....FF.'],pal:{W:[240,240,235],F:[215,190,170],K:[30,25,25]}};
+const MOB={creeper:{hp:20,w:.3,h:1.7,spd:2.1,host:true,cr:true},sheep:{hp:8,w:.38,h:.95,spd:1,host:false},zombie:{hp:20,w:.3,h:1.8,spd:2.3,host:true},pig:{hp:10,w:.35,h:.9,spd:1.1,host:false},cow:{hp:14,w:.4,h:1.3,spd:1,host:false}};
 let mobs=[],spawnT=2,atkCd=0;
 function addMob(k,a,b,c){mobs.push({k,x:a,y:b,z:c,vx:0,vy:0,vz:0,hp:MOB[k].hp,dir:Math.random()*6.28,tt:0,hit:0,atk:0,gr:false})}
 function mobHits(m){const d=MOB[m.k],hw=d.w;for(let i=Math.floor(m.x-hw);i<=Math.floor(m.x+hw-1e-6);i++)for(let j=Math.floor(m.y);j<=Math.floor(m.y+d.h-1e-6);j++)for(let k=Math.floor(m.z-hw);k<=Math.floor(m.z+hw-1e-6);k++)if(solidAt(i,j,k))return true;return false}
 function updMobs(dt){
   const night=dayL<.45;spawnT-=dt;
-  if(spawnT<=0){spawnT=1.2;const zc=mobs.filter(m=>m.k==='zombie').length,pc=mobs.length-zc;
+  if(spawnT<=0){spawnT=1.2;const zc=mobs.filter(m=>MOB[m.k].host).length,pc=mobs.length-zc;
     for(let t=0;t<6;t++){const a=Math.random()*6.28,r=14+Math.random()*14,sx=Math.floor(px+Math.cos(a)*r),sz=Math.floor(pz+Math.sin(a)*r);if(sx<2||sz<2||sx>=SX-2||sz>=SZ-2)continue;
       let yy=SY-2;while(yy>0&&!solidAt(sx,yy-1,sz))yy--;if(get(sx,yy,sz)!==0)continue;const gb=get(sx,yy-1,sz);
-      if(night&&zc<7&&!creative&&yy>SEA){addMob('zombie',sx+.5,yy,sz+.5);break}
-      if(!night&&pc<10&&gb===1&&yy>SEA+1){addMob(Math.random()<.5?'pig':'cow',sx+.5,yy,sz+.5);break}}}
+      if(night&&zc<7&&!creative&&yy>SEA){addMob(Math.random()<.35?'creeper':'zombie',sx+.5,yy,sz+.5);break}
+      if(!night&&pc<10&&gb===1&&yy>SEA+1){addMob(['pig','cow','sheep'][Math.random()*3|0],sx+.5,yy,sz+.5);break}}}
   for(let i=mobs.length-1;i>=0;i--){const m=mobs[i],d=MOB[m.k];
     const dist=Math.hypot(m.x-px,m.z-pz);
-    if(dist>46||(m.k==='zombie'&&dayL>.75&&dist>6&&Math.random()<dt*.5)||m.y<-5){mobs.splice(i,1);continue}
+    if(dist>46||(d.host&&dayL>.75&&dist>6&&Math.random()<dt*.5)||m.y<-5){mobs.splice(i,1);continue}
     m.hit=Math.max(0,m.hit-dt);m.atk=Math.max(0,m.atk-dt);m.tt-=dt;
     let tx=0,tz=0,spd=d.spd;
     if(d.host&&!creative&&dist<24){const dx=px-m.x,dz=pz-m.z,l=Math.hypot(dx,dz)||1;tx=dx/l;tz=dz/l;
-      if(dist<1.0&&Math.abs(py-m.y)<1.6&&m.atk<=0){m.atk=1;damage(3)}}
+      if(d.cr){if(dist<2.7){m.fuse=(m.fuse||0)+dt;spd=0;tx=tz=0;if(m.fuse>1.3){boom(m.x,m.y+.6,m.z,3.2,16);mobs.splice(i,1);continue}}else m.fuse=Math.max(0,(m.fuse||0)-dt)}else if(dist<1.0&&Math.abs(py-m.y)<1.6&&m.atk<=0){m.atk=1;damage(3)}}
     else{if(m.tt<=0){m.tt=1+Math.random()*3;m.dir=Math.random()<.35?NaN:Math.random()*6.28}if(!isNaN(m.dir)){tx=Math.sin(m.dir);tz=Math.cos(m.dir)}spd*=.6}
     const wet=get(Math.floor(m.x),Math.floor(m.y+.3),Math.floor(m.z))===9;
     m.vx+=(tx*spd-m.vx)*Math.min(1,8*dt);m.vz+=(tz*spd-m.vz)*Math.min(1,8*dt);
@@ -248,7 +253,7 @@ function drawMobs(ox,oy,oz,fx,fy,fz,rx,rz,ux,uy,uz){
       for(let px_=Math.max(0,x0);px_<Math.min(RW,x1);px_++){
         const u=Math.min(sp.w-1,Math.floor((px_-x0)/(x1-x0)*sp.w)),ch=row[u];if(ch==='.')continue;const c=sp.pal[ch];if(!c)continue;
         if(depth[py_*RW+px_]<o.z)continue;
-        let R=c[0]*L,G=c[1]*L,B=c[2]*L;if(m.hit>0){R=R*.5+160;G*=.5;B*=.5}
+        let R=c[0]*L,G=c[1]*L,B=c[2]*L;if(m.hit>0){R=R*.5+160;G*=.5;B*=.5}else if(m.fuse>.25&&((m.fuse*9)|0)%2){R=R*.4+150;G=G*.4+150;B=B*.4+150}
         buf[py_*RW+px_]=pack(R,G,B)}}
   }
 }
@@ -261,7 +266,9 @@ const REC=[
  {n:'کلنگ الماسی',need:{diamond:3,stick:2},tool:['p',4]},{n:'تبر الماسی',need:{diamond:3,stick:2},tool:['a',4]},{n:'بیل الماسی',need:{diamond:1,stick:2},tool:['s',4]},{n:'شمشیر الماسی',need:{diamond:2,stick:1},tool:['w',4]},
  {n:'شمش آهن (ذوب)',need:{12:1,coal:1},give:{iron:1}},{n:'شمش طلا (ذوب)',need:{13:1,coal:1},give:{gold:1}},
  {n:'شیشه ×۲',need:{8:2,coal:1},give:{10:2}},{n:'آجر ×۴',need:{16:4},give:{7:4}},{n:'پشم',need:{5:4},give:{17:1}},
- {n:'گوشت پخته',need:{meat:1,coal:1},give:{cooked:1}}
+ {n:'گوشت پخته',need:{meat:1,coal:1},give:{cooked:1}},
+ {n:'TNT (انفجار!)',need:{gunpowder:3,8:2},give:{20:1}},
+ {n:'زره پشمی',need:{17:8},tool:['r',1]},{n:'زره آهنی',need:{iron:6},tool:['r',3]},{n:'زره الماسی',need:{diamond:6},tool:['r',4]}
 ];
 const nm=k=>BL[k]?BL[k][0]:(ITEMN[k]||k);
 const have=k=>inv[k]||0;
@@ -270,7 +277,7 @@ function canCraft(r){for(const k in r.need)if(have(k)<r.need[k])return false;if(
 function craft(i){const r=REC[i];if(!canCraft(r))return;for(const k in r.need)addInv(k,-r.need[k]);if(r.tool)tools[r.tool[0]]=r.tool[1];if(r.give)for(const k in r.give)addInv(k,r.give[k]);beep(660,.1,'triangle',.07);invUI();save()}
 function invUI(){
   $('ichips').innerHTML=Object.keys(inv).length?Object.keys(inv).map(k=>`<span>${nm(k)} × ${fa(inv[k])}</span>`).join(''):'<span>خالی</span>';
-  $('itools').innerHTML=['p','a','s','w'].map(t=>`<span>${tools[t]?TOOLN[t][tools[t]]:'— '+TOOLK[t]}</span>`).join('');
+  $('itools').innerHTML=['p','a','s','w','r'].map(t=>`<span>${tools[t]?TOOLN[t][tools[t]]:'— '+TOOLK[t]}</span>`).join('');
   $('irec').innerHTML=REC.map((r,i)=>{const ok=canCraft(r),need=Object.keys(r.need).map(k=>nm(k)+' ×'+fa(r.need[k])).join('، ');return `<div class="rc"><span>${r.n}<br><small style="opacity:.7">${need}${r.tool&&tools[r.tool[0]]>=r.tool[1]?' · (داری)':''}</small></span><button ${ok?'':'disabled'} data-i="${i}">بساز</button></div>`}).join('');
 }
 $('irec').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)craft(+b.dataset.i)});
@@ -281,13 +288,14 @@ function hotbar(){const h=hotItems(),box=$('hot');if(sel>=h.length)sel=Math.max(
   box.innerHTML='';h.forEach((k,i)=>{const d=document.createElement('div');if(BL[k]){const c=BL[k][1];d.style.background=`rgb(${c[0]},${c[1]},${c[2]})`}else{d.textContent=k==='meat'?'🥩':'🍖'}
     if(!creative){const b=document.createElement('b');b.textContent=fa(have(k));d.appendChild(b)}d.onclick=()=>{sel=i;hotbar()};if(i===sel)d.classList.add('sel');box.appendChild(d)});
   vit()}
-function vit(){let s='';if(!creative){const hh=Math.max(0,Math.ceil(hp/2));s='❤'.repeat(hh)+'<span style="opacity:.35">'+'❤'.repeat(10-hh)+'</span>';if(air<9.9)s+='<br>'+'🫧'.repeat(Math.ceil(air))}else s='🛠 حالت خلاقیت';$('vit').innerHTML=s+'<br><small>'+(dayL<.45?'🌙 شب':'☀️ روز')+'</small>'}
+function vit(){let s='';if(!creative){const hh=Math.max(0,Math.ceil(hp/2));s='❤'.repeat(hh)+'<span style="opacity:.35">'+'❤'.repeat(10-hh)+'</span>';if(air<9.9)s+='<br>'+'🫧'.repeat(Math.ceil(air));s+='<br>'+'🍗'.repeat(Math.ceil(food/2))+(tools.r?' 🛡'+tools.r:'')}else s='🛠 حالت خلاقیت';$('vit').innerHTML=s+'<br><small>'+(dayL<.45?'🌙 شب':'☀️ روز')+'</small>'}
 /* ---------- شکستن / گذاشتن ---------- */
 const look=()=>{const cp=Math.cos(pitch);return[Math.sin(yaw)*cp,Math.sin(pitch),Math.cos(yaw)*cp]};
 function setBlock(a,b,c,v){world[idx(a,b,c)]=v;mods[idx(a,b,c)]=v;saveSoon()}
 let mining=null,mineP=0;
 function mineTime(bl){const d=BL[bl];if(creative)return .05;const tool=d[3]?tools[d[3]]:0;return d[2]/(tool?SPEED[tool]:1)}
 function finishBreak(a,b,c,bl){
+  if(bl===20){lightTnt(a,b,c,1.6);beep(900,.1,'square',.06);return}
   const d=BL[bl];setBlock(a,b,c,0);beep(200,.06,'square',.06);
   if(!creative){const tl=d[3]?tools[d[3]]:0;if(tl>=d[4]&&d[5])addInv(d[5],1)}
 }
@@ -298,7 +306,7 @@ function attackMob(){
   if(!best)return false;if(atkCd>0)return true;
   const dmg=creative?20:[1,4,5,6,7][tools.w];best.hp-=dmg;best.hit=.25;atkCd=.4;
   const kx=best.x-px,kz=best.z-pz,l=Math.hypot(kx,kz)||1;best.vx=kx/l*6;best.vz=kz/l*6;best.vy=5;beep(180,.06,'square',.07);
-  if(best.hp<=0){mobs.splice(mobs.indexOf(best),1);if(!creative&&best.k!=='zombie')addInv('meat',1+Math.floor(Math.random()*2));if(!creative&&best.k==='zombie'&&Math.random()<.4)addInv('coal',1)}
+  if(best.hp<=0){mobs.splice(mobs.indexOf(best),1);if(!creative&&best.k!=='zombie'&&best.k!=='creeper')addInv('meat',1+Math.floor(Math.random()*2));if(!creative&&best.k==='creeper')addInv('gunpowder',1+Math.floor(Math.random()*2));if(!creative&&best.k==='sheep')addInv(17,1);if(!creative&&best.k==='zombie'&&Math.random()<.4)addInv('coal',1)}
   return true;
 }
 function doBreakStep(dt){
@@ -313,7 +321,7 @@ function doBreakStep(dt){
 }
 function doPlace(){
   const h=hotItems(),it=h[sel];if(it===undefined)return;
-  if(it==='meat'||it==='cooked'){if(hp>=20&&!creative)return;if(have(it)<=0)return;addInv(it,-1);hp=Math.min(20,hp+(it==='meat'?4:8));beep(500,.08,'triangle',.06);vit();return}
+  if(it==='meat'||it==='cooked'){if(hp>=20&&food>=19.5&&!creative)return;if(have(it)<=0)return;addInv(it,-1);food=Math.min(20,food+(it==='meat'?3:7));hp=Math.min(20,hp+2);beep(500,.08,'triangle',.06);vit();return}
   const[fx,fy,fz]=look();
   const bl=ray(px,py+1.62,pz,fx,fy,fz,5.5,false);if(!bl)return;
   let a=H_x,b=H_y,c=H_z;if(H_f===0)a-=H_s;else if(H_f===1)b-=H_s;else c-=H_s;
@@ -324,11 +332,11 @@ function doPlace(){
 }
 /* ---------- ذخیره ---------- */
 let saveT=0;function saveSoon(){clearTimeout(saveT);saveT=setTimeout(save,1500)}
-function save(){try{if(Object.keys(mods).length>30000)return;localStorage.setItem('sl-blockcraft2',JSON.stringify({seed,mods,inv,tools,tm,hp,creative,pos:[px,py,pz]}))}catch(e){}}
-function load(){try{const d=JSON.parse(localStorage.getItem('sl-blockcraft2')||'null');if(!d)return false;seed=d.seed||7;genWorld();mods=d.mods||{};for(const k in mods)world[+k]=mods[k];inv=d.inv||{};tools=Object.assign({p:0,a:0,s:0,w:0},d.tools);tm=d.tm||.12;hp=d.hp||20;creative=!!d.creative;if(d.pos&&!boxHits(d.pos[0],d.pos[1],d.pos[2])){[px,py,pz]=d.pos}else spawn();return true}catch(e){return false}}
+function save(){try{if(Object.keys(mods).length>30000)return;localStorage.setItem('sl-blockcraft2',JSON.stringify({seed,mods,inv,tools,tm,hp,food,creative,pos:[px,py,pz]}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem('sl-blockcraft2')||'null');if(!d)return false;seed=d.seed||7;genWorld();mods=d.mods||{};for(const k in mods)world[+k]=mods[k];inv=d.inv||{};tools=Object.assign({p:0,a:0,s:0,w:0,r:0},d.tools);tm=d.tm||.12;hp=d.hp||20;food=d.food==null?20:d.food;creative=!!d.creative;if(d.pos&&!boxHits(d.pos[0],d.pos[1],d.pos[2])){[px,py,pz]=d.pos}else spawn();return true}catch(e){return false}}
 function setMode(c){creative=c;$('bMode').textContent=c?'🛠 خلاقیت':'⚔️ بقا';$('bFly').style.display=c?'':'none';if(!c){fly=false;$('bFly').classList.remove('on');$('bDown').style.visibility='hidden'}hotbar();save()}
 $('bMode').onclick=()=>{setMode(!creative);say(creative?'حالت خلاقیت: همه‌ی بلوک‌ها، بدون خطر':'حالت بقا: جمع کن، بساز، زنده بمان')};
-$('rst').onclick=()=>{if(!confirm('دنیای جدید ساخته شود؟ پیشرفتت پاک می‌شود.'))return;mods={};inv={};tools={p:0,a:0,s:0,w:0};mobs=[];hp=20;air=10;seed=Math.floor(Math.random()*9999)+1;try{localStorage.removeItem('sl-blockcraft2')}catch(e){}genWorld();spawn();hotbar()};
+$('rst').onclick=()=>{if(!confirm('دنیای جدید ساخته شود؟ پیشرفتت پاک می‌شود.'))return;mods={};inv={};tools={p:0,a:0,s:0,w:0,r:0};mobs=[];hp=20;air=10;food=20;seed=Math.floor(Math.random()*9999)+1;try{localStorage.removeItem('sl-blockcraft2')}catch(e){}genWorld();spawn();hotbar()};
 function say(t){const h=$('hint');h.innerHTML=t;h.style.opacity=1;clearTimeout(say.t);say.t=setTimeout(()=>h.style.opacity=0,3500)}
 /* ---------- ورودی ---------- */
 let joyId=null,lookId=null,jx0=0,jy0=0,lx=0,ly=0;const jb=$('jb'),jk=$('jk');
@@ -360,12 +368,68 @@ holdBtn('bJump',()=>jumpHeld=true,()=>jumpHeld=false);holdBtn('bDown',()=>downHe
 $('bFly').addEventListener('click',toggleFly);
 function toggleFly(){if(!creative)return;fly=!fly;$('bFly').classList.toggle('on',fly);$('bDown').style.visibility=fly?'visible':'hidden';vy=0}
 function hideHint(){$('hint').style.opacity=0}setTimeout(hideHint,10000);
+
+/* ---------- امکانات پیشرفته: گرسنگی، انفجار، بیابان، خانه، نقشه ---------- */
+let food=20,hT=0,tnts=[];
+const tntLit=(a,b,c)=>tnts.some(t=>t.a===a&&t.b===b&&t.c===c);
+function lightTnt(a,b,c,t){if(!tntLit(a,b,c))tnts.push({a,b,c,t})}
+function boom(ex,ey,ez,r,dm){
+  for(let a=Math.floor(ex-r);a<=ex+r;a++)for(let b=Math.floor(ey-r);b<=ey+r;b++)for(let c=Math.floor(ez-r);c<=ez+r;c++){
+    if(a<1||a>=SX-1||c<1||c>=SZ-1||b<1||b>=SY)continue;const d=Math.hypot(a+.5-ex,b+.5-ey,c+.5-ez);if(d>r)continue;
+    const bl=world[idx(a,b,c)];if(!bl||bl===18||bl===9)continue;
+    if(bl===20){lightTnt(a,b,c,.25+Math.random()*.4);continue}
+    if(d<r*.8||Math.random()<.45)setBlock(a,b,c,0)}
+  const dp=Math.hypot(px-ex,py+1-ey,pz-ez);
+  if(dp<r+3){damage(Math.round(dm*(1-dp/(r+3))));const l=dp||1;vx+=(px-ex)/l*9;vz+=(pz-ez)/l*9;vy=Math.max(vy,7);ground=false}
+  for(let i=mobs.length-1;i>=0;i--){const m=mobs[i],md=Math.hypot(m.x-ex,m.y-ey,m.z-ez);if(md<r+3){m.hp-=dm*(1-md/(r+3))*1.5;m.vy=6;m.hit=.3;if(m.hp<=0)mobs.splice(i,1)}}
+  beep(70,.5,'sawtooth',.2);beep(140,.3,'square',.12);const e=$('dmg');e.style.background='rgba(255,220,120,.5)';e.style.opacity=.8;setTimeout(()=>{e.style.opacity=0;e.style.background=''},180);
+}
+function updTnt(dt){for(let i=tnts.length-1;i>=0;i--){const t=tnts[i];t.t-=dt;if(t.t<=0){tnts.splice(i,1);if(world[idx(t.a,t.b,t.c)]===20)setBlock(t.a,t.b,t.c,0);boom(t.a+.5,t.b+.5,t.c+.5,3.4,14)}}}
+function survive(dt){
+  if(creative){food=20;return}
+  food=Math.max(0,food-dt*(Math.hypot(vx,vz)>.5?.09:.035));hT+=dt;
+  if(hT>=4){hT=0;if(food>=15&&hp<20)hp++;else if(food<=0&&hp>2)damage(1)}
+}
+function extras(){
+  const R=rng(seed*13+77);
+  for(let z=1;z<SZ-1;z++)for(let a=1;a<SX-1;a++){const h=hmap[z*SX+a];if(h<=SEA+1||h>=27)continue;
+    if(fbm(a*.022,z*.022,seed+50)>.62&&world[idx(a,h-1,z)]===1){
+      for(let y=h-1;y>=h-4&&y>0;y--){const q=world[idx(a,y,z)];if(q===1||q===2)world[idx(a,y,z)]=8}
+      for(let y=h;y<Math.min(SY,h+9);y++){const q=world[idx(a,y,z)];if(q===4||q===5)world[idx(a,y,z)]=0}
+      if(R()<.011){const ch=1+Math.floor(R()*3);for(let y=h;y<h+ch;y++)if(!world[idx(a,y,z)])world[idx(a,y,z)]=19}}}
+  let built=0;
+  for(let t=0;t<500&&built<6;t++){
+    const hx=8+Math.floor(R()*(SX-20)),hz=8+Math.floor(R()*(SZ-20)),h=hmap[hz*SX+hx];
+    if(h<=SEA+2||h>24)continue;let ok=true;
+    for(let dz=0;dz<7&&ok;dz++)for(let dx=0;dx<7;dx++){const hh=hmap[(hz+dz)*SX+hx+dx],tp=world[idx(hx+dx,hh-1,hz+dz)];if(Math.abs(hh-h)>1||hh<=SEA+1||(tp!==1&&tp!==8)){ok=false;break}}
+    if(!ok)continue;built++;
+    for(let dz=0;dz<7;dz++)for(let dx=0;dx<7;dx++){const a=hx+dx,c=hz+dz,oh=hmap[c*SX+a];
+      for(let y=oh;y<h;y++)world[idx(a,y,c)]=(y===h-1)?1:2;for(let y=h;y<Math.min(SY,oh+9,h+9);y++)world[idx(a,y,c)]=0;
+      for(let y=h;y<Math.min(SY,h+9);y++)world[idx(a,y,c)]=0;hmap[c*SX+a]=h;world[idx(a,h-1,c)]=(dx>=1&&dx<=5&&dz>=1&&dz<=5)?6:1}
+    for(let dz=1;dz<=5;dz++)for(let dx=1;dx<=5;dx++){const edge=dx===1||dx===5||dz===1||dz===5,cor=(dx===1||dx===5)&&(dz===1||dz===5);
+      for(let y=0;y<3;y++){const a=hx+dx,c=hz+dz,yy=h+y;
+        if(!edge)continue;let b=cor?4:6;if(y===1&&!cor&&((dx===3)||(dz===3)))b=10;world[idx(a,yy,c)]=b}
+      world[idx(hx+dx,h+3,hz+dz)]=(dx>1&&dx<5&&dz>1&&dz<5)?7:6}
+    world[idx(hx+3,h,hz+1)]=0;world[idx(hx+3,h+1,hz+1)]=0;world[idx(hx+3,h+1,hz+5)]=6;
+    world[idx(hx+2,h,hz+4)]=17;world[idx(hx+4,h,hz+4)]=17;
+  }
+}
+const mc=$('map'),mx=mc.getContext('2d');let mT=0;
+function drawMap(dt){
+  mT-=dt;if(mT>0)return;mT=.35;const R=21;mx.clearRect(0,0,88,88);const a0=Math.floor(px),c0=Math.floor(pz);
+  for(let dz=-R;dz<=R;dz++)for(let dx=-R;dx<=R;dx++){const a=a0+dx,c=c0+dz;if(a<0||a>=SX||c<0||c>=SZ)continue;
+    let y=SY-1;while(y>0&&world[idx(a,y,c)]===0)y--;const b=world[idx(a,y,c)],col=BL[b]?BL[b][1]:[0,0,0],sh=.62+Math.min(.5,y/55);
+    mx.fillStyle='rgb('+(col[0]*sh|0)+','+(col[1]*sh|0)+','+(col[2]*sh|0)+')';mx.fillRect((dx+R)*2,(dz+R)*2,2,2)}
+  mobs.forEach(m=>{const dx=m.x-px,dz=m.z-pz;if(Math.abs(dx)>R||Math.abs(dz)>R)return;mx.fillStyle=m.k==='zombie'?'#f33':m.k==='creeper'?'#3f3':'#fff';mx.fillRect(44+dx*2-1,44+dz*2-1,3,3)});
+  mx.strokeStyle='#ffe34d';mx.lineWidth=2;mx.beginPath();mx.moveTo(44,44);mx.lineTo(44+Math.sin(yaw)*10,44+Math.cos(yaw)*10);mx.stroke();
+  mx.fillStyle='#fff';mx.beginPath();mx.arc(44,44,2.5,0,7);mx.fill();
+}
 /* ---------- حلقه ---------- */
 let last=0,vitT=0,saveI=0;
 function loop(t){
   const dt=Math.min(.05,(t-last)/1000||0);last=t;
   tm=(tm+dt/480)%1;
-  physics(dt);doBreakStep(dt);updMobs(dt);render();
+  physics(dt);doBreakStep(dt);updMobs(dt);survive(dt);updTnt(dt);render();drawMap(dt);
   vitT+=dt;if(vitT>.5){vitT=0;vit()}saveI+=dt;if(saveI>15){saveI=0;save()}
   requestAnimationFrame(loop);
 }

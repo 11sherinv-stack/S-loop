@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Match Triple Sort 3D</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{font-family:Vazirmatn,Tahoma,sans-serif;background:linear-gradient(#f6d9a8,#e8b56f);color:#3a2410;user-select:none;touch-action:manipulation;--w:min(14.2vw,64px)}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+header{display:flex;justify-content:center;gap:8px;padding:10px 8px 4px;flex-wrap:wrap}
+header div{background:#fff9;border-radius:12px;padding:3px 14px;text-align:center;font-size:.7rem}header b{display:block;font-size:1.05rem}
+#bar{display:flex;justify-content:center;gap:8px;margin:4px}
+button{font:inherit;border:0;border-radius:12px;padding:8px 16px;background:#14a89b;color:#fff;font-weight:700;cursor:pointer}
+button:disabled{opacity:.4}
+#board{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;max-width:460px;margin:8px auto 30px;padding:0 8px}
+.sh{position:relative;background:linear-gradient(#c68b4e,#a8703a);border-radius:8px;padding:calc(var(--w)*.45) 6px 6px;box-shadow:0 6px 0 #7a4b22,0 10px 14px #0004,inset 0 -6px 0 #0002}
+.sh::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--w)*.4);background:linear-gradient(#e0ab70,#c68b4e);border-radius:8px 8px 0 0}
+.row{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;height:calc(var(--w)*1.35);background:linear-gradient(#0000,#0003 90%);border-bottom:5px solid #e0ab70}
+.slot{position:relative;display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
+.slot.t::after{content:"";position:absolute;inset:8%;border:2px dashed #fff8;border-radius:8px}
+.nx{position:absolute;left:6px;right:6px;top:2px;height:calc(var(--w)*.5);display:flex;justify-content:space-around;align-items:flex-end;opacity:.55;filter:blur(.4px) brightness(.8);z-index:0;overflow:hidden}
+.nx .it{width:28%!important;height:70%!important}
+.cnt{position:absolute;right:4px;top:-1px;background:#3a2410;color:#ffe9a8;font-size:.62rem;border-radius:8px;padding:0 6px;z-index:3}
+.it{position:relative;width:86%;height:100%;pointer-events:none;transition:transform .15s;z-index:1}
+.sel .it{transform:translateY(-14px) scale(1.08);filter:drop-shadow(0 8px 4px #0005)}
+.it.pop{animation:pop .35s forwards}@keyframes pop{50%{transform:scale(1.25) rotate(6deg)}100%{transform:scale(0) rotate(-20deg);opacity:0}}
+.it .b{position:absolute;left:4%;right:4%;bottom:0;height:82%;background:linear-gradient(90deg,var(--d),var(--c) 28%,var(--c) 62%,var(--d));border-radius:8px 8px 6px 6px;box-shadow:inset 0 -6px 0 #0003,inset 3px 0 0 #fff5}
+.it .b::before{content:"";position:absolute;left:0;right:0;top:-12%;height:16%;background:var(--l);border-radius:5px;transform:skewX(-16deg)}
+.it.bottle .b{left:12%;right:12%;height:74%;border-radius:14px 14px 8px 8px}
+.it.bottle .b::before{left:22%;right:22%;top:-24%;height:28%;border-radius:4px 4px 0 0;background:var(--cap)}
+.it.can .b{border-radius:10px/14px;background:linear-gradient(90deg,var(--d),var(--c) 25%,#fff8 45%,var(--c) 65%,var(--d))}
+.it.can .b::before{border-radius:50%;transform:none;top:-8%;height:16%;background:#ddd}
+.it.carton .b{height:72%}.it.carton .b::before{left:0;right:0;top:-26%;height:30%;background:var(--c);clip-path:polygon(0 100%,50% 0,100% 100%);transform:none}
+.it .e{position:absolute;left:50%;top:50%;transform:translate(-50%,-30%);width:56%;aspect-ratio:1;background:#fffc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(var(--w)*.34);line-height:1}
+#ov{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff;z-index:20;text-align:center}
+#ov h2{margin:0;font-size:1.6rem}
+</style></head><body>
+<a class="back" href="index.html">&larr; S loop</a>
+<header><div>مرحله<b id="lv">۱</b></div><div>حرکت<b id="mv">۰</b></div><div>امتیاز<b id="sc">۰</b></div><div>رکورد<b id="bs">۰</b></div></header>
+<div id="bar"><button id="un">↩ برگشت</button><button id="rs">🔄 دوباره</button><button id="sf">🔀 بُر زدن</button></div>
+<div id="board"></div>
+<div id="ov"><h2 id="ot"></h2><p id="om"></p><button id="nx">مرحله‌ی بعد</button></div>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.08,ty='triangle',v=.06){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const LS={g(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},s(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+// نوع‌ها: شکل، رنگ، رنگ تیره، رنگ روشن، درپوش، ایموجی
+const TY=[['bottle','#3d8bff','#1f5fc4','#7db1ff','#1b3f86','💧'],['box','#7ed348','#4a9a22','#b5ee8a','#2a6a10','🍪'],['carton','#ff9a2e','#d96a00','#ffc27a','#a04a00','🥕'],['carton','#f0403f','#b82020','#ff8a85','#802020','🍉'],['bottle','#e046c8','#a62494','#f58be4','#6a1060','🐱'],['box','#ff8fb3','#d9547f','#ffc0d6','#a03050','🐷'],['can','#2ea6e8','#1a73a8','#8fd4f5','#0f4c70','🐟'],['carton','#a777e6','#7447b8','#cfb0f7','#46267a','🥛'],['box','#ffd84a','#d9a800','#fff08a','#9a7a00','🦆'],['box','#4b7be8','#2748a8','#8fb0f7','#14286a','🐶'],['box','#2fc9b6','#13907f','#7ee9db','#0a5a50','🍵'],['bottle','#ff9f86','#d9654a','#ffc8b8','#9a3a28','🍑'],['bottle','#9b59e0','#6a2fb0','#caa0f5','#3f1a70','🍇'],['bottle','#8fd04a','#5a9a22','#c5ee90','#386a10','🥑']];
+function item(t,cls=''){const y=TY[t];return `<div class="it ${y[0]} ${cls}" style="--c:${y[1]};--d:${y[2]};--l:${y[3]};--cap:${y[4]}"><div class="b"></div><div class="e">${y[5]}</div></div>`}
+let L=LS.g('mts-lv',1),best=LS.g('mts-best',0),sh=[],moves=0,score=0,sel=null,busy=false,hist=[],lock=0;
+function gen(l){const N=Math.min(6,2+Math.ceil(l/2)),D=Math.min(3,1+Math.floor((l-1)/3)),G=N*D,T=Math.min(14,G);
+  const items=[];for(let g=0;g<G;g++){const t=g%T;for(let k=0;k<3;k++)items.push(t)}
+  for(let i=items.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[items[i],items[j]]=[items[j],items[i]]}
+  const S=[];let p=0;for(let i=0;i<N;i++){const ls=[];for(let d=0;d<D;d++)ls.push([items[p++],items[p++],items[p++]]);S.push(ls)}
+  for(let e=0;e<2;e++)S.push([[null,null,null]]);
+  // سطح اول نباید از قبل حل‌شده باشد
+  return S}
+function start(){sh=gen(L);moves=0;sel=null;hist=[];busy=false;$('ov').style.display='none';draw()}
+function snap(){hist.push(JSON.stringify([sh,moves,score]));if(hist.length>60)hist.shift()}
+function draw(){$('lv').textContent=fa(L);$('mv').textContent=fa(moves);$('sc').textContent=fa(score);$('bs').textContent=fa(best);$('un').disabled=!hist.length;
+  $('board').innerHTML=sh.map((ls,si)=>{const f=ls[0],n=ls[1];
+    return `<div class="sh">${n?`<div class="nx">${n.map(t=>t==null?'<span></span>':item(t)).join('')}</div><span class="cnt">+${fa(ls.length-1)}</span>`:''}<div class="row">${f.map((t,k)=>`<div class="slot${t==null?' t':''}${sel&&sel[0]===si&&sel[1]===k?' sel':''}" data-s="${si}" data-k="${k}">${t==null?'':item(t)}</div>`).join('')}</div></div>`}).join('')}
+$('board').addEventListener('click',e=>{if(busy)return;const sl=e.target.closest('.slot');if(!sl)return;const si=+sl.dataset.s,k=+sl.dataset.k,v=sh[si][0][k];
+  if(!sel){if(v!=null){sel=[si,k];beep(520,.05);draw()}return}
+  if(sel[0]===si&&sel[1]===k){sel=null;draw();return}
+  snap();const a=sh[sel[0]][0],o=a[sel[1]];a[sel[1]]=v;sh[si][0][k]=o;sel=null;moves++;beep(380,.06);draw();check()});
+function check(){let any=false;
+  sh.forEach(ls=>{const f=ls[0];if(f[0]!=null&&f[0]===f[1]&&f[1]===f[2]){any=true;ls._clr=true}});
+  if(!any)return;busy=true;beep(700,.12);setTimeout(()=>beep(900,.12),110);
+  document.querySelectorAll('.sh').forEach((el,i)=>{if(sh[i]._clr)el.querySelectorAll('.row .it').forEach(x=>x.classList.add('pop'))});
+  setTimeout(()=>{sh.forEach(ls=>{if(ls._clr){delete ls._clr;score+=30;ls[0]=[null,null,null];if(ls.length>1)ls.shift()}});
+    // لایه‌ی خالی را ادامه بده تا جلو بیاید
+    sh.forEach(ls=>{while(ls.length>1&&ls[0].every(t=>t==null))ls.shift()});
+    busy=false;if(score>best){best=score;LS.s('mts-best',best)}draw();
+    if(sh.every(ls=>ls.every(r=>r.every(t=>t==null))))win();else check()},420)}
+function win(){beep(660,.15);setTimeout(()=>beep(880,.2),150);setTimeout(()=>beep(1100,.3),320);L++;LS.s('mts-lv',L);$('ot').textContent='🎉 آفرین!';$('om').textContent='حرکت‌ها: '+fa(moves)+' · امتیاز: '+fa(score);$('ov').style.display='flex'}
+$('nx').onclick=start;$('rs').onclick=()=>{score=0;start()};
+$('un').onclick=()=>{if(!hist.length||busy)return;[sh,moves,score]=JSON.parse(hist.pop());sel=null;draw()};
+$('sf').onclick=()=>{if(busy)return;snap();const all=[];sh.forEach(ls=>ls.forEach(r=>r.forEach(t=>{if(t!=null)all.push(t)})));
+  for(let i=all.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[all[i],all[j]]=[all[j],all[i]]}
+  let p=0;sh.forEach(ls=>ls.forEach(r=>{for(let k=0;k<3;k++)if(r[k]!=null)r[k]=all[p++]}));moves++;draw();check()};
+start();check();
+</script></body></html>

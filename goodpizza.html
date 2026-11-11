@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Good Pizza</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:linear-gradient(#ffe2b8,#f2b46b);font-family:Vazirmatn,Tahoma,sans-serif;color:#3b1f0a;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#hud{display:flex;justify-content:center;gap:8px;padding:34px 8px 4px;flex-wrap:wrap}#hud div{background:#fffa;border-radius:12px;padding:2px 12px;font-size:.7rem;text-align:center}#hud b{display:block;font-size:1rem}
+#cust{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 10px;min-height:92px}
+#face{font-size:3.4rem;line-height:1}#bub{background:#fff;border-radius:16px;padding:8px 12px;font-size:1.3rem;box-shadow:0 3px 8px #0003;min-width:130px;text-align:center}
+#pat{height:8px;background:#0002;border-radius:5px;margin:2px 14px 6px;overflow:hidden}#pat i{display:block;height:100%;width:100%;background:#4caf50;transition:background .3s}
+#pz{display:block;margin:0 auto;width:min(66vw,250px);aspect-ratio:1}
+#msg{text-align:center;min-height:1.5em;font-weight:700;margin:2px 0 6px}
+#stage{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:0 8px;margin-bottom:8px}
+button{font:inherit;border:0;border-radius:14px;background:#fff;color:#3b1f0a;padding:8px 12px;font-weight:700;box-shadow:0 3px 0 #0003;cursor:pointer}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #0003}button:disabled{opacity:.35}
+button.pr{background:#e53935;color:#fff}button.gr{background:#43a047;color:#fff}
+#oven{margin:4px auto;width:min(80vw,300px);display:none}#oven .tr{position:relative;height:22px;background:#444;border-radius:12px;overflow:hidden}#oven .gz{position:absolute;top:0;bottom:0;background:#4caf50}#oven .ok{position:absolute;top:0;bottom:0;background:#ffc107}#oven .nd{position:absolute;top:-2px;bottom:-2px;width:4px;background:#fff;left:0}
+#ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;z-index:20;text-align:center;padding:14px;overflow:auto}
+#ov h2{margin:0}#ov .up{display:flex;flex-direction:column;gap:6px;width:min(92vw,360px)}#ov .up button{display:flex;justify-content:space-between}
+</style></head><body>
+<a class="back" href="index.html">&larr; S loop</a>
+<div id="hud"><div>روز<b id="dy">۱</b></div><div>پول<b id="mn">۰</b></div><div>مشتری<b id="cl">۰</b></div><div>رضایت<b id="st">—</b></div></div>
+<div id="cust"><div id="face">🙂</div><div id="bub">…</div></div><div id="pat"><i id="pi"></i></div>
+<canvas id="pz" width="300" height="300"></canvas>
+<div id="msg"></div>
+<div id="oven"><div class="tr"><div class="ok" id="ok"></div><div class="gz" id="gz"></div><div class="nd" id="nd"></div></div><div style="text-align:center;margin-top:6px"><button class="pr" id="out">🧤 بیرون بیاور</button></div></div>
+<div id="stage"></div>
+<div id="ov"><h2 id="ot"></h2><p id="om" style="margin:0;line-height:1.8"></p><div class="up" id="up"></div><button class="gr" id="nx" style="padding:12px 34px">شروع</button></div>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const SV=(()=>{try{return JSON.parse(localStorage.getItem('gp-save')||'null')}catch(e){return null}})()||{day:1,money:0,oven:0,pat:0,tops:0,best:0};
+const save=()=>{try{localStorage.setItem('gp-save',JSON.stringify(SV))}catch(e){}};
+const TOP=[['🍄','قارچ',0],['🔴','پپرونی',0],['🫒','زیتون',0],['🫑','فلفل',2],['🌽','ذرت',2],['🍍','آناناس',4],['🥓','بیکن',4],['🧅','پیاز',4]];
+const FACE=['🙂','😀','🧔','👩','👴','👧','🧑‍🍳','👨‍🦰'];
+const c=$('pz'),x=c.getContext('2d');
+let P,cust,left,served,sat,money0,run=false,tprev=0,ovenOn=false,ovenV=0,stepNo;
+const avail=()=>TOP.filter(t=>SV.tops>=t[2]/2||SV.day>=t[2]/2+1);
+function newPizza(){P={dough:0,sauce:0,cheese:0,tops:[],bake:null,place:[]};stepNo=0;ovenOn=false;$('oven').style.display='none';ui();dp()}
+function newCust(){const n=Math.min(3,1+Math.floor(SV.day/2)),pool=avail().map(t=>t[0]),w=[];
+  while(w.length<n&&w.length<pool.length){const t=pool[Math.random()*pool.length|0];if(!w.includes(t))w.push(t)}
+  cust={face:FACE[Math.random()*FACE.length|0],want:w,pat:1,t:Math.max(25,50-SV.day*1.5)+SV.pat*8};
+  $('face').textContent=cust.face;$('bub').innerHTML='پیتزا با<br>'+w.join(' ');$('cl').textContent=fa(left)}
+function ui(){const s=$('stage');let h='';
+  if(!P.dough||P.dough<5)h+='<button class="pr" id="b-d">👐 خمیر را پهن کن ('+fa(P.dough||0)+'/۵)</button>';
+  else if(P.sauce<3)h+='<button class="pr" id="b-s">🍅 سس ('+fa(P.sauce)+'/۳)</button>';
+  else if(P.cheese<3)h+='<button class="pr" id="b-c">🧀 پنیر ('+fa(P.cheese)+'/۳)</button>';
+  else if(!P.bake){h+=avail().map(t=>'<button data-t="'+t[0]+'">'+t[0]+' '+t[1]+' ×'+fa(P.tops.filter(q=>q===t[0]).length)+'</button>').join('')+'<button class="gr" id="b-o">🔥 بفرست داخل فر</button>'}
+  else h+='<button class="gr" id="b-v">🛎 سرو کن</button>';
+  h+='<button id="b-t">🗑</button>';s.innerHTML=h}
+$('stage').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!run)return;beep(500,.04);
+  if(b.id==='b-d'){P.dough++;dp()}else if(b.id==='b-s'){P.sauce++}else if(b.id==='b-c'){P.cheese++}else if(b.dataset.t){for(let i=0;i<4;i++){P.tops.push(b.dataset.t);P.place.push([Math.random()*6.28,Math.random()*.7+.1,Math.random()*6])}}
+  else if(b.id==='b-o'){startOven();return}else if(b.id==='b-v'){serve();return}else if(b.id==='b-t'){newPizza();return}
+  ui();dp()});
+function startOven(){if(P.sauce<3)return;ovenOn=true;ovenV=0;$('oven').style.display='block';$('stage').innerHTML='';const z=ovenZone();$('gz').style.left=z[0]+'%';$('gz').style.width=(z[1]-z[0])+'%';$('ok').style.left=(z[0]-12)+'%';$('ok').style.width=(z[1]-z[0]+24)+'%';msg('منتظر بمان تا نشانگر سبز شود…')}
+const ovenZone=()=>[58-SV.oven*2,80+SV.oven*3];
+$('out').onclick=()=>{if(!ovenOn)return;ovenOn=false;const z=ovenZone();P.bake=ovenV;$('oven').style.display='none';
+  const q=ovenV>=z[0]&&ovenV<=z[1]?2:(ovenV>=z[0]-12&&ovenV<=z[1]+12?1:0);P.q=q;beep(q?700:200,.2);msg(q===2?'عالی! 🌟':q===1?'بد نیست':ovenV<z[0]?'خام ماند 😬':'سوخت 🔥');ui();dp()};
+function serve(){let s=0;const want=cust.want,have=P.tops;let ok=0,bad=0;want.forEach(w=>{const n=have.filter(t=>t===w).length;if(n>=4&&n<=8)ok++;else if(n>0)ok+=.4});have.forEach(t=>{if(!want.includes(t))bad++});
+  const acc=Math.max(0,ok/want.length-bad*.04);const bake=[0.25,.65,1][P.q];const sc=Math.max(0,Math.min(1,acc*.6+bake*.4));
+  const pay=Math.round((8+SV.day)*sc*(1+cust.pat*.5));money0+=pay;SV.money+=pay;served++;sat.push(sc);beep(600+sc*400,.2);
+  msg((sc>.85?'😍 عاشق شد! ':sc>.5?'🙂 خوب بود ':'😕 راضی نبود ')+'+'+fa(pay)+'$');$('face').textContent=sc>.85?'😍':sc>.5?'🙂':'😕';
+  $('mn').textContent=fa(SV.money);$('st').textContent=fa(Math.round(sat.reduce((a,b)=>a+b,0)/sat.length*100))+'٪';next()}
+function next(){left--;run=false;setTimeout(()=>{if(left<=0)endDay();else{newCust();newPizza();run=true}},900)}
+function leave(){beep(150,.4,'sawtooth');$('face').textContent='😡';sat.push(0);msg('مشتری رفت! 😡');$('st').textContent=fa(Math.round(sat.reduce((a,b)=>a+b,0)/sat.length*100))+'٪';next()}
+function msg(t){$('msg').textContent=t}
+function dp(){x.clearRect(0,0,300,300);const cx=150,cy=150;
+  x.fillStyle='#b98a5a';x.beginPath();x.arc(cx,cy,146,0,7);x.fill();x.strokeStyle='#8a6038';x.lineWidth=6;x.stroke();
+  const r=P.dough>=5?128:20+P.dough*21.6;if(P.dough){x.fillStyle=P.bake!=null?bakeCol():'#f2d49b';x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.strokeStyle=P.bake!=null?'#b9772e':'#dfb872';x.lineWidth=7;x.stroke()}
+  if(P.sauce){x.fillStyle='rgba(210,45,30,'+(P.sauce/3*.92)+')';x.beginPath();x.arc(cx,cy,r-12,0,7);x.fill()}
+  if(P.cheese){x.fillStyle='rgba(255,215,90,'+(P.cheese/3*.9)+')';for(let i=0;i<P.cheese*14;i++){const a=i*2.4,d=(i*37%100)/100*(r-18);x.beginPath();x.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,12,0,7);x.fill()}}
+  x.font='24px serif';x.textAlign='center';x.textBaseline='middle';P.tops.forEach((t,i)=>{const p=P.place[i];x.fillText(t,cx+Math.cos(p[0])*p[1]*r*1.2,cy+Math.sin(p[0])*p[1]*r*1.2)});
+  if(P.bake!=null&&P.q===0&&P.bake>85){x.fillStyle='rgba(20,10,0,.55)';x.beginPath();x.arc(cx,cy,r,0,7);x.fill()}}
+const bakeCol=()=>{const v=P.bake;return v<45?'#f2d49b':v<85?'#e0a24f':'#7a4a1a'};
+function endDay(){run=false;const av=sat.reduce((a,b)=>a+b,0)/Math.max(1,sat.length);const day=SV.day;SV.best=Math.max(SV.best,SV.money);
+  $('ot').textContent='پایان روز '+fa(day);$('om').innerHTML='درآمد امروز: <b>'+fa(money0)+'$</b><br>رضایت مشتری‌ها: '+fa(Math.round(av*100))+'٪<br>پول کل: '+fa(SV.money)+'$';
+  const U=[['🔥 فر بهتر (ناحیه‌ی سبز بزرگ‌تر)','oven',30+SV.oven*40,4],['⏱ مشتری صبورتر','pat',25+SV.pat*35,4],['🍕 مواد جدید زودتر','tops',50+SV.tops*80,3]];
+  $('up').innerHTML=U.map(u=>'<button data-u="'+u[1]+'" '+(SV[u[1]]>=u[3]||SV.money<u[2]?'disabled':'')+'><span>'+u[0]+' (سطح '+fa(SV[u[1]])+')</span><b>'+(SV[u[1]]>=u[3]?'حداکثر':fa(u[2])+'$')+'</b></button>').join('');
+  SV.day++;save();$('nx').textContent='روز '+fa(SV.day);$('ov').style.display='flex';
+  $('up').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.u,u=U.find(q=>q[1]===k);if(SV.money<u[2]||SV[k]>=u[3])return;SV.money-=u[2];SV[k]++;save();beep(800,.15);endDayRefresh(U)}}
+function endDayRefresh(U){const old=SV.day;SV.day--;endDay();SV.day=old;}
+function startDay(){$('ov').style.display='none';left=4+SV.day;served=0;sat=[];money0=0;$('dy').textContent=fa(SV.day);$('mn').textContent=fa(SV.money);$('st').textContent='—';newCust();newPizza();msg('');run=true}
+$('nx').onclick=startDay;
+function tick(t){const dt=Math.min(.05,(t-tprev)/1000||0);tprev=t;
+  if(run&&cust){cust.pat-=dt/cust.t;const p=Math.max(0,cust.pat);$('pi').style.width=p*100+'%';$('pi').style.background=p>.5?'#4caf50':p>.25?'#ffb300':'#e53935';if(p<=0&&run){leave()}}
+  if(ovenOn){ovenV+=dt*(100/(7-SV.oven*.3));if(ovenV>=100){ovenV=100;$('out').click()}$('nd').style.left=Math.min(98,ovenV)+'%';P.bake=ovenV;dp()}
+  requestAnimationFrame(tick)}
+$('ot').textContent='GOOD PIZZA 🍕';$('om').innerHTML='مشتری سفارش می‌دهد: خمیر پهن کن، سس و پنیر بزن، روکش‌های خواسته‌شده را (هرکدام ۴ تکه) بگذار، در فر بپز و سرو کن.<br>پول جمع کن و فر و مشتری‌ها را ارتقا بده!';$('nx').textContent='شروع روز '+fa(SV.day);$('up').innerHTML='';$('ov').style.display='flex';
+P={dough:0,sauce:0,cheese:0,tops:[],bake:null,place:[]};cust=null;
+requestAnimationFrame(tick);
+</script></body></html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>777 Slots Casino</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(#5a0a2e,#1c0414 70%);color:#fff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:0;padding:36px 0 4px;text-align:center;font-size:1.5rem;color:#ffd54a;text-shadow:0 0 14px #ff9800,0 2px 0 #7a4b00;letter-spacing:2px}
+#bal{display:flex;justify-content:center;gap:8px;margin:4px}#bal div{background:#0008;border:1px solid #ffd54a66;border-radius:12px;padding:3px 14px;text-align:center;font-size:.7rem}#bal b{display:block;font-size:1.15rem;color:#ffd54a}
+#mach{width:min(94vw,420px);margin:8px auto;padding:12px;border-radius:22px;background:linear-gradient(#ffcf4a,#c98a00);box-shadow:0 8px 0 #7a4b00,0 14px 30px #000a}
+#reels{direction:ltr;display:flex;gap:6px;background:#2b0a14;padding:8px;border-radius:14px;position:relative}
+.reel{flex:1;height:calc(var(--c)*3);overflow:hidden;background:linear-gradient(#e9e2d0,#fff 20%,#fff 80%,#e9e2d0);border-radius:8px;position:relative}
+.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.sym{height:var(--c);display:flex;align-items:center;justify-content:center;font-size:calc(var(--c)*.62);line-height:1}
+.sym.win{animation:wn .5s infinite alternate;background:#ffe08a;border-radius:10px}@keyframes wn{to{transform:scale(1.15);background:#ffb300}}
+#mach{--c:min(21vw,88px)}
+#msg{text-align:center;min-height:1.6em;margin:8px 0 2px;font-weight:800;color:#ffe9a8;font-size:1.05rem}
+#ctl{display:flex;gap:6px;justify-content:center;align-items:center;margin:6px;flex-wrap:wrap}
+button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:#6d1b4a;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #0006}button:active{transform:translateY(2px)}button:disabled{opacity:.4}
+#spin{background:linear-gradient(#ff5252,#c40000);font-size:1.25rem;padding:12px 34px;border-radius:50px}
+.sm{font-size:.75rem;padding:6px 10px;background:#3a1030}
+#pt{width:min(94vw,420px);margin:6px auto 30px;background:#0006;border-radius:14px;padding:10px;font-size:.78rem;display:none}#pt div{display:flex;justify-content:space-between;padding:2px 6px;border-bottom:1px solid #fff2}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<h1>🎰 777 SLOTS</h1>
+<div id="bal"><div>سکه<b id="cr">۰</b></div><div>شرط کل<b id="tb">۰</b></div><div>برد<b id="wn">۰</b></div></div>
+<div id="mach"><div id="reels"></div></div>
+<div id="msg">برای چرخاندن «SPIN» را بزن</div>
+<div id="ctl"><button class="sm" id="bm">−</button><span>شرط هر خط: <b id="bl">۱</b></span><button class="sm" id="bp">+</button><button class="sm" id="mx">MAX</button></div>
+<div id="ctl"><button id="spin">SPIN</button><button class="sm" id="au">AUTO ×۱۰</button><button class="sm" id="pb">📋 جدول</button><button class="sm" id="bn">🎁 هدیه</button></div>
+<div id="pt"></div>
+<p style="text-align:center;font-size:.68rem;opacity:.6;margin:0 12px 24px">سکه‌ها مجازی هستند و فقط برای سرگرمی‌اند؛ پول واقعی در کار نیست.</p>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.07,ty='square',v=.04){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const S=[['🍒',5,30],['🍋',8,24],['🍊',10,18],['🍇',15,12],['🔔',25,8],['⭐',40,5],['💎',75,2.5],['7️⃣',200,1.2]];
+const TOT=S.reduce((a,s)=>a+s[2],0),NR=5,NC=3;
+const LINES=[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1]];
+let cr=+(localStorage.getItem('sl7-cr')||1000),bet=+(localStorage.getItem('sl7-bet')||1),busy=false,auto=0,grid;
+const BETS=[1,2,5,10,25,50];
+const rs=()=>{let r=Math.random()*TOT;for(let i=0;i<S.length;i++){r-=S[i][2];if(r<=0)return i}return 0};
+const reels=$('reels');for(let i=0;i<NR;i++){reels.insertAdjacentHTML('beforeend','<div class="reel"><div class="strip"></div></div>')}
+const strips=[...document.querySelectorAll('.strip')];
+function cell(i){return '<div class="sym">'+S[i][0]+'</div>'}
+function show(g){strips.forEach((st,r)=>{st.style.transition='none';st.style.transform='translateY(0)';st.innerHTML=g[r].map(cell).join('')})}
+function rnd(){return Array.from({length:NR},()=>Array.from({length:NC},rs))}
+function ui(){$('cr').textContent=fa(cr);$('bl').textContent=fa(bet);$('tb').textContent=fa(bet*LINES.length);localStorage.setItem('sl7-cr',cr);localStorage.setItem('sl7-bet',bet)}
+function evalG(g){let total=0;const wins=[];LINES.forEach((ln,li)=>{const first=g[0][ln[0]];let n=1;while(n<NR&&g[n][ln[n]]===first)n++;
+  if(n>=3){const m=S[first][1]*(n===3?1:n===4?3:10);total+=m*bet;wins.push({li,n,sym:first,pay:m*bet})}
+  else if(first===0&&n>=2){total+=2*bet;wins.push({li,n:2,sym:0,pay:2*bet})}});return{total,wins}}
+function cellH(){return strips[0].parentElement.clientHeight/3}
+async function spin(){if(busy)return;const tb=bet*LINES.length;if(cr<tb){msg('سکه‌ات کم است! 🎁 هدیه بگیر یا شرط را کم کن');auto=0;return}
+  busy=true;cr-=tb;ui();$('wn').textContent='۰';msg('...');document.querySelectorAll('.win').forEach(e=>e.classList.remove('win'));
+  const g=rnd(),h=cellH();let done=0;
+  strips.forEach((st,r)=>{const extra=14+r*5,seq=[];for(let k=0;k<extra;k++)seq.push(rs());const all=[...grid[r],...seq,...g[r]];st.innerHTML=all.map(cell).join('');
+    st.style.transition='none';st.style.transform='translateY(0)';st.offsetHeight;
+    st.style.transition='transform '+(1.1+r*.32)+'s cubic-bezier(.15,.7,.2,1)';st.style.transform='translateY('+(-(all.length-3)*h)+'px)'});
+  for(let r=0;r<NR;r++)setTimeout(()=>beep(300+r*60,.05),1100+r*320);
+  await new Promise(r=>setTimeout(r,1100+(NR-1)*320+250));grid=g;
+  const ev=evalG(g);
+  if(ev.total>0){cr+=ev.total;$('wn').textContent=fa(ev.total);const big=ev.total>=tb*5;msg((big?'🎉 برد بزرگ! +':'✨ برنده شدی +')+fa(ev.total));
+    ev.wins.forEach(w=>{const ln=LINES[w.li];for(let r=0;r<w.n;r++){strips[r].children[strips[r].children.length-3+ln[r]].classList.add('win')}});
+    [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.15,'triangle',.06),i*110))}
+  else msg('این‌بار نشد؛ دوباره!');
+  ui();busy=false;
+  if(auto>0){auto--;$('au').textContent=auto?'⏹ '+fa(auto):'AUTO ×۱۰';if(auto>0)setTimeout(spin,ev.total?1400:500)}}
+function msg(t){$('msg').textContent=t}
+$('spin').onclick=()=>{auto=0;$('au').textContent='AUTO ×۱۰';spin()};
+$('au').onclick=()=>{if(auto>0){auto=0;$('au').textContent='AUTO ×۱۰';return}auto=10;$('au').textContent='⏹ ۱۰';spin()};
+$('bp').onclick=()=>{const i=BETS.indexOf(bet);bet=BETS[Math.min(BETS.length-1,i+1)];ui()};$('bm').onclick=()=>{const i=BETS.indexOf(bet);bet=BETS[Math.max(0,i-1)];ui()};
+$('mx').onclick=()=>{bet=[...BETS].reverse().find(b=>b*LINES.length<=cr)||1;ui()};
+$('bn').onclick=()=>{const l=+(localStorage.getItem('sl7-bonus')||0);if(Date.now()-l<864e5&&cr>=tb()){const m=Math.ceil((864e5-(Date.now()-l))/36e5);msg('هدیه‌ی بعدی تا '+fa(m)+' ساعت دیگر');return}localStorage.setItem('sl7-bonus',Date.now());cr+=cr<100?1000:500;ui();msg('🎁 سکه‌ی هدیه گرفتی!')};
+function tb(){return 100}
+$('pb').onclick=()=>{const p=$('pt');p.style.display=p.style.display==='block'?'none':'block';p.innerHTML='<div><b>۳ نماد پشت‌سرهم از چپ</b><b>× شرط هر خط</b></div>'+S.slice().reverse().map(s=>'<div><span>'+s[0]+s[0]+s[0]+'</span><b>'+s[1]+'×</b></div>').join('')+'<div><span>۴ نماد مثل هم</span><b>×۳ ضریب</b></div><div><span>۵ نماد مثل هم</span><b>×۱۰ ضریب</b></div><div><span>🍒🍒 (دو گیلاس از چپ)</span><b>۲×</b></div><div><span>خط‌های برد</span><b>'+LINES.length+' خط</b></div>'};
+grid=rnd();show(grid);ui();
+</script></body></html>

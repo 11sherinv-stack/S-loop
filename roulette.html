@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Casino Roulette</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(#0d6b3a,#05301a 75%);color:#fff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:0;padding:34px 0 2px;text-align:center;font-size:1.3rem;color:#ffd54a}
+#hud{display:flex;justify-content:center;gap:8px;margin:2px}#hud div{background:#0007;border:1px solid #ffd54a66;border-radius:12px;padding:2px 12px;text-align:center;font-size:.68rem}#hud b{display:block;font-size:1.05rem;color:#ffd54a}
+#wh{display:block;margin:4px auto;width:min(66vw,260px);aspect-ratio:1}
+#res{text-align:center;min-height:1.6em;font-weight:800;color:#ffe9a8}
+#hist{display:flex;gap:4px;justify-content:center;margin:2px 0 6px;flex-wrap:wrap}#hist i{font-style:normal;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800}
+.r{background:#c62828}.b{background:#111}.g{background:#1b8a3a}
+#tbl{display:grid;grid-template-columns:30px repeat(12,1fr);gap:2px;width:min(96vw,440px);margin:6px auto;direction:ltr}
+.c{position:relative;display:flex;align-items:center;justify-content:center;border:1px solid #fff6;border-radius:4px;font-weight:800;font-size:.7rem;min-height:34px;cursor:pointer}
+.c .ch{position:absolute;right:-2px;top:-4px;min-width:18px;height:18px;border-radius:9px;background:#ffd54a;color:#000;font-size:.58rem;display:flex;align-items:center;justify-content:center;padding:0 3px;box-shadow:0 1px 3px #000;z-index:2}
+.z{grid-row:span 3;font-size:.9rem}.oth{display:grid;gap:2px;width:min(96vw,440px);margin:2px auto;direction:ltr}
+.oth.d{grid-template-columns:repeat(3,1fr)}.oth.e{grid-template-columns:repeat(6,1fr)}
+.oth .c{min-height:32px;font-size:.66rem}
+#chips{display:flex;gap:6px;justify-content:center;margin:8px 0}.chip{width:44px;height:44px;border-radius:50%;border:3px dashed #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem;box-shadow:0 3px 0 #0007;cursor:pointer}.chip.on{outline:3px solid #ffd54a;transform:translateY(-4px)}
+button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:#6d1b4a;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #0006}button:disabled{opacity:.4}
+#spin{background:linear-gradient(#ff5252,#c40000);font-size:1.15rem;padding:11px 30px;border-radius:40px}
+#act{display:flex;gap:6px;justify-content:center;margin:6px 0 30px;flex-wrap:wrap}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<h1>🎡 Casino Roulette</h1>
+<div id="hud"><div>سکه<b id="cr">۰</b></div><div>شرط<b id="bt">۰</b></div><div>برد آخر<b id="lw">۰</b></div></div>
+<canvas id="wh" width="400" height="400"></canvas><div id="res">چیپ را انتخاب کن و روی میز شرط ببند</div><div id="hist"></div>
+<div id="tbl"></div><div class="oth d" id="od"></div><div class="oth e" id="oe"></div>
+<div id="chips"></div>
+<div id="act"><button id="spin">🎡 بچرخان</button><button id="un">↩ برگشت</button><button id="cl">🗑 پاک</button><button id="rp">🔁 تکرار</button></div>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const ORD=[0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const RED=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+const col=n=>n===0?'g':RED.has(n)?'r':'b';
+let cr=+(localStorage.getItem('rl-cr')||1000),chip=5,bets={},stack=[],last=null,busy=false,hist=JSON.parse(localStorage.getItem('rl-h')||'[]'),wa=0,ba=0;
+const CH=[1,5,10,25,100];$('chips').innerHTML=CH.map(c=>'<div class="chip'+(c===5?' on':'')+'" data-c="'+c+'" style="background:'+['#1565c0','#c62828','#2e7d32','#6a1b9a','#111'][CH.indexOf(c)]+'">'+c+'</div>').join('');
+$('chips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;chip=+c.dataset.c;document.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===c))};
+// میز
+let h='<div class="c g z" data-k="n0">0</div>';
+for(let r=0;r<3;r++)for(let k=0;k<12;k++){const n=(k+1)*3-r;h+='<div class="c '+col(n)+'" data-k="n'+n+'">'+n+'</div>'}
+$('tbl').innerHTML=h;
+$('od').innerHTML=[['d1','1–12'],['d2','13–24'],['d3','25–36']].map(([k,t])=>'<div class="c" data-k="'+k+'">'+t+'</div>').join('');
+$('oe').innerHTML=[['low','1–18'],['even','زوج'],['red','قرمز'],['black','مشکی'],['odd','فرد'],['high','19–36']].map(([k,t])=>'<div class="c '+(k==='red'?'r':k==='black'?'b':'')+'" data-k="'+k+'">'+t+'</div>').join('');
+const cols=document.createElement('div');cols.className='oth d';cols.innerHTML=[['c3','ستون ۱ (۳،۶…)'],['c2','ستون ۲'],['c1','ستون ۳']].map(([k,t])=>'<div class="c" data-k="'+k+'" style="font-size:.6rem">'+t+'</div>').join('');$('oe').after(cols);
+const total=()=>Object.values(bets).reduce((a,b)=>a+b,0);
+function ui(){$('cr').textContent=fa(cr);$('bt').textContent=fa(total());localStorage.setItem('rl-cr',cr);
+  document.querySelectorAll('[data-k]').forEach(c=>{const ch=c.querySelector('.ch');if(ch)ch.remove();const v=bets[c.dataset.k];if(v)c.insertAdjacentHTML('beforeend','<span class="ch">'+v+'</span>')});
+  $('hist').innerHTML=hist.slice(-14).reverse().map(n=>'<i class="'+col(n)+'">'+n+'</i>').join('')}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-k]');if(!c||busy)return;if(cr-total()<chip){$('res').textContent='سکه‌ی کافی نداری';return}
+  bets[c.dataset.k]=(bets[c.dataset.k]||0)+chip;stack.push(c.dataset.k);beep(700,.04);ui()});
+$('un').onclick=()=>{if(busy||!stack.length)return;const k=stack.pop();bets[k]-=chip>bets[k]?bets[k]:chip;if(bets[k]<=0)delete bets[k];ui()};
+$('cl').onclick=()=>{if(busy)return;bets={};stack=[];ui()};
+$('rp').onclick=()=>{if(busy||!last)return;const t=Object.values(last).reduce((a,b)=>a+b,0);if(t>cr){$('res').textContent='سکه کافی نیست';return}bets={...last};stack=Object.keys(bets);ui()};
+function pay(n){let w=0;for(const[k,v]of Object.entries(bets)){let win=false,m=1;
+  if(k[0]==='n'){win=+k.slice(1)===n;m=36}else if(n>0){if(k==='red')win=RED.has(n);else if(k==='black')win=!RED.has(n);else if(k==='even')win=n%2===0;else if(k==='odd')win=n%2===1;else if(k==='low')win=n<=18;else if(k==='high')win=n>=19;
+    else if(k[0]==='d'){win=Math.ceil(n/12)===+k[1];m=3}else if(k[0]==='c'){win=(n%3===0?3:n%3)===+k[1]*(1)||false;const cn=n%3===0?3:n%3;win=cn===({c3:3,c2:2,c1:1})[k];m=3}
+    if(k==='red'||k==='black'||k==='even'||k==='odd'||k==='low'||k==='high')m=2}
+  if(win)w+=v*m}return w}
+// چرخ
+const cv=$('wh'),x=cv.getContext('2d'),C=200,ST=Math.PI*2/37;
+function draw(wr,br,brad,show){x.clearRect(0,0,400,400);
+  x.fillStyle='#4e2a0c';x.beginPath();x.arc(C,C,198,0,7);x.fill();x.fillStyle='#8b5a2b';x.beginPath();x.arc(C,C,184,0,7);x.fill();
+  for(let i=0;i<37;i++){const n=ORD[i],a0=wr+i*ST-ST/2-Math.PI/2,a1=a0+ST;x.beginPath();x.moveTo(C,C);x.arc(C,C,168,a0,a1);x.closePath();x.fillStyle=n===0?'#1b8a3a':RED.has(n)?'#c62828':'#151515';x.fill();x.strokeStyle='#d4af37';x.lineWidth=1;x.stroke();
+    const am=(a0+a1)/2;x.save();x.translate(C+Math.cos(am)*146,C+Math.sin(am)*146);x.rotate(am+Math.PI/2);x.fillStyle='#fff';x.font='bold 15px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(n,0,0);x.restore()}
+  x.fillStyle='#2a1706';x.beginPath();x.arc(C,C,118,0,7);x.fill();x.fillStyle='#d4af37';x.beginPath();x.arc(C,C,22,0,7);x.fill();x.strokeStyle='#d4af37';x.lineWidth=4;for(let i=0;i<4;i++){const a=wr+i*Math.PI/2;x.beginPath();x.moveTo(C,C);x.lineTo(C+Math.cos(a)*100,C+Math.sin(a)*100);x.stroke()}
+  x.fillStyle='#fff';x.shadowColor='#000';x.shadowBlur=6;x.beginPath();x.arc(C+Math.cos(br)*brad,C+Math.sin(br)*brad,8,0,7);x.fill();x.shadowBlur=0}
+draw(0,-Math.PI/2,176);
+$('spin').onclick=()=>{if(busy||!total()){$('res').textContent='اول شرط ببند';return}busy=true;cr-=total();const bt=total();last={...bets};ui();$('res').textContent='...';
+  const n=Math.floor(Math.random()*37),idx=ORD.indexOf(n),W0=wa;const dur=6200,t0=performance.now();
+  const wTurn=3*Math.PI*2,wF=W0+wTurn;const bTurn=-7*Math.PI*2;
+  // موقعیت نهایی توپ = بالای چرخ در زاویه‌ی آن شماره؛ (-π/2 + wF + idx*ST)
+  const bF=-Math.PI/2+wF+idx*ST;
+  let lastTick=0;
+  (function f(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),e2=1-Math.pow(1-k,2.2);
+    const wr=W0+(wF-W0)*e,br=bF+bTurn*(1-e2),rad=k<.7?176:176-(k-.7)/.3*Math.min(1,1)*30+Math.sin(k*90)*(1-k)*3;
+    draw(wr,br,rad);if(t-lastTick>110&&k<.92){beep(900+Math.random()*200,.02,'square',.015);lastTick=t}
+    if(k<1)requestAnimationFrame(f);else{wa=wF%(Math.PI*2);end(n,bt)}})(t0)};
+function end(n,bt){const w=pay(n);cr+=w;hist.push(n);hist=hist.slice(-40);localStorage.setItem('rl-h',JSON.stringify(hist));
+  $('lw').textContent=fa(w);$('res').innerHTML='عدد برنده: <b style="font-size:1.3rem">'+n+'</b> '+(n===0?'سبز':RED.has(n)?'قرمز':'مشکی')+(w>bt?' · 🎉 برد '+fa(w-bt)+'+':w>0?' · برگشت '+fa(w):' · باختی');
+  if(w>0)[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.15),i*110));else beep(180,.3,'sawtooth');
+  bets={};stack=[];busy=false;if(cr<=0){cr=500;$('res').textContent+=' — ۵۰۰ سکه‌ی هدیه دریافت کردی'}ui()}
+ui();
+</script></body></html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Polysphere Art Puzzle 3D</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:linear-gradient(#f3f9ff,#e8dcf7);font-family:Vazirmatn,Tahoma,sans-serif;color:#2a2f5a;user-select:none;touch-action:none;overflow:hidden}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+header{display:flex;justify-content:center;gap:8px;padding:34px 8px 2px}header div{background:#fffc;border-radius:12px;padding:2px 14px;text-align:center;font-size:.68rem;box-shadow:0 2px 6px #0002}header b{display:block;font-size:1rem}
+#stage{perspective:900px;display:flex;justify-content:center;margin-top:4px}
+canvas{width:min(94vw,calc(100svh - 190px)*.77,420px);aspect-ratio:360/470;touch-action:none;display:block;transform-style:preserve-3d}
+canvas.spin{animation:sp 7s linear infinite}@keyframes sp{from{transform:rotateY(0)}to{transform:rotateY(360deg)}}
+#bar{display:flex;gap:8px;justify-content:center;margin-top:6px}
+button{font:inherit;border:0;border-radius:14px;padding:9px 16px;background:#5b6cff;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #0003}button:active{transform:translateY(2px)}
+#ov{position:fixed;inset:0;background:#0008;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;text-align:center;z-index:20}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<header><div>مرحله<b id="lv">۱</b></div><div>قطعه‌ها<b id="pc">۰</b></div><div>حرکت<b id="mv">۰</b></div></header>
+<div id="stage"><canvas id="c" width="360" height="470"></canvas></div>
+<div id="bar"><button id="hint">💡 راهنما</button><button id="rot">🔄 نمای ۳ بعدی</button><button id="sh">🔀 بُر بزن</button></div>
+<div id="ov"><h2 id="ot" style="margin:0;font-size:1.8rem"></h2><p id="om" style="margin:0"></p><button id="nx">مرحله‌ی بعد</button></div>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.08,ty='sine',v=.05){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const cv=$('c'),x=cv.getContext('2d'),BS=340,BX=10,BY=8;
+const LV=[
+ {n:'نهنگ',h:[175,268],p:[[6,30],[22,23],[40,30],[58,42],[76,44],[90,36],[99,36],[88,50],[74,57],[60,60],[56,70],[50,88],[44,66],[34,58],[22,52],[12,42]],g:13},
+ {n:'ماهی',h:[15,55],p:[[10,50],[25,34],[48,28],[68,36],[80,50],[98,34],[92,50],[98,66],[80,52],[68,64],[48,72],[25,66]],g:13},
+ {n:'کوه',h:[195,285],p:[[0,90],[30,40],[45,60],[65,22],[100,90]],g:13},
+ {n:'قلب',h:[330,375],p:Array.from({length:28},(_,i)=>{const t=i/28*Math.PI*2;return[50+16*Math.pow(Math.sin(t),3)*3.1,44-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*2.6]}),g:12},
+ {n:'ستاره',h:[40,65],p:Array.from({length:10},(_,i)=>{const a=-Math.PI/2+i*Math.PI/5,r=i%2?19:46;return[50+Math.cos(a)*r,52+Math.sin(a)*r]}),g:11}
+];
+let li=+(localStorage.getItem('ps-lv')||0)%LV.length,pcs=[],drag=null,moves=0,hintT=0,hintI=-1,done=false;
+function rng(s){return()=>{s=(s*1664525+1013904223)%4294967296;return s/4294967296}}
+function inside(pt,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a[1]>pt[1])!==(b[1]>pt[1])&&pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function delaunay(P){const mx=100,sup=[[-mx*5,-mx*3],[mx*7,-mx*3],[mx/2,mx*8]];let pts=P.concat(sup),T=[[P.length,P.length+1,P.length+2]];
+  const cc=t=>{const[a,b,c]=t.map(i=>pts[i]);const d=2*(a[0]*(b[1]-c[1])+b[0]*(c[1]-a[1])+c[0]*(a[1]-b[1]));const ux=((a[0]**2+a[1]**2)*(b[1]-c[1])+(b[0]**2+b[1]**2)*(c[1]-a[1])+(c[0]**2+c[1]**2)*(a[1]-b[1]))/d,uy=((a[0]**2+a[1]**2)*(c[0]-b[0])+(b[0]**2+b[1]**2)*(a[0]-c[0])+(c[0]**2+c[1]**2)*(b[0]-a[0]))/d;return[ux,uy,(a[0]-ux)**2+(a[1]-uy)**2]};
+  for(let i=0;i<P.length;i++){const p=pts[i],bad=[],keep=[];T.forEach(t=>{const c=cc(t);((p[0]-c[0])**2+(p[1]-c[1])**2<c[2])?bad.push(t):keep.push(t)});
+    const E=[];bad.forEach(t=>{for(let k=0;k<3;k++){const e=[t[k],t[(k+1)%3]];const ix=E.findIndex(q=>(q[0]===e[1]&&q[1]===e[0])||(q[0]===e[0]&&q[1]===e[1]));if(ix>=0)E.splice(ix,1);else E.push(e)}});
+    T=keep.concat(E.map(e=>[e[0],e[1],i]))}
+  return T.filter(t=>t.every(i=>i<P.length))}
+function build(){const L=LV[li],R=rng(li*977+13),P=[];const poly=L.p;
+  for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],d=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.round(d/L.g));for(let k=0;k<n;k++)P.push([a[0]+(b[0]-a[0])*k/n,a[1]+(b[1]-a[1])*k/n])}
+  for(let gx=0;gx<=100;gx+=L.g)for(let gy=0;gy<=100;gy+=L.g){const q=[gx+(R()-.5)*L.g*.7,gy+(R()-.5)*L.g*.7];if(inside(q,poly)&&P.every(o=>Math.hypot(o[0]-q[0],o[1]-q[1])>L.g*.6))P.push(q)}
+  const T=delaunay(P).filter(t=>{const c=[(P[t[0]][0]+P[t[1]][0]+P[t[2]][0])/3,(P[t[0]][1]+P[t[1]][1]+P[t[2]][1])/3];return inside(c,poly)});
+  const S=BS/100;pcs=T.map((t,i)=>{const v=t.map(k=>[BX+P[k][0]*S,BY+P[k][1]*S]),c=[(v[0][0]+v[1][0]+v[2][0])/3,(v[0][1]+v[1][1]+v[2][1])/3];
+    const u=(c[0]-BX)/BS*.65+(c[1]-BY)/BS*.35,hu=L.h[0]+(L.h[1]-L.h[0])*u,ll=52+R()*26,sa=70+R()*25;
+    return{v,c,col:'hsl('+hu+','+sa+'%,'+ll+'%)',ox:0,oy:0,ok:false}});
+  scatter();moves=0;done=false;$('lv').textContent=fa(li+1)+' · '+LV[li].n;ui()}
+function scatter(){pcs.forEach(p=>{if(p.ok)return;const tx=25+Math.random()*310,ty=BY+BS+22+Math.random()*58;p.ox=tx-p.c[0];p.oy=ty-p.c[1]})}
+function ui(){$('pc').textContent=fa(pcs.filter(p=>p.ok).length)+'/'+fa(pcs.length);$('mv').textContent=fa(moves)}
+function tri(p,v,ox,oy){x.beginPath();x.moveTo(v[0][0]+ox,v[0][1]+oy);x.lineTo(v[1][0]+ox,v[1][1]+oy);x.lineTo(v[2][0]+ox,v[2][1]+oy);x.closePath()}
+function draw(){x.clearRect(0,0,360,470);
+  x.fillStyle='rgba(255,255,255,.55)';x.fillRect(BX-4,BY-4,BS+8,BS+8);
+  pcs.forEach((p,i)=>{if(p.ok)return;tri(p,p.v,0,0);x.fillStyle='rgba(120,130,200,.10)';x.fill();x.strokeStyle='rgba(120,130,200,.35)';x.lineWidth=1;x.stroke();if(hintI===i){x.fillStyle='rgba(255,200,0,.5)';x.fill()}});
+  pcs.forEach(p=>{if(!p.ok)return;tri(p,p.v,0,0);x.fillStyle=p.col;x.fill();x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=.8;x.stroke()});
+  const order=pcs.map((p,i)=>i).filter(i=>!pcs[i].ok&&i!==drag?.i);if(drag)order.push(drag.i);
+  order.forEach(i=>{const p=pcs[i];tri(p,p.v,p.ox,p.oy);x.fillStyle=p.col;x.shadowColor='rgba(40,40,120,.4)';x.shadowBlur=i===drag?.i?14:5;x.fill();x.shadowBlur=0;x.strokeStyle='rgba(255,255,255,.8)';x.lineWidth=1.4;x.stroke()})}
+function pt(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*360,(e.clientY-r.top)/r.height*470]}
+function hit(p,q){const[a,b,c]=p.v.map(v=>[v[0]+p.ox,v[1]+p.oy]);const s=(a,b,c)=>(a[0]-c[0])*(b[1]-c[1])-(b[0]-c[0])*(a[1]-c[1]);const d1=s(q,a,b),d2=s(q,b,c),d3=s(q,c,a);return!((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0))}
+cv.addEventListener('pointerdown',e=>{if(done||cv.classList.contains('spin'))return;const q=pt(e);let best=-1,bd=1e9;for(let i=pcs.length-1;i>=0;i--){const p=pcs[i];if(p.ok)continue;if(hit(p,q))return pick(i,q,e);const d=Math.hypot(p.c[0]+p.ox-q[0],p.c[1]+p.oy-q[1]);if(d<bd){bd=d;best=i}}if(best>=0&&bd<22)pick(best,q,e)});
+function pick(i,q,e){drag={i,dx:q[0]-pcs[i].ox,dy:q[1]-pcs[i].oy};try{cv.setPointerCapture(e.pointerId)}catch(_){};beep(500,.04)}
+cv.addEventListener('pointermove',e=>{if(!drag)return;const q=pt(e);pcs[drag.i].ox=q[0]-drag.dx;pcs[drag.i].oy=q[1]-drag.dy});
+const up=()=>{if(!drag)return;const p=pcs[drag.i];moves++;if(Math.hypot(p.ox,p.oy)<16){p.ok=true;p.ox=p.oy=0;beep(700+Math.random()*300,.15,'triangle');if(hintI===drag.i)hintI=-1;if(pcs.every(q=>q.ok))win()}else beep(260,.05);drag=null;ui()};
+cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+function win(){done=true;localStorage.setItem('ps-lv',(li+1)%LV.length);cv.classList.add('spin');[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));setTimeout(()=>{$('ot').textContent='🎨 '+LV[li].n+' کامل شد!';$('om').textContent='حرکت‌ها: '+fa(moves);$('ov').style.display='flex'},1800)}
+$('nx').onclick=()=>{$('ov').style.display='none';cv.classList.remove('spin');li=(li+1)%LV.length;build()};
+$('hint').onclick=()=>{const un=pcs.map((p,i)=>i).filter(i=>!pcs[i].ok);if(!un.length)return;hintI=un[Math.random()*un.length|0];setTimeout(()=>hintI=-1,2500);beep(900,.1)};
+$('rot').onclick=()=>cv.classList.toggle('spin');
+$('sh').onclick=()=>{scatter();pcs.forEach(p=>{if(!p.ok){p.ox*=1}});pcs.forEach(p=>{if(!p.ok){const tx=25+Math.random()*310,ty=BY+BS+22+Math.random()*58;p.ox=tx-p.c[0];p.oy=ty-p.c[1]}})};
+(function loop(){draw();requestAnimationFrame(loop)})();
+build();
+</script></body></html>

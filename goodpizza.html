@@ -20,7 +20,7 @@ button.pr{background:#e53935;color:#fff}button.gr{background:#43a047;color:#fff}
 #ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;z-index:20;text-align:center;padding:14px;overflow:auto}
 #ov h2{margin:0}#ov .up{display:flex;flex-direction:column;gap:6px;width:min(92vw,360px)}#ov .up button{display:flex;justify-content:space-between}
 </style></head><body>
-<a class="back" href="index.html">&larr; S loop</a>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
 <div id="hud"><div>روز<b id="dy">۱</b></div><div>پول<b id="mn">۰</b></div><div>مشتری<b id="cl">۰</b></div><div>رضایت<b id="st">—</b></div></div>
 <div id="cust"><div id="face">🙂</div><div id="bub">…</div></div><div id="pat"><i id="pi"></i></div>
 <canvas id="pz" width="300" height="300"></canvas>

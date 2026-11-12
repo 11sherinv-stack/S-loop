@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Archery</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#7ec8ff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 36px);left:0;right:0;display:flex;justify-content:center;gap:8px;pointer-events:none}#hud div{background:#fffc;border-radius:12px;padding:2px 12px;text-align:center;font-size:.68rem}#hud b{display:block;font-size:1.05rem}
+#ov{position:fixed;inset:0;background:#0008;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff;text-align:center;padding:16px}
+#ov h2{margin:0;font-size:1.8rem}#ov p{margin:0;line-height:1.8}button{font:inherit;border:0;border-radius:14px;padding:12px 34px;background:#e5383b;color:#fff;font-weight:800;font-size:1.1rem}
+</style></head><body>
+<canvas id="c"></canvas><a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<div id="hud"><div>مرحله<b id="lv">۱</b></div><div>تیر<b id="ar">۱۰</b></div><div>امتیاز<b id="sc">۰</b></div><div>باد<b id="wd">۰</b></div><div>رکورد<b id="bs">۰</b></div></div>
+<div id="ov"><h2 id="ot">🏹 کمان‌گیری</h2><p id="om">انگشتت را روی صفحه بکش عقب (مثل فلاخن) تا زاویه و قدرت تعیین شود؛ رها کن تا تیر شلیک شود.<br>به باد و فاصله توجه کن. ۱۰ تیر داری!<br>برای رفتن به مرحله‌ی بعد حداقل امتیاز لازم است.</p><button id="go">START</button></div>
+<script>
+const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let W,H,D=1;function fit(){D=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;x.setTransform(D,0,0,D,0,0)}fit();addEventListener('resize',fit);
+let lv=+(localStorage.getItem('ar-lv')||1),best=+(localStorage.getItem('ar-best')||0),score=0,arrows=10,wind=0,arrow=null,hits=[],aim=null,st='menu',tg,msg='',msgT=0,lastT=0,roundHits=[];
+const bow={x:70,y:0};const PX=14;// px per meter-ish
+function setup(){const d=20+lv*8;tg={d,x:W-60,y:H*.55,r:Math.max(16,52-lv*3.2),vy:lv>=3?(30+lv*8):0,dir:1,base:H*.55};wind=(Math.random()-.5)*Math.min(12,2+lv*1.6);wind=Math.round(wind*10)/10;arrows=10;score=0;hits=[];arrow=null;bow.y=H*.62;hud()}
+function hud(){$('lv').textContent=fa(lv);$('ar').textContent=fa(arrows);$('sc').textContent=fa(score);$('bs').textContent=fa(best);$('wd').textContent=(wind>0?'→ ':wind<0?'← ':'')+fa(Math.abs(wind))}
+function rings(){return[['#f5f5f5',1],['#222',.84],['#2b8be8',.68],['#e5383b',.52],['#ffd23f',.36]]}
+function shoot(dx,dy){const pw=Math.min(1,Math.hypot(dx,dy)/150);if(pw<.12)return;const a=Math.atan2(dy,dx);arrow={x:bow.x,y:bow.y,vx:Math.cos(a)*(380+pw*620),vy:Math.sin(a)*(380+pw*620),a,live:true};arrows--;hud();beep(200+pw*300,.12,'sawtooth',.04)}
+function score10(dy){const rr=Math.abs(dy)/tg.r;if(rr>1)return 0;return rr<.12?10:Math.max(1,Math.ceil((1-rr)*9)+1>10?10:Math.ceil((1-rr)*10))}
+function update(dt){
+  if(tg&&tg.vy){tg.y+=tg.vy*tg.dir*dt;if(tg.y>tg.base+H*.14)tg.dir=-1;if(tg.y<tg.base-H*.14)tg.dir=1}
+  if(arrow&&arrow.live){arrow.vy+=620*dt;arrow.vx+=wind*22*dt;const px=arrow.x;arrow.x+=arrow.vx*dt;arrow.y+=arrow.vy*dt;arrow.a=Math.atan2(arrow.vy,arrow.vx);
+    if(px<tg.x&&arrow.x>=tg.x){const k=(tg.x-px)/(arrow.x-px),yy=arrow.y-(arrow.y-arrow.vy*dt)*0+0,hy=(arrow.y-arrow.vy*dt)+(arrow.vy*dt)*k,dy=hy-tg.y,sc=score10(dy);
+      arrow.live=false;if(sc>0){score+=sc;hits.push({dy,t:tg.y});msg=sc===10?'🎯 عالی! ۱۰':'+'+fa(sc);beep(500+sc*60,.15)}else{msg='خطا ✕';beep(150,.2,'sawtooth')}msgT=1.1;arrow.stuck=sc>0;arrow.hy=dy;arrow.x=tg.x;arrow.y=hy;hud()}
+    else if(arrow.y>H*.8||arrow.x>W+40){arrow.live=false;msg='خطا ✕';msgT=1;beep(150,.2,'sawtooth')}
+    if(!arrow.live)setTimeout(()=>{arrow=null;if(arrows<=0)endRound()},700)}
+  if(msgT>0)msgT-=dt}
+function endRound(){st='end';const need=Math.round(35+lv*8),ok=score>=need;if(score>best){best=score;localStorage.setItem('ar-best',best)}
+  $('ot').textContent=ok?'🏆 مرحله تمام شد':'تلاش دوباره';$('om').innerHTML='امتیاز: '+fa(score)+' (حداقل '+fa(need)+')<br>رکورد: '+fa(best);$('go').textContent=ok?'NEXT':'AGAIN';$('go').dataset.ok=ok?1:'';$('ov').style.display='flex';hud()}
+function drawTarget(){const T=tg;x.fillStyle='#6d4c2f';x.fillRect(T.x-3,T.y,6,H-T.y);
+  x.save();x.translate(T.x,T.y);x.scale(.35,1);rings().forEach(([c,k])=>{x.fillStyle=c;x.beginPath();x.arc(0,0,T.r*k,0,7);x.fill()});x.restore();
+  hits.forEach(h=>{});x.fillStyle='#fff';x.font='11px sans-serif';x.textAlign='center';x.fillText(tg.d+'m',T.x,T.y+T.r+14)}
+function arrowDraw(a,len){x.save();x.translate(a.x,a.y);x.rotate(a.a);x.strokeStyle='#5d4037';x.lineWidth=2.5;x.beginPath();x.moveTo(-len,0);x.lineTo(0,0);x.stroke();x.fillStyle='#bbb';x.beginPath();x.moveTo(6,0);x.lineTo(-2,-3);x.lineTo(-2,3);x.fill();x.fillStyle='#e53935';x.beginPath();x.moveTo(-len,0);x.lineTo(-len-6,-4);x.lineTo(-len+2,0);x.lineTo(-len-6,4);x.fill();x.restore()}
+function draw(){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#6bb8ff');g.addColorStop(.7,'#d9f1ff');g.addColorStop(.7,'#6bbf59');g.addColorStop(1,'#3f8f3a');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='#fff8';[[.2,.12,40],[.55,.2,34],[.8,.1,44]].forEach(([a,b,r])=>{x.beginPath();x.arc(W*a,H*b,r,0,7);x.arc(W*a+r*.8,H*b+4,r*.7,0,7);x.fill()});
+  x.fillStyle='#2e7d32';x.beginPath();x.moveTo(0,H*.7);for(let i=0;i<=8;i++)x.lineTo(W*i/8,H*.7-20-Math.sin(i*1.7)*18);x.lineTo(W,H*.7);x.fill();
+  if(!tg)return;drawTarget();
+  // اسلحه
+  const pull=aim?Math.min(1,Math.hypot(aim.dx,aim.dy)/150):0,a=aim?Math.atan2(aim.dy,aim.dx):0;
+  x.save();x.translate(bow.x,bow.y);x.fillStyle='#8d6e63';x.fillRect(-10,0,20,H-bow.y);x.restore();
+  x.save();x.translate(bow.x,bow.y);x.rotate(aim?a:0);x.strokeStyle='#6d4c41';x.lineWidth=5;x.beginPath();x.arc(8,0,38,-1.25,1.25);x.stroke();
+  const tx=-pull*34+8,ty=0;x.strokeStyle='#fff';x.lineWidth=1.5;x.beginPath();x.moveTo(8+38*Math.cos(-1.25),38*Math.sin(-1.25));x.lineTo(tx,ty);x.lineTo(8+38*Math.cos(1.25),38*Math.sin(1.25));x.stroke();
+  if(aim&&!arrow){x.restore();x.save();x.translate(bow.x,bow.y);x.rotate(a);arrowDraw({x:-pull*34+8+10,y:0,a:0},44);x.restore()}else x.restore();
+  // مسیر پیش‌بینی
+  if(aim&&pull>.12&&!arrow){const A=Math.atan2(aim.dy,aim.dx),sp=380+pull*620;let px=bow.x,py=bow.y,vx=Math.cos(A)*sp,vy=Math.sin(A)*sp;x.fillStyle='#fff9';const n=Math.max(3,14-lv*1.5);for(let i=0;i<n*3;i++){vy+=620*.03;px+=vx*.03;py+=vy*.03;if(i%3===0){x.beginPath();x.arc(px,py,2.3,0,7);x.fill()}}}
+  if(arrow)arrowDraw(arrow,40);
+  // تیرهای گیر کرده
+  hits.forEach(h=>{x.save();x.translate(tg.x,tg.y+h.dy+(tg.y-h.t));x.strokeStyle='#5d4037';x.lineWidth=2.5;x.beginPath();x.moveTo(-34,0);x.lineTo(0,0);x.stroke();x.fillStyle='#e53935';x.fillRect(-38,-3,6,6);x.restore()});
+  if(msgT>0){x.globalAlpha=Math.min(1,msgT*2);x.fillStyle='#fff';x.strokeStyle='#0008';x.lineWidth=4;x.font='bold 30px sans-serif';x.textAlign='center';x.strokeText(msg,W/2,H*.3);x.fillText(msg,W/2,H*.3);x.globalAlpha=1}
+  // باد
+  x.fillStyle='#fff';x.font='13px sans-serif';x.textAlign='center';x.fillText('باد '+(wind>0?'➡':wind<0?'⬅':'·'),W/2,H-14)}
+function loop(t){const dt=Math.min(.03,(t-lastT)/1000||0);lastT=t;if(st==='play')update(dt);draw();requestAnimationFrame(loop)}
+let sp=null;cv.addEventListener('pointerdown',e=>{if(st!=='play'||arrow)return;sp={x:e.clientX,y:e.clientY};aim={dx:0,dy:0};try{cv.setPointerCapture(e.pointerId)}catch(_){}});
+cv.addEventListener('pointermove',e=>{if(!sp)return;aim={dx:sp.x-e.clientX,dy:sp.y-e.clientY}});
+const up=()=>{if(!sp)return;const a=aim;sp=null;aim=null;if(a)shoot(a.dx,a.dy)};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+$('go').onclick=()=>{if($('go').dataset.ok){lv++;localStorage.setItem('ar-lv',lv)}$('go').dataset.ok='';$('ov').style.display='none';st='play';setup()};
+setup();requestAnimationFrame(loop);
+</script></body></html>

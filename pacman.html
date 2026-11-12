@@ -18,7 +18,7 @@ button.on{border-color:#ffd400;color:#ffd400}.go{background:#ffd400;color:#000;p
 #pad{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,50px);gap:4px;margin-top:6px;direction:ltr}
 #pad button{padding:0;font-size:1.2rem}
 </style></head><body>
-<a class="back" href="index.html">&larr; S loop</a>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
 <div id="hud"><span>امتیاز <b id="sc">۰</b></span><span>جان <b id="lf">۳</b></span><span>نقشه <b id="mn"></b></span><span>رکورد <b id="bs">۰</b></span></div>
 <div class="wrap"><canvas id="c" width="380" height="420"></canvas>
 <div id="ov"><h2>PAC-MAN</h2><p>نقشه را انتخاب کن. با کشیدن انگشت روی صفحه یا کلیدهای جهت‌دار حرکت کن.<br>قرص‌های بزرگ، روح‌ها را آبی و خوردنی می‌کنند.</p><div class="maps" id="mp"></div><button class="go" id="go">START</button></div></div>

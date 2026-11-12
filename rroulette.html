@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Russian Roulette</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:radial-gradient(#3a1a1a,#0d0505 80%);color:#fff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+h1{margin:0;padding:34px 0 2px;text-align:center;font-size:1.25rem;color:#ff8a65}
+.pl{display:flex;justify-content:space-around;margin:4px 10px}.pl div{background:#0008;border:2px solid #fff2;border-radius:14px;padding:5px 16px;text-align:center;min-width:130px}.pl div.on{border-color:#ff8a65;box-shadow:0 0 14px #ff8a6588}.pl b{display:block;font-size:.85rem}.pl span{font-size:1.2rem;letter-spacing:2px}
+#cyl{display:block;margin:6px auto;width:min(70vw,270px);aspect-ratio:1}
+#info{text-align:center;font-size:.8rem;opacity:.9;min-height:1.4em}#msg{text-align:center;min-height:2.6em;font-weight:800;font-size:1.05rem;color:#ffe9a8;padding:0 10px}
+#acts{display:flex;gap:8px;justify-content:center;margin:6px 10px;flex-wrap:wrap}button{font:inherit;border:0;border-radius:14px;padding:12px 18px;background:#37474f;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #0006}button:active{transform:translateY(2px)}button:disabled{opacity:.4}
+#sh0{background:#e5383b}#sh1{background:#ff7043}.it{background:#4527a0;font-size:.8rem;padding:8px 12px}
+#ov{position:fixed;inset:0;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;z-index:20}#ov h2{margin:0;font-size:1.8rem}#ov p{margin:0;line-height:1.9;font-size:.88rem}
+#splat{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .6s;z-index:15}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<h1>🎲 رولت روسی (نسخه‌ی تفنگ اسباب‌بازی)</h1>
+<div class="pl"><div id="p0"><b>تو</b><span id="h0"></span></div><div id="p1"><b>🤖 جوکر</b><span id="h1"></span></div></div>
+<canvas id="cyl" width="300" height="300"></canvas>
+<div id="info"></div><div id="msg"></div>
+<div id="acts"><button id="sh1">🎯 شلیک به حریف</button><button id="sh0">🙃 شلیک به خودم</button></div>
+<div id="acts"><button class="it" id="pk">🔎 نگاه به خانه‌ی بعدی (۱)</button><button class="it" id="hl">❤️ +۱ جان (۱)</button></div>
+<div id="splat"></div>
+<div id="ov"><h2>🎲 رولت روسی</h2><p>یک تفنگ اسباب‌بازی با <b>۶ خانه</b> که چند تایش <b>کپسول جوهر</b> دارد (بقیه خالی). هر بازیکن ۳ جان دارد.<br>در نوبتت یا به <b>حریف</b> شلیک کن یا به <b>خودت</b>: اگر به خودت بزنی و خانه خالی باشد، نوبت دیگری هم می‌گیری!<br>جوهر خورد = یک جان کم. هر دور تعداد کپسول‌ها بیشتر می‌شود. هر بازی یک بار «نگاه به خانه‌ی بعدی» و یک بار «+۱ جان» داری.</p><button id="go" style="background:#e5383b">START</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('cyl'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.06){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+let lives=[3,3],ch=[],pos=0,turn=0,rot=0,busy=true,round=0,peek=1,heal=1,peeked=-1,over=false;
+function load(){round++;const n=Math.min(3,1+Math.floor((round-1)/2)),a=[0,0,0,0,0,0];let k=0;while(k<n){const i=Math.random()*6|0;if(!a[i]){a[i]=1;k++}}ch=a;pos=0;peeked=-1;msg('🔄 دور '+fa(round)+': '+fa(n)+' کپسول جوهر در ۶ خانه — بشکن و بچرخان!')}
+function left(){const r=ch.slice(pos);return[r.reduce((a,b)=>a+b,0),r.length]}
+function ui(){for(let i=0;i<2;i++){$('h'+i).textContent='❤️'.repeat(Math.max(0,lives[i]))+'🖤'.repeat(Math.max(0,3-Math.max(0,lives[i])));$('p'+i).classList.toggle('on',turn===i)}
+  const[l,t]=left();$('info').textContent='خانه‌های باقی‌مانده: '+fa(t)+' · کپسول جوهر باقی‌مانده: '+fa(l);$('pk').textContent='🔎 نگاه به خانه‌ی بعدی ('+fa(peek)+')';$('hl').textContent='❤️ +۱ جان ('+fa(heal)+')';
+  const my=turn===0&&!busy&&!over;['sh0','sh1'].forEach(i=>$(i).disabled=!my);$('pk').disabled=!my||!peek;$('hl').disabled=!my||!heal||lives[0]>=3}
+function msg(t){$('msg').textContent=t}
+function draw(){x.clearRect(0,0,300,300);x.save();x.translate(150,150);x.fillStyle='#37474f';x.beginPath();x.arc(0,0,140,0,7);x.fill();x.strokeStyle='#90a4ae';x.lineWidth=6;x.stroke();
+  x.rotate(rot);for(let i=0;i<6;i++){x.save();x.rotate(i*Math.PI/3);x.translate(0,-84);const used=i<pos,live=ch[i]&&!used,pk=peeked===i;x.fillStyle='#111';x.beginPath();x.arc(0,0,30,0,7);x.fill();
+    if(live){x.fillStyle=pk?'#ff5252':'#7b1fa2';x.beginPath();x.arc(0,0,22,0,7);x.fill();x.fillStyle='#ffffff55';x.beginPath();x.arc(-7,-7,6,0,7);x.fill()}
+    else if(used){x.fillStyle=ch[i]?'#ab47bc':'#555';x.beginPath();x.arc(0,0,12,0,7);x.fill()}
+    else if(pk){x.fillStyle='#69f0ae';x.beginPath();x.arc(0,0,14,0,7);x.fill()}
+    x.restore()}
+  x.fillStyle='#546e7a';x.beginPath();x.arc(0,0,22,0,7);x.fill();x.restore();
+  x.fillStyle='#ff8a65';x.beginPath();x.moveTo(150,2);x.lineTo(138,-14);x.lineTo(162,-14);x.fill()}
+function targetRot(){return -pos*Math.PI/3}
+async function spin(){busy=true;const t0=performance.now(),from=rot,to=targetRot()-Math.PI*2*3;await new Promise(r=>{(function f(t){const k=Math.min(1,(t-t0)/1400),e=1-Math.pow(1-k,3);rot=from+(to-from)*e;draw();if(k<1)requestAnimationFrame(f);else r()})(t0)});rot=targetRot();draw()}
+function advance(){const to=targetRot(),from=rot,t0=performance.now();return new Promise(r=>{(function f(t){const k=Math.min(1,(t-t0)/350),e=1-Math.pow(1-k,2);rot=from+(to-from)*e;draw();if(k<1)requestAnimationFrame(f);else r()})(t0)})}
+function splat(c){const s=$('splat');s.style.background='radial-gradient(circle at '+(30+Math.random()*40)+'% '+(30+Math.random()*30)+'%,'+c+' 0,'+c+'aa 12%,transparent 40%)';s.style.opacity=.85;setTimeout(()=>s.style.opacity=0,700)}
+async function fire(who,target){busy=true;ui();const live=ch[pos];pos++;await advance();beep(live?130:600,.25,live?'sawtooth':'square',.08);
+  const nm=i=>i?'جوکر':'تو';
+  if(live){lives[target]--;splat(target?'#7b1fa2':'#d500f9');msg('💥 کپسول جوهر! '+(target?'جوکر':'تو')+' یک جان از دست داد'+(who===target?' (به خودش زد)':''));turn=1-who}
+  else{if(who===target){msg('✨ خالی بود! '+nm(who)+' نوبت دیگری می‌گیرد');turn=who}else{msg('💨 خالی بود… نوبت '+nm(1-who));turn=1-who}}
+  ui();await sleep(900);
+  if(lives[0]<=0||lives[1]<=0)return end();
+  if(left()[0]===0||pos>=6){msg('🔄 تفنگ دوباره پر می‌شود…');await sleep(900);load();await spin()}
+  busy=false;ui();if(turn===1)bot()}
+async function bot(){busy=true;ui();await sleep(900);const[l,t]=left(),p=l/t;let self;
+  if(l===0)self=true;else if(l===t)self=false;else self=p<.34||(p<.5&&Math.random()<.3);
+  if(lives[1]<3&&Math.random()<.25&&p>.5){} msg('🤖 جوکر به '+(self?'خودش':'تو')+' شلیک می‌کند…');await sleep(700);fire(1,self?1:0)}
+async function end(){over=true;busy=true;const win=lives[1]<=0;ui();beep(win?880:150,.5,win?'triangle':'sawtooth');msg('');$('ov').style.display='flex';$('ov').innerHTML='<h2>'+(win?'🏆 تو برنده شدی!':'🤖 جوکر برد')+'</h2><p>دوباره بازی کنیم؟</p><button id="go" style="background:#e5383b">AGAIN</button>';$('go').onclick=start}
+$('sh0').onclick=()=>{if(!busy&&turn===0)fire(0,0)};$('sh1').onclick=()=>{if(!busy&&turn===0)fire(0,1)};
+$('pk').onclick=()=>{if(busy||!peek||pos>=6)return;peek--;peeked=pos;msg(ch[pos]?'🔎 خانه‌ی بعدی: کپسول جوهر دارد!':'🔎 خانه‌ی بعدی: خالی است');draw();ui()};
+$('hl').onclick=()=>{if(busy||!heal||lives[0]>=3)return;heal--;lives[0]++;msg('❤️ یک جان گرفتی');ui()};
+async function start(){lives=[3,3];round=0;peek=1;heal=1;turn=0;over=false;$('ov').style.display='none';load();draw();await spin();busy=false;ui()}
+$('go').onclick=start;draw();ui();
+</script></body></html>

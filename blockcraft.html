@@ -39,7 +39,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 </head>
 <body>
 <canvas id="c"></canvas>
-<a class="back" href="index.html">&larr; S loop</a>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
 <div id="cross"></div><div id="mine"><i></i></div><div id="jb"><div id="jk"></div></div><div id="dmg"></div>
 <div id="vit"></div><canvas id="map" width="88" height="88"></canvas>
 <div id="top"><button id="bInv">🎒 ساخت و کوله‌پشتی</button><button id="bMode">⚔️ بقا</button><button id="rst">🌍 دنیای جدید</button></div>

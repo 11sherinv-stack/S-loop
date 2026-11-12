@@ -25,7 +25,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 </style>
 </head>
 <body>
-<a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
+<a href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🏙️ City Bloxx</h1>
 <div class="hud"><div>جمعیت<b id="sc">۰</b></div><div>طبقه<b id="fl">۰</b></div><div>جان<b id="hp">❤️❤️❤️</b></div><div>رکورد<b id="bs">۰</b></div></div>
 <div class="wrap"><canvas id="c" width="360" height="600"></canvas>

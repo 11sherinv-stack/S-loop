@@ -36,7 +36,7 @@ button:disabled{opacity:.4}
 #ov{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#fff;z-index:20;text-align:center}
 #ov h2{margin:0;font-size:1.6rem}
 </style></head><body>
-<a class="back" href="index.html">&larr; S loop</a>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
 <header><div>مرحله<b id="lv">۱</b></div><div>حرکت<b id="mv">۰</b></div><div>امتیاز<b id="sc">۰</b></div><div>رکورد<b id="bs">۰</b></div></header>
 <div id="bar"><button id="un">↩ برگشت</button><button id="rs">🔄 دوباره</button><button id="sf">🔀 بُر زدن</button></div>
 <div id="board"></div>

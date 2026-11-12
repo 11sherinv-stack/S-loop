@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Plants vs Zombies</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#2b3b1a;color:#fff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:manipulation;overflow:hidden}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#top{display:flex;align-items:center;gap:5px;padding:34px 4px 4px;flex-wrap:wrap;justify-content:center}
+#sun{background:#fff8c4;color:#7a5200;font-weight:800;border-radius:12px;padding:3px 10px;font-size:1rem;min-width:70px;text-align:center}
+#seeds{display:flex;gap:4px;direction:ltr}.sd{position:relative;width:46px;height:56px;border-radius:8px;background:#e8d9a8;color:#3b2a00;border:2px solid #7a5a2a;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.35rem;line-height:1;overflow:hidden;cursor:pointer;padding:0}
+.sd small{font-size:.62rem;font-weight:800}.sd.on{outline:3px solid #ffeb3b}.sd .cv{position:absolute;left:0;right:0;top:0;background:#0009;height:0}.sd.no{opacity:.55}
+#sh{width:46px;height:56px;border-radius:8px;background:#90a4ae;border:2px solid #455a64;font-size:1.4rem;cursor:pointer;padding:0}#sh.on{outline:3px solid #ffeb3b}
+canvas{display:block;width:100vw;max-width:760px;margin:0 auto;aspect-ratio:720/420;touch-action:manipulation}
+#info{text-align:center;font-size:.8rem;padding:2px;opacity:.9}
+#ov{position:fixed;inset:0;background:#000b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+#ov h2{margin:0;font-size:1.8rem}#ov p{margin:0;line-height:1.8;font-size:.9rem}#ov button{font:inherit;border:0;border-radius:14px;padding:12px 34px;background:#43a047;color:#fff;font-weight:800;font-size:1.1rem}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<div id="top"><div id="sun">☀️ 150</div><div id="seeds"></div><button id="sh">⛏</button></div>
+<canvas id="c" width="720" height="420"></canvas>
+<div id="info"></div>
+<div id="ov"><h2>🌻 گیاهان علیه زامبی‌ها</h2><p>با خورشیدها (روی آن‌ها بزن!) گیاه بکار تا زامبی‌ها به خانه نرسند.<br>یک بذر انتخاب کن، بعد روی خانه‌ی چمن بزن. ⛏ برای کندن گیاه.</p><button id="go">START</button></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.05){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const OX=40,OY=0,CW=76,CH=84,NR=5,NC=9;
+const SD=[{k:'sf',e:'🌻',c:50,cd:5},{k:'ps',e:'🌱',c:100,cd:5},{k:'sn',e:'❄️',c:175,cd:6},{k:'wn',e:'🥜',c:50,cd:15},{k:'cb',e:'🍒',c:150,cd:25},{k:'pm',e:'🥔',c:25,cd:18}];
+let lvl=+(localStorage.getItem('pz-lv')||1),sun,plants,zs,peas,suns,mow,fx,sel=null,shovel=false,st='menu',t=0,skyT,spawned,total,spT,cdT,last=0,msgT=0;
+const seedsEl=$('seeds');seedsEl.innerHTML=SD.map((s,i)=>'<button class="sd" data-i="'+i+'">'+s.e+'<small>'+s.c+'</small><div class="cv"></div></button>').join('');
+function setup(){sun=150;plants=[];zs=[];peas=[];suns=[];fx=[];mow=Array.from({length:NR},()=>({x:-10,on:false,used:false}));sel=null;shovel=false;t=0;skyT=5;spawned=0;total=8+lvl*5;spT=14;cdT=SD.map(()=>0);ui()}
+function ui(){$('sun').textContent='☀️ '+sun;document.querySelectorAll('.sd').forEach((b,i)=>{const s=SD[i];b.classList.toggle('on',sel===i);b.classList.toggle('no',sun<s.c);b.querySelector('.cv').style.height=(cdT[i]>0?cdT[i]/s.cd*100:0)+'%'});$('sh').classList.toggle('on',shovel);
+  $('info').textContent='مرحله '+lvl+' — زامبی‌ها: '+Math.max(0,total-spawned+zs.length)+' باقی'}
+seedsEl.onclick=e=>{const b=e.target.closest('.sd');if(!b||st!=='play')return;const i=+b.dataset.i;if(cdT[i]>0||sun<SD[i].c){beep(150,.1);return}sel=sel===i?null:i;shovel=false;ui()};
+$('sh').onclick=()=>{shovel=!shovel;sel=null;ui()};
+function pos(e){const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*720,(e.clientY-r.top)/r.height*420]}
+cv.addEventListener('pointerdown',e=>{if(st!=='play')return;e.preventDefault();const[px,py]=pos(e);
+  for(let i=suns.length-1;i>=0;i--){const s=suns[i];if(Math.hypot(s.x-px,s.y-py)<34){suns.splice(i,1);sun+=25;beep(900,.08);ui();return}}
+  const c=Math.floor((px-OX)/CW),r=Math.floor((py-OY)/CH);if(c<0||c>=NC||r<0||r>=NR)return;const ex=plants.findIndex(p=>p.r===r&&p.c===c);
+  if(shovel){if(ex>=0){plants.splice(ex,1);beep(300,.1)}return}
+  if(sel==null||ex>=0)return;const s=SD[sel];if(sun<s.c||cdT[sel]>0)return;sun-=s.c;cdT[sel]=s.cd;
+  const hp={sf:300,ps:300,sn:300,wn:1800,cb:9999,pm:300}[s.k];plants.push({k:s.k,r,c,hp,mh:hp,tm:s.k==='sf'?6:s.k==='cb'?.9:s.k==='pm'?8:0,sh:.6});beep(520,.08);sel=null;ui()});
+function spawnZ(){const R=Math.random(),k=lvl>=2&&R<.15?'bk':lvl>=1&&R<.4?'cn':'no',fast=lvl>=3&&Math.random()<.2;const hp={no:200,cn:370,bk:1100}[k];zs.push({r:Math.random()*NR|0,x:NC+.4,k,hp,mh:hp,sl:0,sp:fast?1.7:1,eat:false,fr:Math.random()*6});spawned++}
+function boom(r,xc,rad){zs.forEach(z=>{if(Math.abs(z.r-r)<=1&&Math.abs(z.x-xc)<=rad)z.hp-=1800});fx.push({x:OX+(xc+.5)*CW,y:OY+(r+.5)*CH,t:.5})}
+function update(dt){t+=dt;
+  skyT-=dt;if(skyT<=0){skyT=8+Math.random()*3;suns.push({x:OX+Math.random()*CW*8+20,y:-20,ty:80+Math.random()*300,vy:50,life:9})}
+  for(let i=0;i<cdT.length;i++)if(cdT[i]>0)cdT[i]=Math.max(0,cdT[i]-dt);
+  suns.forEach(s=>{if(s.y<s.ty)s.y+=s.vy*dt;s.life-=dt});suns=suns.filter(s=>s.life>0);
+  // زامبی ظهور
+  spT-=dt;if(spawned<total&&spT<=0){spawnZ();spT=Math.max(3.2,10-lvl*.9-spawned/total*3)*(.7+Math.random()*.6)}
+  plants.forEach(p=>{
+    if(p.k==='sf'){p.tm-=dt;if(p.tm<=0){p.tm=12;suns.push({x:OX+(p.c+.5)*CW+rnd(),y:OY+(p.r+.3)*CH,ty:OY+(p.r+.7)*CH,vy:60,life:9})}}
+    else if(p.k==='ps'||p.k==='sn'){p.sh-=dt;const tg=zs.some(z=>z.r===p.r&&z.x>p.c);if(p.sh<=0&&tg){p.sh=1.35;peas.push({r:p.r,x:OX+(p.c+.8)*CW,sn:p.k==='sn'});beep(700,.03,'square',.02)}}
+    else if(p.k==='cb'){p.tm-=dt;if(p.tm<=0){boom(p.r,p.c,1.6);p.hp=0;beep(90,.4,'sawtooth',.15)}}
+    else if(p.k==='pm'){if(p.tm>0)p.tm-=dt;else{const z=zs.find(z=>z.r===p.r&&Math.abs(z.x-(p.c+.6))<.6);if(z){boom(p.r,p.c,.9);p.hp=0;beep(100,.3,'sawtooth',.15)}}}});
+  peas.forEach(p=>{p.x+=380*dt;const z=zs.find(z=>z.r===p.r&&OX+z.x*CW+22>p.x&&OX+z.x*CW-10<p.x);if(z){z.hp-=20;if(p.sn)z.sl=3.5;p.hit=1;beep(250,.03,'square',.02)}});peas=peas.filter(p=>!p.hit&&p.x<740);
+  zs.forEach(z=>{z.sl=Math.max(0,z.sl-dt);const c=Math.floor(z.x+.35),pl=plants.find(p=>p.r===z.r&&p.c===c&&p.hp>0&&!(p.k==='pm'&&p.tm<=0));
+    if(pl&&c<NC&&c>=0){z.eat=true;pl.hp-=60*dt}else{z.eat=false;z.x-=.19*z.sp*(z.sl>0?.5:1)*dt}
+    if(z.x<-.3){const m=mow[z.r];if(!m.used){m.used=true;m.on=true;m.x=-10;beep(200,.4,'sawtooth',.06)}else if(!m.on){lose();}}});
+  mow.forEach((m,r)=>{if(m.on){m.x+=480*dt;zs.forEach(z=>{if(z.r===r&&OX+z.x*CW<m.x+30)z.hp=0});if(m.x>740)m.on=false}});
+  plants=plants.filter(p=>p.hp>0);const before=zs.length;zs=zs.filter(z=>z.hp>0);if(zs.length<before)beep(180,.08,'sawtooth',.03);
+  fx.forEach(f=>f.t-=dt);fx=fx.filter(f=>f.t>0);
+  if(spawned>=total&&!zs.length&&st==='play')win();ui()}
+const rnd=()=>(Math.random()-.5)*30;
+function win(){st='end';beep(660,.2);setTimeout(()=>beep(990,.3),200);lvl++;localStorage.setItem('pz-lv',lvl);$('ov').style.display='flex';$('ov').innerHTML='<h2>🏆 زامبی‌ها شکست خوردند!</h2><p>آماده‌ی مرحله‌ی '+lvl+' هستی؟</p><button id="go">NEXT</button>';$('go').onclick=begin}
+function lose(){if(st!=='play')return;st='end';beep(110,.8,'sawtooth',.1);$('ov').style.display='flex';$('ov').innerHTML='<h2>🧠 زامبی‌ها مغزت را خوردند!</h2><p>مرحله‌ی '+lvl+' را دوباره امتحان کن.</p><button id="go">AGAIN</button>';$('go').onclick=begin}
+function begin(){$('ov').style.display='none';setup();st='play'}
+$('go').onclick=begin;
+function drawPlant(p){const cx=OX+(p.c+.5)*CW,cy=OY+(p.r+.5)*CH;x.save();x.translate(cx,cy);x.textAlign='center';x.textBaseline='middle';
+  if(p.k==='sf'){x.font='54px serif';x.fillText('🌻',0,4)}else if(p.k==='cb'){const s=1+Math.sin(p.tm*30)*.1*(p.tm<.9?1:0);x.font=(52*s)+'px serif';x.fillText('🍒',0,4)}
+  else if(p.k==='ps'||p.k==='sn'){const c=p.k==='ps'?'#5cc23a':'#6fd0f5',d=p.k==='ps'?'#2e7d1c':'#2a89b3';x.fillStyle=d;x.fillRect(-3,4,6,26);x.beginPath();x.ellipse(-14,22,14,6,-.4,0,7);x.ellipse(14,22,14,6,.4,0,7);x.fill();
+    x.fillStyle=c;x.beginPath();x.arc(0,-6,22,0,7);x.fill();x.fillRect(14,-12,18,14);x.beginPath();x.arc(32,-5,8,0,7);x.fill();x.fillStyle='#111';x.beginPath();x.arc(6,-14,4,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(7,-15,1.5,0,7);x.fill()}
+  else if(p.k==='wn'){const k=p.hp/p.mh;x.fillStyle=k>.66?'#c68a4a':k>.33?'#a9703a':'#8a5a2c';x.beginPath();x.ellipse(0,2,26,32,0,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.arc(-9,-6,6,0,7);x.arc(9,-6,6,0,7);x.fill();x.fillStyle='#111';x.beginPath();x.arc(-8,-6,3,0,7);x.arc(10,-6,3,0,7);x.fill();if(k<.66){x.strokeStyle='#4e2e12';x.lineWidth=2;x.beginPath();x.moveTo(-5,10);x.lineTo(0,18);x.lineTo(6,12);x.stroke()}}
+  else if(p.k==='pm'){x.fillStyle='#8d6e63';x.beginPath();x.ellipse(0,18,30,16,0,Math.PI,0);x.fill();x.fillStyle=p.tm<=0?'#ff1744':'#555';x.beginPath();x.arc(0,-2,5,0,7);x.fill();x.strokeStyle='#5d4037';x.beginPath();x.moveTo(0,4);x.lineTo(0,-2);x.stroke();if(p.tm>0){x.fillStyle='#ffffff99';x.font='10px sans-serif';x.fillText(Math.ceil(p.tm)+'s',0,26)}}
+  x.restore()}
+function drawZ(z){const cx=OX+z.x*CW+CW/2,cy=OY+(z.r+.5)*CH;x.save();x.translate(cx,cy);x.textAlign='center';x.textBaseline='middle';const w=Math.sin(t*6+z.fr)*(z.eat?3:1.5);x.translate(0,w*.4);
+  if(z.sl>0)x.filter='hue-rotate(160deg) saturate(1.3)';x.font='56px serif';x.fillText('🧟',0,4);x.filter='none';
+  if(z.k==='cn'){x.fillStyle='#ff9800';x.beginPath();x.moveTo(-10,-22);x.lineTo(0,-46);x.lineTo(10,-22);x.fill();x.fillStyle='#fff';x.fillRect(-7,-30,14,3)}
+  if(z.k==='bk'){x.fillStyle='#9e9e9e';x.fillRect(-14,-40,28,22);x.fillStyle='#757575';x.fillRect(-16,-22,32,5);x.fillStyle='#bdbdbd';x.fillRect(-9,-38,5,14)}
+  if(z.hp<z.mh){x.fillStyle='#0008';x.fillRect(-16,34,32,4);x.fillStyle='#e53935';x.fillRect(-16,34,32*Math.max(0,z.hp/z.mh),4)}
+  x.restore()}
+function draw(){x.clearRect(0,0,720,420);
+  for(let r=0;r<NR;r++)for(let c=0;c<NC;c++){x.fillStyle=(r+c)%2?'#5fae3a':'#6fc144';x.fillRect(OX+c*CW,OY+r*CH,CW,CH)}
+  x.fillStyle='#7b5a35';x.fillRect(0,0,OX,420);x.fillStyle='#4f3820';x.fillRect(OX-4,0,4,420);
+  mow.forEach((m,r)=>{if(m.used&&!m.on)return;const mx=m.on?m.x:6;x.fillStyle='#e53935';x.fillRect(mx,OY+r*CH+CH/2-12,30,22);x.fillStyle='#333';x.beginPath();x.arc(mx+6,OY+r*CH+CH/2+12,5,0,7);x.arc(mx+24,OY+r*CH+CH/2+12,5,0,7);x.fill();x.fillStyle='#fff';x.fillRect(mx+20,OY+r*CH+CH/2-20,3,10)});
+  if(sel!=null||shovel){x.fillStyle='rgba(255,255,255,.12)';for(let r=0;r<NR;r++)for(let c=0;c<NC;c++)if(!plants.some(p=>p.r===r&&p.c===c))x.fillRect(OX+c*CW+2,OY+r*CH+2,CW-4,CH-4)}
+  const items=[...plants.map(p=>({y:p.r,f:()=>drawPlant(p)})),...zs.map(z=>({y:z.r+.01,f:()=>drawZ(z)}))].sort((a,b)=>a.y-b.y);items.forEach(i=>i.f());
+  peas.forEach(p=>{x.fillStyle=p.sn?'#8be9ff':'#7be04a';x.beginPath();x.arc(p.x,OY+(p.r+.42)*CH,7,0,7);x.fill();x.strokeStyle='#0003';x.stroke()});
+  fx.forEach(f=>{x.fillStyle='rgba(255,160,0,'+Math.min(1,f.t*2)+')';x.beginPath();x.arc(f.x,f.y,80*(1.2-f.t),0,7);x.fill()});
+  suns.forEach(s=>{const g=x.createRadialGradient(s.x,s.y,4,s.x,s.y,26);g.addColorStop(0,'#fff59d');g.addColorStop(.6,'#ffd600');g.addColorStop(1,'rgba(255,214,0,0)');x.fillStyle=g;x.beginPath();x.arc(s.x,s.y,26,0,7);x.fill();x.fillStyle='#ffeb3b';x.beginPath();x.arc(s.x,s.y,14,0,7);x.fill()})}
+function loop(tm){const dt=Math.min(.04,(tm-last)/1000||0);last=tm;if(st==='play')update(dt);draw();requestAnimationFrame(loop)}
+setup();requestAnimationFrame(loop);
+</script></body></html>

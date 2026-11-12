@@ -14,7 +14,13 @@ h1{margin:0;padding:36px 0 4px;text-align:center;font-size:1.5rem;color:#ffd54a;
 .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
 .sym{height:var(--c);display:flex;align-items:center;justify-content:center;font-size:calc(var(--c)*.62);line-height:1}
 .sym.win{animation:wn .5s infinite alternate;background:#ffe08a;border-radius:10px}@keyframes wn{to{transform:scale(1.15);background:#ffb300}}
-#mach{--c:min(21vw,88px)}
+#mach{--c:min(17.5vw,84px);position:relative;margin-right:auto;margin-left:auto;width:min(82vw,396px)}
+.s7{font-family:Georgia,'Times New Roman',serif;font-weight:900;font-size:1.05em;line-height:1;color:#e53935;-webkit-text-stroke:2px #ffd54a;text-shadow:0 3px 0 #8b0000,0 0 10px #ff8a80;transform:scaleY(1.1);display:inline-block}
+#lv{position:absolute;right:-40px;top:14px;width:40px;height:178px;touch-action:none}
+#lv .base{position:absolute;left:0;top:73px;width:16px;height:34px;border-radius:6px 0 0 6px;background:linear-gradient(90deg,#8a8a8a,#d8d8d8,#777);box-shadow:0 2px 4px #0008}
+#lv .rod{position:absolute;left:16px;width:9px;margin-left:0;background:linear-gradient(90deg,#999,#fff,#888);border-radius:4px;box-shadow:0 0 3px #0008}
+#lv .kn{position:absolute;left:5px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a8a,#e00 55%,#800);box-shadow:0 3px 6px #000a;cursor:grab}
+#lv .hint{position:absolute;left:-2px;top:182px;font-size:.55rem;opacity:.7;white-space:nowrap;color:#ffe9a8}
 #msg{text-align:center;min-height:1.6em;margin:8px 0 2px;font-weight:800;color:#ffe9a8;font-size:1.05rem}
 #ctl{display:flex;gap:6px;justify-content:center;align-items:center;margin:6px;flex-wrap:wrap}
 button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:#6d1b4a;color:#fff;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #0006}button:active{transform:translateY(2px)}button:disabled{opacity:.4}
@@ -25,7 +31,7 @@ button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:#6d1
 <a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
 <h1>🎰 777 SLOTS</h1>
 <div id="bal"><div>سکه<b id="cr">۰</b></div><div>شرط کل<b id="tb">۰</b></div><div>برد<b id="wn">۰</b></div></div>
-<div id="mach"><div id="reels"></div></div>
+<div id="mach"><div id="reels"></div><div id="lv"><div class="base"></div><div class="rod" id="rod"></div><div class="kn" id="kn"></div><div class="hint">⬇ بکش</div></div></div>
 <div id="msg">برای چرخاندن «SPIN» را بزن</div>
 <div id="ctl"><button class="sm" id="bm">−</button><span>شرط هر خط: <b id="bl">۱</b></span><button class="sm" id="bp">+</button><button class="sm" id="mx">MAX</button></div>
 <div id="ctl"><button id="spin">SPIN</button><button class="sm" id="au">AUTO ×۱۰</button><button class="sm" id="pb">📋 جدول</button><button class="sm" id="bn">🎁 هدیه</button></div>
@@ -35,7 +41,7 @@ button{font:inherit;border:0;border-radius:14px;padding:9px 14px;background:#6d1
 const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
 function beep(f,d=.07,ty='square',v=.04){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
-const S=[['🍒',5,30],['🍋',8,24],['🍊',10,18],['🍇',15,12],['🔔',25,8],['⭐',40,5],['💎',75,2.5],['7️⃣',200,1.2]];
+const S=[['🍒',5,30],['🍋',8,24],['🍊',10,18],['🍇',15,12],['🔔',25,8],['⭐',40,5],['💎',75,2.5],['<span class="s7">7</span>',200,1.2]];
 const TOT=S.reduce((a,s)=>a+s[2],0),NR=5,NC=3;
 const LINES=[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1]];
 let cr=+(localStorage.getItem('sl7-cr')||1000),bet=+(localStorage.getItem('sl7-bet')||1),busy=false,auto=0,grid;
@@ -74,5 +80,13 @@ $('mx').onclick=()=>{bet=[...BETS].reverse().find(b=>b*LINES.length<=cr)||1;ui()
 $('bn').onclick=()=>{const l=+(localStorage.getItem('sl7-bonus')||0);if(Date.now()-l<864e5&&cr>=tb()){const m=Math.ceil((864e5-(Date.now()-l))/36e5);msg('هدیه‌ی بعدی تا '+fa(m)+' ساعت دیگر');return}localStorage.setItem('sl7-bonus',Date.now());cr+=cr<100?1000:500;ui();msg('🎁 سکه‌ی هدیه گرفتی!')};
 function tb(){return 100}
 $('pb').onclick=()=>{const p=$('pt');p.style.display=p.style.display==='block'?'none':'block';p.innerHTML='<div><b>۳ نماد پشت‌سرهم از چپ</b><b>× شرط هر خط</b></div>'+S.slice().reverse().map(s=>'<div><span>'+s[0]+s[0]+s[0]+'</span><b>'+s[1]+'×</b></div>').join('')+'<div><span>۴ نماد مثل هم</span><b>×۳ ضریب</b></div><div><span>۵ نماد مثل هم</span><b>×۱۰ ضریب</b></div><div><span>🍒🍒 (دو گیلاس از چپ)</span><b>۲×</b></div><div><span>خط‌های برد</span><b>'+LINES.length+' خط</b></div>'};
+// اهرم
+(function(){const kn=$('kn'),rod=$('rod'),TOP=6,BOT=142,PIV=88;let y=TOP,dr=false,sy=0,y0=0,anim=0;
+  const set=v=>{y=Math.max(TOP,Math.min(BOT,v));kn.style.top=(y-0)+'px';const k=y+15,a=Math.min(k,PIV),b=Math.max(k,PIV);rod.style.top=a+'px';rod.style.height=Math.max(2,b-a)+'px'};
+  const back=()=>{cancelAnimationFrame(anim);const t0=performance.now(),s0=y;(function f(t){const k=Math.min(1,(t-t0)/450),e=1-Math.pow(1-k,3);set(s0+(TOP-s0)*e);if(k<1)anim=requestAnimationFrame(f)})(t0)};
+  kn.addEventListener('pointerdown',e=>{if(busy)return;e.preventDefault();dr=true;sy=e.clientY;y0=y;cancelAnimationFrame(anim);try{kn.setPointerCapture(e.pointerId)}catch(_){}});
+  kn.addEventListener('pointermove',e=>{if(!dr)return;set(y0+e.clientY-sy)});
+  const end=()=>{if(!dr)return;dr=false;if(y>BOT-18&&!busy){beep(220,.12,'sawtooth',.05);auto=0;$('au').textContent='AUTO ×۱۰';spin()}back()};
+  kn.addEventListener('pointerup',end);kn.addEventListener('pointercancel',end);set(TOP)})();
 grid=rnd();show(grid);ui();
 </script></body></html>

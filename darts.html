@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Darts</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:radial-gradient(#3b2a1a,#140c06);color:#fff;font-family:Vazirmatn,Tahoma,sans-serif;user-select:none;touch-action:none;overflow:hidden}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:9;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#sb{display:flex;justify-content:center;gap:10px;padding:36px 8px 4px}#sb div{background:#0008;border:2px solid #fff3;border-radius:14px;padding:4px 16px;text-align:center;min-width:120px}#sb div.on{border-color:#ffd54a;box-shadow:0 0 12px #ffd54a88}#sb b{display:block;font-size:1.6rem}#sb small{font-size:.65rem;opacity:.8}
+canvas{display:block;margin:0 auto;width:min(96vw,calc(100svh - 190px));aspect-ratio:1;touch-action:none}
+#msg{text-align:center;min-height:2em;font-weight:800;font-size:1.1rem;color:#ffe9a8}
+#ov{position:fixed;inset:0;background:#000c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px}
+#ov h2{margin:0;font-size:1.8rem}#ov p{margin:0;line-height:1.8}button{font:inherit;border:0;border-radius:14px;padding:11px 26px;background:#e5383b;color:#fff;font-weight:800;font-size:1.05rem}button.s{background:#37474f}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<div id="sb"><div id="p0"><small>تو</small><b id="s0">301</b><small id="d0">—</small></div><div id="p1"><small>کامپیوتر</small><b id="s1">301</b><small id="d1">—</small></div></div>
+<canvas id="c" width="560" height="560"></canvas><div id="msg"></div>
+<div id="ov"><h2>🎯 دارت</h2><p>هدف‌گیر روی تخته حرکت می‌کند؛ <b>لمس کن</b> تا دارت پرتاب شود.<br>۳ دارت در هر نوبت. امتیاز را به دقیقاً صفر برسان (اگر کمتر از صفر شود نوبت باطل می‌شود). برای دقیق‌تر شدن، انگشتت را روی صفحه <b>نگه دار</b> تا هدف‌گیر آرام شود و رها کن.</p><div style="display:flex;gap:8px"><button id="g3">301</button><button id="g5" class="s">501</button></div></div>
+<script>
+const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d'),C=280,R=250;
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.06){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const SEG=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+// شعاع‌ها نسبت به R: بول 6.35، بول بیرونی 15.9، سه‌برابر 99–107، دو‌برابر 162–170 (از 170)
+const RB=6.35/170,RO=15.9/170,T0=99/170,T1=107/170,D0=162/170;
+function scoreAt(px,py){const dx=px-C,dy=py-C,r=Math.hypot(dx,dy)/R;if(r>1)return{s:0,t:'miss'};if(r<=RB)return{s:50,t:'DB'};if(r<=RO)return{s:25,t:'B'};
+  let a=Math.atan2(dx,-dy)*180/Math.PI;a=(a+360+9)%360;const n=SEG[Math.floor(a/18)];if(r>=D0)return{s:n*2,t:'D'+n};if(r>=T0&&r<=T1)return{s:n*3,t:'T'+n};return{s:n,t:''+n}}
+let start=301,sc=[0,0],turn=0,left=3,turnStart=0,darts=[],t=0,hold=false,state='menu',aimOn=false,busy=false;
+function board(){x.fillStyle='#111';x.beginPath();x.arc(C,C,R+22,0,7);x.fill();x.fillStyle='#000';x.beginPath();x.arc(C,C,R*1.0,0,7);x.fill();
+  for(let i=0;i<20;i++){const a0=(i*18-9-90)*Math.PI/180,a1=a0+18*Math.PI/180,dark=i%2===0;
+    const ring=(r0,r1,c)=>{x.beginPath();x.arc(C,C,R*r1,a0,a1);x.arc(C,C,R*r0,a1,a0,true);x.closePath();x.fillStyle=c;x.fill()};
+    const base=dark?'#161616':'#f1e4c3',acc=dark?'#c62828':'#1b8a3a';
+    ring(RO,T0,base);ring(T0,T1,acc);ring(T1,D0,base);ring(D0,1,acc);
+    const am=(a0+a1)/2;x.fillStyle='#fff';x.font='bold 24px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(SEG[i],C+Math.cos(am)*(R+12),C+Math.sin(am)*(R+12))}
+  x.fillStyle='#1b8a3a';x.beginPath();x.arc(C,C,R*RO,0,7);x.fill();x.fillStyle='#c62828';x.beginPath();x.arc(C,C,R*RB,0,7);x.fill();
+  x.strokeStyle='#b8b8b8';x.lineWidth=1;for(let i=0;i<20;i++){const a=(i*18-9-90)*Math.PI/180;x.beginPath();x.moveTo(C+Math.cos(a)*R*RO,C+Math.sin(a)*R*RO);x.lineTo(C+Math.cos(a)*R,C+Math.sin(a)*R);x.stroke()}
+  [RO,T0,T1,D0,1].forEach(r=>{x.beginPath();x.arc(C,C,R*r,0,7);x.stroke()})}
+function dart(d){x.save();x.translate(d.x,d.y);x.strokeStyle='#ddd';x.lineWidth=3;x.beginPath();x.moveTo(0,0);x.lineTo(-18,28);x.stroke();x.fillStyle=d.c;x.beginPath();x.moveTo(-18,28);x.lineTo(-30,26);x.lineTo(-26,42);x.lineTo(-14,38);x.closePath();x.fill();x.fillStyle='#fff';x.beginPath();x.arc(0,0,2,0,7);x.fill();x.restore()}
+function aimPos(){const k=hold?.25:1,a=95*k;return{x:C+Math.sin(t*1.7)*a*1.1+Math.sin(t*3.1)*a*.35,y:C+Math.cos(t*1.3)*a*.9+Math.cos(t*2.7)*a*.4}}
+function draw(){x.clearRect(0,0,560,560);board();darts.forEach(dart);
+  if(state==='play'&&turn===0&&!busy){const p=aimPos();x.strokeStyle='#ffeb3b';x.lineWidth=2;x.beginPath();x.arc(p.x,p.y,14,0,7);x.moveTo(p.x-22,p.y);x.lineTo(p.x+22,p.y);x.moveTo(p.x,p.y-22);x.lineTo(p.x,p.y+22);x.stroke()}}
+function msg(m){$('msg').textContent=m}
+function ui(){$('s0').textContent=sc[0];$('s1').textContent=sc[1];$('p0').classList.toggle('on',turn===0);$('p1').classList.toggle('on',turn===1)}
+function throwAt(px,py,who){busy=true;const r=scoreAt(px,py);darts.push({x:px,y:py,c:who?'#2196f3':'#e53935'});beep(r.s?300+r.s*8:120,.1);
+  const label=r.t==='miss'?'خارج!':r.t==='DB'?'🎯 بول ۵۰':r.t==='B'?'بول ۲۵':(r.t[0]==='T'?'سه‌برابر ':r.t[0]==='D'?'دوبل ':'')+(r.t.replace(/[TD]/,''));msg((who?'🤖 ':'')+label+' = '+r.s);
+  left--;turnTotal+=r.s;const nv=sc[who]-r.s;let bust=false;
+  if(nv<0){bust=true}else sc[who]=nv;ui();
+  setTimeout(()=>{if(sc[who]===0){return end(who)}
+    if(bust){sc[who]=turnStart;ui();msg((who?'🤖 ':'')+'باطل! (کمتر از صفر)');beep(150,.3,'sawtooth');return nextTurn(900)}
+    if(left>0){busy=false;if(who===1)setTimeout(ai,700)}else nextTurn(1000)},650)}
+let turnTotal=0;
+function nextTurn(ms){setTimeout(()=>{darts=[];turn^=1;left=3;turnStart=sc[turn];turnTotal=0;busy=false;ui();msg(turn?'نوبت کامپیوتر…':'نوبت توست');if(turn)setTimeout(ai,800)},ms)}
+function gauss(){return (Math.random()+Math.random()+Math.random()-1.5)*1.6}
+function targetFor(rem){ // نقطه‌ی هدف
+  const pol=(n,r)=>{const i=SEG.indexOf(n),a=(i*18-90)*Math.PI/180;return[C+Math.cos(a)*R*r,C+Math.sin(a)*R*r]};
+  if(rem>60)return pol(20,(T0+T1)/2);if(rem===50)return[C,C];
+  if(rem<=40&&rem%2===0)return pol(rem/2,(D0+1)/2);const n=Math.min(20,Math.max(1,rem<=20?rem:rem-40>0&&rem-40<=20?rem-40:20));return pol(n,(RO+T0)/2+.1)}
+function ai(){if(state!=='play'||turn!==1)return;const rem=sc[1],[tx,ty]=targetFor(rem),sd=34;const px=tx+gauss()*sd,py=ty+gauss()*sd;throwAt(px,py,1)}
+function end(who){state='end';busy=true;beep(who?200:880,.4);$('ov').style.display='flex';$('ov').innerHTML='<h2>'+(who?'🤖 کامپیوتر برد':'🏆 تو برنده شدی!')+'</h2><p>دوباره بازی کنیم؟</p><div style="display:flex;gap:8px"><button id="g3">301</button><button id="g5" class="s">501</button></div>';bind()}
+function begin(n){start=n;sc=[n,n];turn=0;left=3;turnStart=n;turnTotal=0;darts=[];state='play';busy=false;$('ov').style.display='none';ui();msg('نوبت توست — لمس کن تا پرتاب شود')}
+function bind(){$('g3').onclick=()=>begin(301);$('g5').onclick=()=>begin(501)}bind();
+cv.addEventListener('pointerdown',e=>{if(state!=='play'||turn!==0||busy)return;e.preventDefault();hold=true});
+const rel=e=>{if(!hold)return;hold=false;if(state!=='play'||turn!==0||busy)return;const p=aimPos();const k=.25;throwAt(p.x+gauss()*9,p.y+gauss()*9,0)};
+cv.addEventListener('pointerup',rel);cv.addEventListener('pointercancel',()=>hold=false);
+(function loop(){t+=.016;draw();requestAnimationFrame(loop)})();
+</script></body></html>

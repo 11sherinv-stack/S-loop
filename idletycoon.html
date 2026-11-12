@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Idle Miner Tycoon</title>
+<style>
+:root{box-sizing:border-box}*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:#3b2a1a;font-family:Vazirmatn,Tahoma,sans-serif;color:#fff;user-select:none;touch-action:manipulation}
+.back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:56px;z-index:30;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none}
+#top{position:sticky;top:0;z-index:20;background:linear-gradient(#1565c0,#0d47a1);padding:34px 8px 6px;box-shadow:0 3px 8px #0008}
+#cash{text-align:center;font-size:1.9rem;font-weight:900;color:#ffeb3b;text-shadow:0 2px 0 #7a5b00;line-height:1.1}#cash small{display:block;font-size:.72rem;color:#fff;font-weight:600}
+#bar{display:flex;gap:6px;justify-content:center;margin-top:6px;flex-wrap:wrap}
+button{font:inherit;border:0;border-radius:12px;padding:7px 12px;background:#ff9800;color:#fff;font-weight:800;font-size:.8rem;cursor:pointer;box-shadow:0 3px 0 #0005}button:active{transform:translateY(2px)}button:disabled{background:#6d6d6d;opacity:.7}
+button.g{background:#43a047}button.b{background:#1e88e5}button.p{background:#8e24aa}
+.q{display:flex;gap:4px;justify-content:center;margin-top:6px}.q button{padding:3px 12px;background:#455a64;font-size:.74rem}.q button.on{background:#ffb300;color:#000}
+#list{padding:8px;max-width:520px;margin:0 auto}
+.cd{border-radius:14px;margin:8px 0;overflow:hidden;box-shadow:0 4px 0 #0006;background:#5d4037}
+.sc{height:78px;position:relative;overflow:hidden;background:linear-gradient(#6d4c41,#4e342e)}
+.sc .pile{position:absolute;left:8px;bottom:2px;font-size:1.6rem}.sc .mn{position:absolute;bottom:4px;font-size:1.5rem;animation:wk 2.4s linear infinite}
+@keyframes wk{0%{left:18%}50%{left:62%}100%{left:18%}}
+.sc .tag{position:absolute;right:8px;top:6px;background:#0007;border-radius:10px;padding:1px 10px;font-size:.72rem}
+.el{position:absolute;left:44%;font-size:2rem;animation:ev 3s ease-in-out infinite alternate}@keyframes ev{from{top:2px}to{top:42px}}
+.tr{position:absolute;bottom:4px;font-size:1.8rem;animation:wk 3.2s linear infinite}
+.pg{height:8px;background:#0005}.pg i{display:block;height:100%;background:#ffd600;width:0}
+.rw{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:6px 8px;background:#6d4c41}
+.in{font-size:.74rem;line-height:1.5}.in b{color:#ffe082}
+.mgr{background:#7b1fa2}.mgr.on{background:#2e7d32}
+#nw{width:100%;padding:14px;font-size:1rem}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:#000c;border-radius:14px;padding:8px 16px;font-size:.82rem;z-index:50;display:none;max-width:90vw;text-align:center}
+#drop{position:fixed;top:120px;font-size:2.6rem;z-index:25;display:none;cursor:pointer;animation:fl 9s linear forwards}@keyframes fl{from{left:-60px}to{left:105vw}}
+#ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;text-align:center;padding:16px;z-index:40}#ov h2{margin:0}#ov p{margin:0;line-height:1.9;font-size:.9rem}
+</style></head><body>
+<a class="back" href="index.html" onclick="if(parent!==window){event.preventDefault();parent.postMessage('sl-close','*')}">&larr; S loop</a>
+<div id="top"><div id="cash"></div><div id="bar"><button class="g" id="bo">⚡ بوست ×۲</button><button class="p" id="pr">💎 Prestige</button><button class="b" id="mg">🧑‍💼 مدیرها</button><button id="rs" style="background:#b71c1c">⟲</button></div><div class="q" id="q"><button data-q="1" class="on">×۱</button><button data-q="10">×۱۰</button><button data-q="100">×۱۰۰</button><button data-q="0">MAX</button></div></div>
+<div id="list"></div><div id="toast"></div><div id="drop">🎁</div>
+<div id="ov"><h2 id="ot"></h2><p id="om"></p><button class="g" id="oc" style="padding:10px 30px;font-size:1rem">باشه</button></div>
+<script>
+const $=i=>document.getElementById(i);
+const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));let au;
+function beep(f,d=.06,ty='triangle',v=.04){try{au=au||new(AudioContext||webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=v*GV;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const SUF=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
+function fmt(n){if(!isFinite(n))return'∞';if(n<1000)return n<10?n.toFixed(1):Math.floor(n).toString();let i=0;while(n>=1000&&i<SUF.length-1){n/=1000;i++}if(n>=1000){let e=0,m=n;while(m>=1000){m/=1000;e++}return m.toFixed(2)+String.fromCharCode(97+Math.min(25,e-1))+String.fromCharCode(97+Math.min(25,e-1))}return n.toFixed(n<10?2:n<100?1:0)+SUF[i]}
+const NAMES=['زغال‌سنگ','مس','نقره','طلا','یاقوت','زمرد','الماس','پلاتین','کریستال','اورانیوم','تیتانیوم','آسمان‌سنگ'],ICON=['🪨','🟤','⚪','🟡','🔴','🟢','💎','🔘','🔮','☢️','🔷','🌠'];
+const D=()=>({cash:0,gems:0,total:0,shafts:[{lv:1,mgr:0,buf:0}],el:{lv:1,mgr:0},wh:{lv:1,mgr:0,buf:0},boost:0,boostCd:0,last:Date.now(),all:0,drop:60});
+let S=D();try{const l=JSON.parse(localStorage.getItem('imt-save')||'null');if(l)S=Object.assign(D(),l)}catch(e){}
+const MS=lv=>{let m=1;if(lv>=10)m*=2;if(lv>=25)m*=2;for(let q=50;q<=lv;q+=25)m*=2;return m};
+const gm=()=>1+.2*S.gems,bst=()=>S.boost>0?2:1;
+const prod=i=>1.2*Math.pow(3.4,i)*S.shafts[i].lv*MS(S.shafts[i].lv)*(S.shafts[i].mgr?2:1)*gm()*bst();
+const tE=()=>10*S.el.lv*MS(S.el.lv)*(S.el.mgr?2:1)*bst(),tW=()=>14*S.wh.lv*MS(S.wh.lv)*(S.wh.mgr?2:1)*bst();
+const c0=i=>4*Math.pow(5,i),R=1.18,costS=(i,lv,n)=>c0(i)*Math.pow(R,lv-1)*(Math.pow(R,n)-1)/(R-1);
+const ceL=(lv,n)=>25*Math.pow(1.17,lv-1)*(Math.pow(1.17,n)-1)/.17,cwL=(lv,n)=>40*Math.pow(1.17,lv-1)*(Math.pow(1.17,n)-1)/.17;
+const newCost=i=>300*Math.pow(6.5,i-1),mgrS=i=>newCost(Math.max(1,i))*15*(i===0?.05:1),mgrE=()=>6000,mgrW=()=>9000;
+let qty=1;
+function nFor(fn,lv){if(qty>0)return qty;let n=0;while(n<500&&fn(lv,n+1)<=S.cash)n++;return Math.max(1,n)}
+function income(){let p=0;S.shafts.forEach((_,i)=>p+=prod(i));return Math.min(p,tE(),tW())*gm()*(S.wh.mgr?1:1)*1}
+function step(dt){let tot=0;S.shafts.forEach((s,i)=>{const p=prod(i);s.buf=Math.min(p*20+50,s.buf+p*dt);tot+=s.buf});
+  const mv=Math.min(tE()*dt,tot);if(mv>0)S.shafts.forEach(s=>{const k=s.buf/tot*mv;s.buf-=k;S.wh.buf+=k});
+  const out=Math.min(tW()*dt,S.wh.buf);S.wh.buf-=out;const gain=out*gm()/gm();S.cash+=gain;S.total+=gain;S.all+=gain;
+  if(S.boost>0)S.boost=Math.max(0,S.boost-dt);if(S.boostCd>0)S.boostCd-=dt;S.drop-=dt;if(S.drop<=0){S.drop=90+Math.random()*60;showDrop()}}
+/* پیش‌ساخت UI */
+const L=$('list');let built=-1;
+function build(){let h='';
+  h+='<div class="cd"><div class="sc" style="background:linear-gradient(#546e7a,#37474f)"><span class="tag">🏭 انبار — سطح <b id="wl"></b></span><span class="pile" id="wp">📦</span><span class="tr">🚚</span></div><div class="pg"><i id="wg"></i></div><div class="rw"><div class="in">انتقال: <b id="wt"></b>/s</div><button id="wb"></button></div></div>';
+  h+='<div class="cd"><div class="sc" style="background:linear-gradient(#5d4037,#3e2723)"><span class="tag">🛗 آسانسور — سطح <b id="el"></b></span><span class="el">🛗</span></div><div class="rw"><div class="in">ظرفیت: <b id="et"></b>/s</div><button id="eb"></button></div></div>';
+  S.shafts.forEach((s,i)=>{h+='<div class="cd" id="c'+i+'"><div class="sc"><span class="tag">'+ICON[i%12]+' '+NAMES[i%12]+' — سطح <b id="l'+i+'"></b></span><span class="pile" id="p'+i+'"></span><span class="mn" id="m'+i+'" style="animation-delay:-'+(i*.4)+'s">👷⛏️</span></div><div class="pg"><i id="g'+i+'"></i></div><div class="rw"><div class="in">تولید: <b id="t'+i+'"></b>/s<br><span id="x'+i+'" style="opacity:.8"></span></div><button id="u'+i+'" data-u="'+i+'"></button></div></div>'});
+  h+='<div class="cd"><button id="nw" class="g"></button></div>';L.innerHTML=h;built=S.shafts.length;
+  $('wb').onclick=()=>buy('w');$('eb').onclick=()=>buy('e');$('nw').onclick=()=>buy('n');S.shafts.forEach((_,i)=>$('u'+i).onclick=()=>buy('s',i))}
+function buy(k,i){let n,c;
+  if(k==='s'){n=nFor((lv,m)=>costS(i,lv,m),S.shafts[i].lv);c=costS(i,S.shafts[i].lv,n);if(S.cash<c)return beep(150,.1,'sawtooth');S.cash-=c;S.shafts[i].lv+=n}
+  else if(k==='e'){n=nFor(ceL,S.el.lv);c=ceL(S.el.lv,n);if(S.cash<c)return beep(150,.1,'sawtooth');S.cash-=c;S.el.lv+=n}
+  else if(k==='w'){n=nFor(cwL,S.wh.lv);c=cwL(S.wh.lv,n);if(S.cash<c)return beep(150,.1,'sawtooth');S.cash-=c;S.wh.lv+=n}
+  else if(k==='n'){const idx=S.shafts.length;c=newCost(idx);if(S.cash<c)return beep(150,.1,'sawtooth');S.cash-=c;S.shafts.push({lv:1,mgr:0,buf:0});build()}
+  beep(700,.06);save()}
+function ui(){const inc=income();$('cash').innerHTML='💰 '+fmt(S.cash)+'<small>'+fmt(inc)+' /s · 💎 '+S.gems+' (×'+gm().toFixed(1)+')'+(S.boost>0?' · ⚡'+Math.ceil(S.boost)+'s':'')+'</small>';
+  if(built!==S.shafts.length)build();
+  $('wl').textContent=S.wh.lv;$('wt').textContent=fmt(tW());{const n=nFor(cwL,S.wh.lv),c=cwL(S.wh.lv,n);$('wb').textContent='+'+n+' سطح · '+fmt(c);$('wb').disabled=S.cash<c}
+  $('wg').style.width=Math.min(100,S.wh.buf/(tW()*3+1)*100)+'%';$('wp').textContent=S.wh.buf>1?'📦📦':'📦';
+  $('el').textContent=S.el.lv;$('et').textContent=fmt(tE());{const n=nFor(ceL,S.el.lv),c=ceL(S.el.lv,n);$('eb').textContent='+'+n+' سطح · '+fmt(c);$('eb').disabled=S.cash<c}
+  S.shafts.forEach((s,i)=>{$('l'+i).textContent=s.lv;$('t'+i).textContent=fmt(prod(i));const cap=prod(i)*20+50;$('g'+i).style.width=(s.buf/cap*100)+'%';$('p'+i).textContent=ICON[i%12].repeat(Math.min(4,1+Math.floor(s.buf/cap*4)));
+    const n=nFor((lv,m)=>costS(i,lv,m),s.lv),c=costS(i,s.lv,n);$('u'+i).textContent='+'+n+' سطح · '+fmt(c);$('u'+i).disabled=S.cash<c;$('x'+i).textContent='×'+MS(s.lv)+' ضریب · '+(s.mgr?'مدیر ✓':'بدون مدیر');$('m'+i).textContent='👷'.repeat(Math.min(5,1+Math.floor(s.lv/12)))+'⛏️'});
+  const nc=newCost(S.shafts.length);$('nw').textContent='⛏ شفت جدید #'+(S.shafts.length+1)+' · '+fmt(nc);$('nw').disabled=S.cash<nc;
+  const pot=potential();$('pr').textContent='💎 Prestige (+'+pot+')';$('pr').disabled=pot<1;$('bo').disabled=S.boost>0||S.boostCd>0;$('bo').textContent=S.boost>0?'⚡ فعال':S.boostCd>0?'⚡ '+Math.ceil(S.boostCd)+'s':'⚡ بوست ×۲'}
+const potential=()=>Math.floor(Math.sqrt(S.total/2e5));
+$('q').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;qty=+b.dataset.q;document.querySelectorAll('#q button').forEach(x=>x.classList.toggle('on',x===b))};
+$('bo').onclick=()=>{S.boost=60;S.boostCd=240;beep(900,.2);toast('⚡ ۶۰ ثانیه درآمد ×۲!')};
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2200)}
+/* مدیرها */
+$('mg').onclick=()=>{const rows=[];S.shafts.forEach((s,i)=>rows.push(['شفت '+(i+1)+' ('+NAMES[i%12]+')',mgrS(i),s.mgr,()=>s.mgr=1]));rows.push(['آسانسور',mgrE(),S.el.mgr,()=>S.el.mgr=1]);rows.push(['انبار',mgrW(),S.wh.mgr,()=>S.wh.mgr=1]);
+  const o=$('ov');o.style.display='flex';$('ot').textContent='🧑‍💼 مدیرها (درآمد ×۲ برای هر بخش)';$('om').innerHTML='<div style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">'+rows.map((r,i)=>'<button class="mgr '+(r[2]?'on':'')+'" data-m="'+i+'" '+(r[2]||S.cash<r[1]?'disabled':'')+'>'+r[0]+' — '+(r[2]?'استخدام شده ✓':fmt(r[1]))+'</button>').join('')+'</div>';
+  $('om').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;const r=rows[+b.dataset.m];if(S.cash>=r[1]&&!r[2]){S.cash-=r[1];r[3]();beep(800,.15);save();$('mg').click()}};$('oc').onclick=()=>{$('ov').style.display='none';$('om').onclick=null}};
+$('oc').onclick=()=>$('ov').style.display='none';
+/* پرستیژ و ریست */
+$('pr').onclick=()=>{const g=potential();if(g<1)return;if(!confirm('Prestige: همه‌چیز ریست می‌شود ولی '+g+' 💎 می‌گیری (هر الماس +۲۰٪ درآمد دائمی). ادامه؟'))return;const gems=S.gems+g;S=Object.assign(D(),{gems});beep(1000,.3);built=-1;save();toast('💎 +'+g)};
+$('rs').onclick=()=>{if(confirm('همه‌ی پیشرفت پاک شود؟')){S=D();built=-1;save()}};
+/* صندوق هدیه */
+function showDrop(){const d=$('drop');d.style.display='block';d.style.animation='none';d.offsetHeight;d.style.animation='fl 9s linear forwards';d.style.top=(110+Math.random()*120)+'px';clearTimeout(showDrop.t);showDrop.t=setTimeout(()=>d.style.display='none',9200)}
+$('drop').onclick=()=>{$('drop').style.display='none';if(Math.random()<.15&&S.total>1e4){S.gems++;toast('🎁 یک 💎 گرفتی!')}else{const g=Math.max(50,income()*120);S.cash+=g;S.total+=g;toast('🎁 +'+fmt(g)+' (۲ دقیقه درآمد)')}beep(900,.2)};
+function save(){S.last=Date.now();try{localStorage.setItem('imt-save',JSON.stringify(S))}catch(e){}}
+/* درآمد آفلاین */
+(function(){const el=Math.min(8*3600,(Date.now()-S.last)/1000);if(el>60&&S.shafts.length){const g=income()*el*.5;S.cash+=g;S.total+=g;const o=$('ov');o.style.display='flex';$('ot').textContent='🌙 درآمد زمان غیبت';$('om').innerHTML='در '+Math.floor(el/60)+' دقیقه‌ای که نبودی معدن‌ها <b style="color:#ffeb3b">'+fmt(g)+'</b> درآمد کردند!'}})();
+let lt=performance.now(),ac=0;setInterval(()=>{const n=performance.now(),dt=Math.min(1,(n-lt)/1000);lt=n;step(dt);ac+=dt;if(ac>=.25){ac=0;ui()}},100);
+setInterval(save,5000);addEventListener('pagehide',save);document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+build();ui();
+</script></body></html>

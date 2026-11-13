@@ -1,6 +1,6 @@
 <!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>Cube Hopper</title>
+<title>Q*bert</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
 html,body{margin:0;height:100%;background:#0e0a24;color:#fff;font-family:Tahoma,system-ui,sans-serif;overflow:hidden}
@@ -10,13 +10,13 @@ a.back{align-self:flex-start;color:#ffcf5a;text-decoration:none;padding:6px 12px
 canvas{height:min(calc(100vh - 200px),calc(100vw*520/400));aspect-ratio:400/520;background:linear-gradient(#1a1245,#0e0a24);border-radius:8px}
 #pad{display:grid;grid-template-columns:repeat(2,74px);grid-template-rows:repeat(2,58px);gap:8px;margin-top:8px;direction:ltr}
 button{border-radius:12px;border:2px solid #ffcf5a;background:#2a1f66;color:#fff;font-size:26px}button:active{background:#5a46c0}
-#msg{position:absolute;top:34%;background:#000c;padding:14px 22px;border-radius:10px;text-align:center;font-size:20px}
+#msg{pointer-events:none;position:absolute;top:34%;background:#000c;padding:14px 22px;border-radius:10px;text-align:center;font-size:20px}
 </style></head><body>
 <a class="back" href="index.html">← S loop</a>
 <div id="hud"><span>امتیاز <b id="sc">0</b></span><span>مرحله <b id="lv">1</b></span><span>جان <b id="li">3</b></span></div>
 <canvas id="c" width="400" height="520"></canvas>
 <div id="pad"><button data-d="UL">↖</button><button data-d="UR">↗</button><button data-d="DL">↙</button><button data-d="DR">↘</button></div>
-<div id="msg">روی همه‌ی مکعب‌ها بپر تا رنگشان عوض شود!<br>از توپ قرمز و مار بنفش دوری کن.<br>بشقاب‌های کنار هرم تو را به بالا می‌برند.<br><small>دکمه‌ها / لمس کنار بازیکن / کلیدهای Q E A D</small><br><small>برای شروع لمس کن</small></div>
+<div id="msg">کیوبرت را روی همه‌ی مکعب‌ها بپران تا رنگشان عوض شود!<br>از توپ قرمز و مار بنفش دوری کن.<br>بشقاب‌های کنار هرم تو را به بالا می‌برند.<br><small>دکمه‌ها / لمس کنار بازیکن / کلیدهای Q E A D</small><br><small>برای شروع لمس کن</small></div>
 <script>
 if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
 const cv=document.getElementById('c'),g=cv.getContext('2d');
@@ -24,12 +24,12 @@ const D={UL:[-1,-1],UR:[-1,0],DL:[1,0],DR:[1,1]};
 const pos=(r,c)=>({x:200+(c-r/2)*56,y:80+r*40});
 const ok=(r,c)=>r>=0&&r<=6&&c>=0&&c<=r;
 let cube,need,level,score,lives,P,En,discs,run=false,spawnT,snakeT,over=0,winT=0,want=null,tick=0;
-const COL=n=>n==1?['#5b7bff','#2fd27a']:['#5b7bff','#ffd23f','#2fd27a'];
+const COL=n=>n==1?['#5a5acf','#ffd23f']:['#5a5acf','#4fd08a','#ffd23f'];
 function start(){if(run)return;score=0;lives=3;level=1;newLevel();run=true;msg.style.display='none'}
 function newLevel(){need=level<2?1:2;cube=[];for(let r=0;r<7;r++)cube.push(Array(r+1).fill(0));discs=[{r:3,c:-1,on:1},{r:3,c:4,on:1}];respawn();hud()}
-function respawn(){P={r:0,c:0,from:null,t:1,fall:0};En=[];spawnT=2;snakeT=5;want=null;hud()}
+function respawn(){over=0;winT=0;P={r:0,c:0,from:null,t:1,fall:0,dir:'DR'};En=[];spawnT=2;snakeT=5;want=null;hud()}
 function hud(){sc.textContent=score;lv.textContent=level;li.textContent=lives}
-function hop(e,d,dur){const [dr,dc]=D[d];e.from={r:e.r,c:e.c};e.r+=dr;e.c+=dc;e.t=0;e.dur=dur}
+function hop(e,d,dur){e.dir=d;const [dr,dc]=D[d];e.from={r:e.r,c:e.c};e.r+=dr;e.c+=dc;e.t=0;e.dur=dur}
 function cell(e){return e.from?e:e}
 function land(e,isP){ // پایان پرش
  if(isP){
@@ -39,7 +39,7 @@ function land(e,isP){ // پایان پرش
   if(cube[P.r][P.c]<need){cube[P.r][P.c]++;score+=25;hud();check()}
  }
  hit()}
-function hit(){if(P.fall||over)return;if(En.some(e=>e.r==P.r&&e.c==P.c&&!e.fall)){die()}}
+function hit(){if(P.fall||over>0)return;if(En.some(e=>e.r==P.r&&e.c==P.c&&!e.fall)){die()}}
 function die(){over=1.1;lives--;hud()}
 function check(){if(cube.every(row=>row.every(v=>v>=need)))winT=1.2}
 function aiHop(e){
@@ -50,11 +50,11 @@ function aiHop(e){
 }
 function update(dt){
  if(!run)return;tick+=dt;
- if(winT>0){winT-=dt;if(winT<=0){score+=1000;level++;newLevel()}return}
- if(over>0){over-=dt;if(over<=0){if(lives<=0){run=false;msg.innerHTML='پایان بازی — امتیاز '+score+'<br><small>برای شروع دوباره لمس کن</small>';msg.style.display='block'}else respawn()}return}
+ if(winT>0){winT-=dt;if(winT<=0){winT=0;score+=1000;level++;newLevel()}return}
+ if(over>0){over-=dt;if(over<=0){over=0;if(lives<=0){run=false;msg.innerHTML='پایان بازی — امتیاز '+score+'<br><small>برای شروع دوباره لمس کن</small>';msg.style.display='block'}else respawn()}return}
  if(P.fall){P.fall+=dt*3;if(P.fall>2){P.fall=0;die()}return}
  if(P.from){P.t+=dt/.26;if(P.t>=1){P.t=1;P.from=null;land(P,true)}}
- if(!P.from&&want&&!P.fall&&!over){const d=want;want=null;const [dr,dc]=D[d];hop(P,d,.26);}
+ if(!P.from&&want&&!P.fall&&!(over>0)){const d=want;want=null;const [dr,dc]=D[d];hop(P,d,.26);}
  // دشمنان
  spawnT-=dt;if(spawnT<=0&&En.filter(e=>!e.snake).length<2){spawnT=3.4-Math.min(level,5)*.2;const c=Math.random()<.5?0:1;En.push({r:1,c,from:null,t:1,wait:.4,ball:1})}
  if(!En.some(e=>e.snake||e.egg)){snakeT-=dt;if(snakeT<=0){En.push({r:1,c:0,from:null,t:1,wait:.5,egg:1});snakeT=7}}
@@ -72,17 +72,39 @@ function draw(){
  for(const d of discs){if(!d.on)continue;const p=pos(d.r,d.c);g.fillStyle='#ff5cc8';g.beginPath();g.ellipse(p.x,p.y+4,18,8,0,0,7);g.fill();g.fillStyle='#ffe';g.beginPath();g.ellipse(p.x,p.y+2,12,5,0,0,7);g.fill()}
  for(let r=0;r<7;r++)for(let c=0;c<=r;c++){const p=pos(r,c),s=cube[r][c],col=COL(need)[s];
   poly([[p.x-28,p.y],[p.x,p.y-16],[p.x+28,p.y],[p.x,p.y+16]],col);
-  poly([[p.x-28,p.y],[p.x,p.y+16],[p.x,p.y+38],[p.x-28,p.y+22]],'#3a3f9e');
-  poly([[p.x+28,p.y],[p.x,p.y+16],[p.x,p.y+38],[p.x+28,p.y+22]],'#232766')}
+  poly([[p.x-28,p.y],[p.x,p.y+16],[p.x,p.y+38],[p.x-28,p.y+22]],'#d62f3c');
+  poly([[p.x+28,p.y],[p.x,p.y+16],[p.x,p.y+38],[p.x+28,p.y+22]],'#2748c9')}
  const ents=[...En.map(e=>({e,k:e.snake?'s':e.egg?'e':'b'})),{e:P,k:'p'}];
  for(const {e,k} of ents){const q=rp(e);let y=q.y-12;if(k=='p'&&P.fall){y+=P.fall*60}
   if(k=='p'&&over>0&&!P.fall){y-=0}
   if(k=='s'){g.fillStyle='#8a2be2';g.beginPath();g.arc(q.x,y-6,10,0,7);g.fill();g.beginPath();g.arc(q.x,y+4,8,0,7);g.fill();g.fillStyle='#fff';g.fillRect(q.x-5,y-9,3,3);g.fillRect(q.x+2,y-9,3,3)}
   else if(k=='e'){g.fillStyle='#b070ff';g.beginPath();g.arc(q.x,y,9,0,7);g.fill()}
   else if(k=='b'){g.fillStyle='#ff3b3b';g.beginPath();g.arc(q.x,y,9,0,7);g.fill();g.fillStyle='#fff6';g.beginPath();g.arc(q.x-3,y-3,3,0,7);g.fill()}
-  else{g.fillStyle='#ff8a1c';g.beginPath();g.arc(q.x,y,11,0,7);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(q.x-4,y-3,3.5,0,7);g.arc(q.x+4,y-3,3.5,0,7);g.fill();g.fillStyle='#000';g.fillRect(q.x-4,y-3,2,2);g.fillRect(q.x+3,y-3,2,2);g.fillStyle='#ff8a1c';g.fillRect(q.x-4,y+1,8,9);}}
+  else drawQ(q.x,k=='p'&&P.fall?q.y+2+P.fall*60:q.y+2,P)}
  if(over>0&&!P.fall){const q=rp(P);g.fillStyle='#fff';g.font='bold 18px sans-serif';g.textAlign='center';g.fillText('@!#?@!',q.x,q.y-34)}
  if(winT>0){g.fillStyle='#fff';g.font='bold 26px Tahoma';g.textAlign='center';g.fillText('مرحله تمام شد! 🎉',200,40)}}
+
+function drawQ(x,y,e){ // کیوبرت: مبدأ = وسط روی مکعب
+ const d=e.dir||'DR',right=d=='DR'||d=='UR',back=d[0]=='U',sx=right?1:-1,air=!!e.from&&e.t<1,t=air?Math.sin(Math.PI*e.t):0;
+ g.save();g.translate(x,y);g.scale(1,air?1.08:1);
+ g.fillStyle='#0004';g.beginPath();g.ellipse(0,1,10,4,0,0,7);g.fill();
+ // پاها
+ const sp=air?7:5;g.fillStyle='#b8420a';g.beginPath();g.ellipse(-sp,-1,6,3.6,0,0,7);g.ellipse(sp,-1,6,3.6,0,0,7);g.fill();
+ g.fillStyle='#ff6a10';g.beginPath();g.ellipse(-sp,-2.5,5.5,3.4,0,0,7);g.ellipse(sp,-2.5,5.5,3.4,0,0,7);g.fill();
+ // بدن
+ const gr=g.createRadialGradient(-4,-24,2,0,-16,16);gr.addColorStop(0,'#ffb766');gr.addColorStop(.45,'#ff7a1a');gr.addColorStop(1,'#d9530a');
+ g.fillStyle=gr;g.beginPath();g.ellipse(0,-15,13.5,14,0,0,7);g.fill();
+ // پوزه‌ی لوله‌ای
+ const ty=back?-17:-10,tx=sx*(back?9:12);
+ g.lineCap='round';g.strokeStyle='#c24a0a';g.lineWidth=back?11:13;g.beginPath();g.moveTo(sx*3,back?-17:-11);g.lineTo(tx+sx*(back?2:3),ty+(back?0:2));g.stroke();
+ g.strokeStyle='#ff7f1f';g.lineWidth=back?8.5:10.5;g.beginPath();g.moveTo(sx*3,back?-17:-11);g.lineTo(tx+sx*(back?2:3),ty+(back?0:2));g.stroke();
+ if(!back){g.fillStyle='#ffa04a';g.beginPath();g.ellipse(sx*16,-8,4.8,6.6,0,0,7);g.fill();g.fillStyle='#4a1305';g.beginPath();g.ellipse(sx*16.6,-8,3.3,5,0,0,7);g.fill();
+  // چشم‌ها
+  for(const [ex,ey,rx,ry] of [[1,-21,4.6,5.8],[9,-20,4.2,5.4]]){g.fillStyle='#fff';g.beginPath();g.ellipse(sx*ex,ey,rx,ry,0,0,7);g.fill();g.strokeStyle='#8a3207';g.lineWidth=1;g.stroke();
+   g.fillStyle='#111';g.beginPath();g.ellipse(sx*(ex+1.6),ey+.5,2.1,3,0,0,7);g.fill()}
+  g.strokeStyle='#8a3207';g.lineWidth=1.6;g.beginPath();g.moveTo(sx*-3,-27);g.lineTo(sx*6,-26.5);g.stroke()}
+ else{g.fillStyle='#ffffff30';g.beginPath();g.ellipse(-sx*3,-21,4,6,0,0,7);g.fill()}
+ g.restore()}
 function input(d){if(!run){start();return}if(P.fall||over>0||winT>0)return;if(!P.from)want=d;else want=d}
 document.querySelectorAll('#pad button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();input(b.dataset.d)}));
 const KM={q:'UL',e:'UR',a:'DL',d:'DR','7':'UL','9':'UR','1':'DL','3':'DR'};

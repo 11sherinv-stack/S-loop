@@ -1,0 +1,115 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Hokm</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:#12301f;color:#f3ead0;font-family:Tahoma,system-ui,sans-serif;overflow:hidden}
+a.back{position:absolute;top:6px;right:10px;color:#e8c46a;text-decoration:none;font-size:14px;z-index:5}
+#top{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:13px;line-height:1.7}
+#table{position:absolute;inset:44px 0 130px 0}
+.seat{position:absolute;text-align:center;font-size:13px}
+.seat b{display:block;color:#e8c46a}
+#s2{top:0;left:50%;transform:translateX(-50%)}#s1{right:4px;top:42%}#s3{left:4px;top:42%}
+.backs{display:inline-flex;direction:ltr}
+.backs i{width:14px;height:22px;margin-left:-8px;border-radius:3px;background:repeating-linear-gradient(45deg,#7a1d1d,#7a1d1d 3px,#a33 3px,#a33 6px);border:1px solid #fff6}
+#s1 .backs,#s3 .backs{flex-direction:column}#s1 .backs i,#s3 .backs i{margin:-12px 0 0 0;width:22px;height:14px}
+#trick{position:absolute;inset:0;margin:auto;width:210px;height:150px}
+.pc{position:absolute;width:46px;height:66px}
+.card{width:46px;height:66px;border-radius:6px;background:#fffdf6;border:1px solid #888;color:#111;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:3px;font-weight:700;font-size:17px;direction:ltr;box-shadow:0 2px 4px #0006}
+.card.red{color:#c0182b}.card span{font-size:24px;line-height:1}
+#pos0{left:82px;top:84px}#pos1{left:150px;top:36px}#pos2{left:82px;top:-14px}#pos3{left:14px;top:36px}
+#hand{position:absolute;bottom:6px;left:0;right:0;height:120px;display:flex;justify-content:center;direction:ltr;padding:0 8px}
+#hand .card{margin-left:-20px;transition:transform .12s;flex:none;position:relative}
+#hand .card.ok{cursor:pointer}#hand .card.ok:active,#hand .card.ok:hover{transform:translateY(-14px)}
+#hand .card.no{filter:brightness(.55)}
+#hand .card:first-child{margin-left:0}
+#info{position:absolute;bottom:128px;left:0;right:0;text-align:center;font-size:14px;color:#e8c46a;min-height:20px}
+#dlg{position:absolute;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:9}
+#dlg div.box{background:#1d4a31;border:2px solid #e8c46a;border-radius:14px;padding:18px;text-align:center;max-width:320px}
+#dlg button{font-size:30px;margin:5px;width:62px;height:62px;border-radius:12px;border:0;background:#fffdf6}
+#dlg button.go{width:auto;height:auto;font-size:16px;padding:10px 20px;background:#e8c46a}
+</style></head><body>
+<a class="back" href="index.html">← S loop</a>
+<div id="top"></div>
+<div id="table">
+ <div class="seat" id="s2"></div><div class="seat" id="s1"></div><div class="seat" id="s3"></div>
+ <div id="trick"><div class="pc" id="pos0"></div><div class="pc" id="pos1"></div><div class="pc" id="pos2"></div><div class="pc" id="pos3"></div></div>
+</div>
+<div id="info"></div><div id="hand"></div>
+<div id="dlg"><div class="box" id="box"></div></div>
+<script>
+if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
+const SU=['♠','♥','♦','♣'],RK=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const NAME=['تو','حریف راست','همیار','حریف چپ']; // نشست: 0 پایین،1 راست،2 بالا،3 چپ (خلاف ساعت‌گرد)
+let hands,trump,hakem,led,trickCards,turn,tricks,pts=[0,0],busy=false,lastWinner;
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const val=c=>c%13, suit=c=>Math.floor(c/13);
+function cardHTML(c){const s=SU[suit(c)];return `<div class="card ${suit(c)==1||suit(c)==2?'red':''}"><div>${RK[val(c)]}</div><span>${s}</span><div>${RK[val(c)]}</div></div>`}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function sortHand(h){h.sort((a,b)=>suit(a)-suit(b)||val(b)-val(a))}
+function winnerOf(){let best=0;for(let i=1;i<trickCards.length;i++){const a=trickCards[best].c,b=trickCards[i].c;
+ const aT=suit(a)==trump,bT=suit(b)==trump;
+ if(bT&&!aT)best=i;else if(bT==aT&&suit(b)==suit(a)&&val(b)>val(a))best=i}return trickCards[best].p}
+function legal(p){const h=hands[p];if(led==null)return h.slice();const f=h.filter(c=>suit(c)==led);return f.length?f:h.slice()}
+function render(){
+ $('top').innerHTML=`امتیاز: ما <b>${pts[0]}</b> — آن‌ها <b>${pts[1]}</b> (۷ امتیاز برد) &nbsp;|&nbsp; حکم: <b style="font-size:20px;color:${trump==1||trump==2?'#ff7b7b':'#fff'}">${trump==null?'؟':SU[trump]}</b> &nbsp;|&nbsp; دست‌ها: ما <b>${tricks[0]}</b> — آن‌ها <b>${tricks[1]}</b>`;
+ [1,2,3].forEach(p=>{$('s'+p).innerHTML=`<b>${NAME[p]}${hakem==p?' 👑':''}</b><div class="backs">${'<i></i>'.repeat(hands[p].length)}</div>`});
+ const lg=turn==0&&!busy?legal(0):[];
+ $('hand').innerHTML=hands[0].map(c=>`<div data-c="${c}" class="card ${suit(c)==1||suit(c)==2?'red':''} ${lg.includes(c)?'ok':'no'}"><div>${RK[val(c)]}</div><span>${SU[suit(c)]}</span><div>${RK[val(c)]}</div></div>`).join('');
+ document.querySelectorAll('#hand .card.ok').forEach(el=>el.onclick=()=>humanPlay(+el.dataset.c));
+ for(let p=0;p<4;p++)$('pos'+p).innerHTML='';
+ trickCards.forEach(t=>$('pos'+t.p).innerHTML=cardHTML(t.c));
+ }
+function chooseTrumpAI(h5){const cnt=[0,0,0,0],sum=[0,0,0,0];h5.forEach(c=>{cnt[suit(c)]++;sum[suit(c)]+=val(c)+1});
+ let b=0;for(let s=1;s<4;s++)if(cnt[s]*20+sum[s]>cnt[b]*20+sum[b])b=s;return b}
+function ask(html,btns){return new Promise(res=>{$('box').innerHTML=html;const wrap=document.createElement('div');
+ btns.forEach(b=>{const e=document.createElement('button');e.innerHTML=b.t;if(b.cls)e.className=b.cls;e.onclick=()=>{$('dlg').style.display='none';res(b.v)};wrap.appendChild(e)});
+ $('box').appendChild(wrap);$('dlg').style.display='flex'})}
+async function newHand(){
+ const deck=shuffle([...Array(52).keys()]);hands=[[],[],[],[]];trump=null;led=null;trickCards=[];tricks=[0,0];
+ if(hakem==null)hakem=Math.random()*4|0;
+ for(let i=0;i<20;i++)hands[i%4].push(deck[i]); // ۵ کارت اول
+ render();
+ $('info').textContent=hakem==0?'تو حاکم هستی':NAME[hakem]+' حاکم است…';await sleep(600);
+ if(hakem==0){sortHand(hands[0]);render();
+  trump=await ask('<div style="margin-bottom:10px">تو حاکم هستی. حکم را انتخاب کن<br><small>(فقط ۵ کارت اول را دیده‌ای)</small></div><div class="backs" style="display:block;margin:6px 0">'+hands[0].map(cardHTML).join('').replace(/class="card/g,'style="display:inline-flex;margin:2px" class="card').replace(/style="display:inline-flex;margin:2px"/g,'style="display:inline-flex;margin:2px;transform:scale(.8)"')+'</div>',SU.map((s,i)=>({t:`<span style="color:${i==1||i==2?'#c0182b':'#111'}">${s}</span>`,v:i})))}
+ else trump=chooseTrumpAI(hands[hakem].slice());
+ for(let i=20;i<52;i++)hands[i%4].push(deck[i]);
+ hands.forEach(sortHand);turn=hakem;render();
+ $('info').textContent='حکم '+SU[trump]+' شد';await sleep(900);nextTurn()}
+function aiPick(p){
+ const L=legal(p).slice().sort((a,b)=>val(a)-val(b));
+ const lowest=L[0],highest=L[L.length-1];
+ if(led==null){ // شروع دست: آس غیرحکم یا بالاترین
+  const aces=L.filter(c=>val(c)==12&&suit(c)!=trump);if(aces.length)return aces[0];
+  const nt=L.filter(c=>suit(c)!=trump);return nt.length?nt[nt.length-1]:highest}
+ // فعلاً چه کسی برنده است؟
+ const tmp=trickCards.slice();const w=winnerOfCards(tmp),partnerWin=(w.p+2)%4==p||0;
+ const winners=L.filter(c=>beats(c,w.c));
+ if(w.p%2==p%2&&w.p!=p)return lowest;           // همیار می‌برد: کم‌ارزش بده
+ if(winners.length){if(trickCards.length==3)return winners[0];return winners[Math.min(1,winners.length-1)==0?0:winners.length-1]}
+ return lowest}
+function beats(c,w){const cT=suit(c)==trump,wT=suit(w)==trump;if(cT&&!wT)return true;if(!cT&&wT)return false;return suit(c)==suit(w)&&val(c)>val(w)}
+function winnerOfCards(t){let b=t[0];for(let i=1;i<t.length;i++)if(beats(t[i].c,b.c))b=t[i];return b}
+async function nextTurn(){
+ if(trickCards.length==4){busy=true;render();await sleep(900);
+  const w=winnerOf();tricks[w%2]++;trickCards=[];led=null;turn=w;render();
+  if(tricks[0]==7||tricks[1]==7){return endHand()}
+  busy=false;return nextTurn()}
+ render();
+ if(turn==0){busy=false;render();$('info').textContent='نوبت توست';return}
+ busy=true;$('info').textContent=NAME[turn]+' بازی می‌کند…';render();await sleep(650);play(turn,aiPick(turn))}
+function play(p,c){hands[p]=hands[p].filter(x=>x!=c);if(led==null)led=suit(c);trickCards.push({p,c});turn=(p+1)%4;nextTurn()}
+function humanPlay(c){if(turn!=0||busy)return;if(!legal(0).includes(c))return;busy=true;play(0,c)}
+async function endHand(){
+ const win=tricks[0]==7?0:1,kot=tricks[1-win]==0;
+ const hakemTeam=hakem%2;let add=1;if(kot)add=(win!=hakemTeam)?3:2; // کُت: ۲ امتیاز، حاکم‌کُت: ۳
+ pts[win]+=add;
+ if(win==hakemTeam){/* حاکم همان می‌ماند */}else{hakem=(hakem+1)%4} // حاکم بعدی: نفر بعدی
+ const over=pts[0]>=7||pts[1]>=7;
+ await ask(`<div style="font-size:18px;margin-bottom:10px">${win==0?'🎉 ما بردیم':'آن‌ها بردند'} (${tricks[0]}–${tricks[1]})${kot?'<br>'+(add==3?'حاکم‌کُت!':'کُت!'):''}</div><div>امتیاز: ما ${pts[0]} — آن‌ها ${pts[1]}</div>${over?'<div style="margin:10px 0;font-size:20px">'+(pts[0]>=7?'🏆 بازی را بردید!':'بازی را باختید')+'</div>':''}`,[{t:over?'بازی جدید':'دست بعد',v:1,cls:'go'}]);
+ if(over){pts=[0,0];hakem=null}
+ newHand()}
+newHand();
+</script></body></html>

@@ -1,0 +1,69 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Merge Flower</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:none}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 0,#6b8f3e,#2f4a1c);color:#fff8e6;font-family:Tahoma,system-ui,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;padding:8px}
+a.back{align-self:flex-start;color:#ffe08a;text-decoration:none;font-size:14px}
+h1{margin:4px 0;font-size:22px}
+#hud{display:flex;gap:14px;font-size:15px;margin-bottom:6px}
+#board{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:min(94vw,420px);padding:8px;background:#5a3b1e;border-radius:14px;border:3px solid #8a5d30}
+.cell{aspect-ratio:1;border-radius:12px;background:#7b5530;display:flex;align-items:center;justify-content:center;font-size:min(11vw,44px);position:relative;box-shadow:inset 0 2px 5px #0006}
+.cell.sel{outline:3px solid #ffe08a;background:#946a3b}
+.cell .f{transition:transform .15s;pointer-events:none}
+.cell.pop .f{animation:pop .3s}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+.cell small{position:absolute;bottom:1px;right:4px;font-size:10px;color:#ffe9b8;pointer-events:none}
+#ctl{margin:12px 0;display:flex;gap:10px}
+button{font-size:16px;padding:12px 18px;border:0;border-radius:12px;background:#ffd25e;color:#3b2a0b;font-weight:700}
+button:active{filter:brightness(.9)}
+#chain{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;width:min(94vw,420px);font-size:22px;margin-top:4px}
+#chain span{opacity:.35}#chain span.got{opacity:1}
+#ghost{position:fixed;pointer-events:none;font-size:46px;transform:translate(-50%,-60%);z-index:9;display:none}
+#over{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-size:22px;z-index:10}
+</style></head><body>
+<a class="back" href="index.html">← S loop</a>
+<h1>🌸 Merge Flower</h1>
+<div id="hud"><span>امتیاز: <b id="sc">0</b></span><span>رکورد: <b id="bs">0</b></span><span>بالاترین گل: <b id="top">🌱</b></span></div>
+<div id="board"></div>
+<div id="ctl"><button id="spawn">🌱 گل جدید</button><button id="rst" style="background:#e9e0c9">شروع دوباره</button></div>
+<div style="font-size:13px;opacity:.9;text-align:center;width:min(94vw,420px)">دو گل هم‌نوع را روی هم بکش (یا یکی را لمس و بعد دیگری را لمس کن) تا گل جدیدتر بسازند.</div>
+<div id="chain"></div>
+<div id="ghost"></div>
+<div id="over"><div id="ovt"></div><button id="again">دوباره</button></div>
+<script>
+if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
+const FL=['🌱','🌼','🌷','🌸','🌹','🌺','🌻','🪻','💐','🏵️','🌳'],N=5,M=6;
+const NM=['جوانه','گل بابونه','لاله','شکوفه','رز','هیبیسکوس','آفتابگردان','اطلسی','دسته گل','گل سرخ طلایی','درخت گل'];
+let B,score,best=+localStorage.mfBest||0,sel=null,maxL;
+const $=id=>document.getElementById(id);$('bs').textContent=best;
+const cells=[];for(let i=0;i<N*M;i++){const d=document.createElement('div');d.className='cell';d.dataset.i=i;$('board').appendChild(d);cells.push(d)}
+function init(){B=Array(N*M).fill(-1);score=0;sel=null;maxL=0;B[12]=0;B[13]=0;B[7]=1;draw();$('over').style.display='none';upChain()}
+function draw(pop){cells.forEach((c,i)=>{c.className='cell'+(sel==i?' sel':'')+(pop==i?' pop':'');
+ c.innerHTML=B[i]>=0?`<span class="f">${FL[B[i]]}</span><small>${B[i]+1}</small>`:''});
+ $('sc').textContent=score;$('top').textContent=FL[maxL]}
+function upChain(){$('chain').innerHTML=FL.map((f,i)=>`<span class="${i<=maxL?'got':''}" title="${NM[i]}">${f}</span>`).join('')}
+function act(a,b){ // حرکت یا ادغام
+ if(a==b||B[a]<0)return false;
+ if(B[b]<0){B[b]=B[a];B[a]=-1;sel=null;draw(b);return true}
+ if(B[a]==B[b]&&B[a]<FL.length-1){B[b]++;B[a]=-1;score+=(B[b]+1)*10;maxL=Math.max(maxL,B[b]);upChain();sel=null;draw(b);check();return true}
+ // جابه‌جایی دو گل متفاوت
+ [B[a],B[b]]=[B[b],B[a]];sel=null;draw(b);return true}
+function spawn(){const e=B.map((v,i)=>v<0?i:-1).filter(i=>i>=0);if(!e.length){check();return}
+ const i=e[Math.random()*e.length|0];B[i]=Math.random()<.2&&maxL>2?1:0;draw(i);check()}
+function check(){if(B.some(v=>v<0))return;
+ for(let i=0;i<N*M;i++){const r=i%N,c=i/N|0;if(r<N-1&&B[i]==B[i+1])return;if(c<M-1&&B[i]==B[i+N])return}
+ $('ovt').innerHTML=`صفحه پر شد!<br>امتیاز: ${score}`;best=Math.max(best,score);localStorage.mfBest=best;$('bs').textContent=best;$('over').style.display='flex'}
+let from=null,moved=false;const gh=$('ghost');
+$('board').addEventListener('pointerdown',e=>{const c=e.target.closest('.cell');if(!c)return;const i=+c.dataset.i;from=i;moved=false;
+ if(B[i]>=0){gh.textContent=FL[B[i]];gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px'}});
+addEventListener('pointermove',e=>{if(from==null||B[from]<0)return;moved=true;gh.style.display='block';gh.style.left=e.clientX+'px';gh.style.top=e.clientY+'px'});
+addEventListener('pointerup',e=>{if(from==null)return;gh.style.display='none';
+ const t=document.elementFromPoint(e.clientX,e.clientY),c=t&&t.closest&&t.closest('.cell');const f=from;from=null;if(!c)return;const to=+c.dataset.i;
+ if(moved&&to!=f){act(f,to);return}
+ // لمس ساده: انتخاب و ادغام
+ if(sel==null){if(B[to]>=0){sel=to;draw()}}else if(sel==to){sel=null;draw()}else act(sel,to)});
+$('spawn').onclick=spawn;$('rst').onclick=init;$('again').onclick=init;
+init();
+</script></body></html>

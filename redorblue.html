@@ -1,0 +1,87 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Red or Blue</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:#000;color:#b8ffc8;font-family:Tahoma,system-ui,sans-serif;overflow:hidden}
+#rain{position:fixed;inset:0;width:100%;height:100%;opacity:.55}
+a.back{position:fixed;top:8px;right:12px;color:#5dff8a;text-decoration:none;font-size:14px;z-index:5}
+#chip{position:fixed;top:8px;left:12px;font-size:12px;color:#5dff8a;z-index:5;direction:rtl;text-align:left}
+#stage{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 14px 14px;z-index:2}
+#fig{width:min(92vw,380px);height:min(46vh,330px);transition:opacity 1s}
+#txt{width:min(92vw,420px);min-height:92px;margin-top:6px;background:#001a0acc;border:1px solid #1f8a3d;border-radius:10px;padding:12px 14px;font-size:16px;line-height:1.9;text-shadow:0 0 6px #0f0}
+#btn{margin-top:12px;padding:10px 26px;border-radius:10px;border:1px solid #5dff8a;background:#04210f;color:#b8ffc8;font-size:16px;display:none}
+.pill{cursor:pointer;transform-origin:center;animation:fl 2.4s ease-in-out infinite}
+.pill:hover rect,.pill:active rect{filter:brightness(1.4)}
+@keyframes fl{50%{transform:translateY(-5px) rotate(4deg)}}
+#none{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);padding:8px 18px;border-radius:8px;border:1px dashed #5dff8a;background:transparent;color:#5dff8a;font-size:13px;display:none;z-index:5}
+.fade{opacity:0!important}
+.red{color:#ff8a8a}.blue{color:#8ab8ff}
+</style></head><body>
+<canvas id="rain"></canvas>
+<a class="back" href="index.html">← S loop</a>
+<div id="chip"></div>
+<div id="stage">
+ <svg id="fig" viewBox="0 0 380 330">
+  <ellipse cx="190" cy="318" rx="130" ry="10" fill="#0f0" opacity=".15"/>
+  <path d="M95 330C95 245 130 215 190 215S285 245 285 330Z" fill="#101510" stroke="#1f8a3d"/>
+  <path d="M190 218L165 330H215Z" fill="#050805"/>
+  <rect x="172" y="195" width="36" height="28" rx="10" fill="#4a3228"/>
+  <ellipse cx="190" cy="150" rx="46" ry="56" fill="#5a3d30"/>
+  <path d="M146 140C150 96 230 96 234 140C220 118 160 118 146 140Z" fill="#1a110c"/>
+  <g id="gl"><rect x="150" y="136" width="35" height="22" rx="10" fill="#050a05" stroke="#5dff8a"/><rect x="195" y="136" width="35" height="22" rx="10" fill="#050a05" stroke="#5dff8a"/><rect x="185" y="143" width="10" height="3" fill="#5dff8a"/>
+  <path d="M155 142L170 140M200 142L215 140" stroke="#5dff8a" stroke-width="2" opacity=".6"/></g>
+  <path d="M172 188Q190 198 208 188" stroke="#2a1a14" stroke-width="3" fill="none"/>
+  <g id="hands" style="transition:opacity .6s">
+   <path d="M110 250C80 262 50 270 36 270" stroke="#101510" stroke-width="34" stroke-linecap="round" fill="none"/>
+   <path d="M270 250C300 262 330 270 344 270" stroke="#101510" stroke-width="34" stroke-linecap="round" fill="none"/>
+   <circle cx="42" cy="270" r="22" fill="#5a3d30"/><circle cx="338" cy="270" r="22" fill="#5a3d30"/>
+   <g class="pill" id="pL" transform="translate(42 262)"><g transform="rotate(-35)"><rect x="-26" y="-11" width="52" height="22" rx="11" id="cL"/><rect x="-22" y="-8" width="20" height="5" rx="2.5" fill="#fff6"/></g></g>
+   <g class="pill" id="pR" transform="translate(338 262)" style="animation-delay:.6s"><g transform="rotate(35)"><rect x="-26" y="-11" width="52" height="22" rx="11" id="cR"/><rect x="-22" y="-8" width="20" height="5" rx="2.5" fill="#fff6"/></g></g>
+  </g>
+ </svg>
+ <div id="txt"></div><button id="btn">ادامه</button>
+</div>
+<button id="none">هیچ‌کدام</button>
+<script>
+const $=id=>document.getElementById(id);if(self!==top)document.querySelector('.back').style.display='none';
+// باران ماتریسی
+const rc=$('rain'),rg=rc.getContext('2d');let cols,drops;
+function rs(){rc.width=innerWidth;rc.height=innerHeight;cols=Math.floor(rc.width/16);drops=Array.from({length:cols},()=>Math.random()*rc.height/16)}rs();addEventListener('resize',rs);
+const CH='ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄ0123456789';
+setInterval(()=>{rg.fillStyle='rgba(0,0,0,.12)';rg.fillRect(0,0,rc.width,rc.height);rg.font='15px monospace';
+ for(let i=0;i<cols;i++){rg.fillStyle=Math.random()<.04?'#dfffe6':'#1fe055';rg.fillText(CH[Math.random()*CH.length|0],i*16,drops[i]*16);if(drops[i]*16>rc.height&&Math.random()>.975)drops[i]=0;drops[i]+=.7}},60);
+// وضعیت
+let SV;try{SV=JSON.parse(localStorage.rbpill)}catch(e){}
+SV=SV||{loop:0,found:[],hist:[],secret:false};
+const END=[
+ ['خواب شیرین','قرص آبی را قورت می‌دهی. لحظه‌ای تاریکی… بعد صدای زنگ ساعت. صبح است و همه‌چیز سر جای خودش. فقط یک حس خفیف می‌ماند: انگار دری بسته مانده که یادت نیست کجا بود.'],
+ ['دروازه','قرص قرمز را می‌بلعی. دیوار اتاق مثل آب موج برمی‌دارد و پشت آن چیزی می‌بینی که هیچ‌وقت اجازه نداشتی ببینی. حقیقت سرد است، ولی واقعی… و همین‌جا همه‌چیز دوباره شروع می‌شود.'],
+ ['پشیمانی','دفعه‌ی قبل جلوتر رفته بودی و حالا قرص آبی؟ همه‌چیز محو می‌شود، اما ته ذهنت چیزی ول نمی‌کند. می‌دانی که می‌دانستی. و این بدتر از هر نادانی‌ای است.'],
+ ['بیداری دوباره','بعد از آن زندگی آسان، این بار قرمز را برمی‌داری. دیوارها این بار زودتر می‌ریزند، مثل کسی که قبلاً راه را بلد بوده. مرد لبخند می‌زند: «می‌دانستم برمی‌گردی.»'],
+ ['راه رفتن تا ته','دو بار پشت سر هم قرمز. دیگر ترسی نیست؛ فقط کنجکاوی. هرچه عمیق‌تر می‌روی، ماجرا بزرگ‌تر می‌شود، تا جایی که می‌فهمی خود «انتخاب» هم جزئی از ماجراست.'],
+ ['غار','دو بار پشت سر هم آبی. راحتی عادت می‌شود، عادت می‌شود دیوار. سایه‌ها روی دیوار رقصیدن را ادامه می‌دهند و تو هم تماشا می‌کنی؛ چرا که تماشا کردن راحت است.']];
+const SEC=['شکستن حلقه','هر دو قرص را کنار می‌گذاری. مرد ابروهایش را بالا می‌برد. اتاق، دست‌ها، باران سبز… همه یک لحظه چشمک می‌زنند و محو می‌شوند. این بار انتخاب، خود حلقه بود. آزاد شدی. (می‌توانی دوباره شروع کنی.)'];
+const INTRO=['در یک اتاق تاریک نشسته‌ای. مردی با عینک آفتابی روبه‌رویت است. می‌گوید: «همین حالا یک انتخاب داری.»','دوباره همان اتاق. مرد کمی لبخند می‌زند: «بالاخره برگشتی. می‌خواهی دوباره امتحان کنی؟»','باز هم اینجا. مرد سر تکان می‌دهد: «این چندمین دور است؟ حلقه تمام نمی‌شود مگر…»'];
+function chip(){$('chip').innerHTML='دور '+(SV.loop+1)+' • پایان‌ها '+SV.found.length+'/6'}
+const T={timer:0};
+function type(s,cb){clearTimeout(T.timer);const el=$('txt');el.textContent='';let i=0;(function n(){if(i<=s.length){el.textContent=s.slice(0,i++);T.timer=setTimeout(n,22)}else cb&&cb()})()}
+let left=0,busy=true,phase='intro';
+function colors(){left=Math.random()<.5?0:1; // کدام دست قرمز است
+ $('cL').setAttribute('fill',left==0?'#e8342a':'#2a6bff');$('cR').setAttribute('fill',left==0?'#2a6bff':'#e8342a')}
+function setHands(on){$('hands').style.opacity=on?1:0;$('hands').style.pointerEvents=on?'auto':'none'}
+function start(){phase='intro';busy=true;setHands(false);$('btn').style.display='none';$('none').style.display='none';$('fig').classList.remove('fade');colors();chip();
+ type(INTRO[Math.min(SV.loop,2)],()=>{setHands(true);busy=false;phase='choose';$('txt').innerHTML+='<br><b>در هر دست یک قرص است — یکی را انتخاب کن.</b>';if(SV.found.length>=6&&!SV.secret)$('none').style.display='block';else if(SV.found.length>=6)$('none').style.display='block'})}
+function pick(color){ // 'red' | 'blue'
+ if(busy)return;busy=true;setHands(false);$('none').style.display='none';
+ const prev=SV.hist[SV.hist.length-1];let e;
+ if(color=='blue')e=prev==null?0:prev=='red'?2:5; else e=prev==null?1:prev=='blue'?3:4;
+ SV.hist.push(color);if(SV.hist.length>8)SV.hist.shift();
+ if(!SV.found.includes(e))SV.found.push(e);SV.loop++;save();showEnd('<b class="'+color+'">'+(color=='red'?'قرص قرمز':'قرص آبی')+' — '+END[e][0]+'</b><br>'+END[e][1])}
+function showEnd(h){phase='end';chip();const el=$('txt');clearTimeout(T.timer);el.innerHTML=h;setTimeout(()=>{$('btn').style.display='block';$('btn').textContent='برگرد به اول ↻'},1400)}
+$('btn').onclick=()=>{if(phase!=='end')return;$('btn').style.display='none';$('fig').classList.add('fade');$('txt').innerHTML='<span style="opacity:.7">…بارگذاری دوباره‌ی همه‌چیز…</span>';setTimeout(start,1500)};
+$('none').onclick=()=>{if(busy)return;busy=true;setHands(false);$('none').style.display='none';SV.secret=true;SV.loop=0;SV.found=[];SV.hist=[];save();showEnd('<b style="color:#fff">'+SEC[0]+'</b><br>'+SEC[1])};
+$('pL').onclick=()=>pick(left==0?'red':'blue');$('pR').onclick=()=>pick(left==0?'blue':'red');
+function save(){try{localStorage.rbpill=JSON.stringify(SV)}catch(e){}}
+setTimeout(start,400);
+</script></body></html>

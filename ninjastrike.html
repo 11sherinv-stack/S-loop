@@ -1,0 +1,93 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Ninja</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none}
+html,body{margin:0;height:100%;background:#1c130c;color:#f3e3c3;font-family:system-ui,Tahoma,sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column;align-items:center}
+a.back{align-self:flex-start;color:#e8b04a;text-decoration:none;padding:8px 12px;font-size:14px}
+#hud{display:flex;gap:18px;font-size:15px;padding:2px 0}
+canvas{width:min(100vw,calc((100vh - 190px)*1.7778));aspect-ratio:16/9;background:#2a1d3b;border:2px solid #5a4020;border-radius:6px}
+#pad{display:flex;justify-content:space-between;width:min(100vw,640px);padding:10px 14px;gap:10px;direction:ltr}
+#pad div{display:flex;gap:10px}
+button{width:70px;height:70px;border-radius:50%;border:2px solid #e8b04a;background:#3b2815;color:#f3e3c3;font-size:26px}
+button.atk{background:#8c2b1f;border-color:#ff9a7a;width:86px;height:86px}
+button:active{filter:brightness(1.5)}
+#msg{position:absolute;top:34%;font-size:22px;text-align:center;background:#000a;padding:14px 22px;border-radius:10px}
+</style></head><body>
+<a class="back" href="index.html">← S loop</a>
+<div id="hud"><span>امتیاز: <b id="sc">0</b></span><span>جان: <b id="lv">❤❤❤</b></span><span>رکورد: <b id="bs">0</b></span></div>
+<canvas id="c" width="640" height="360"></canvas>
+<div id="pad"><div><button id="bl">◀</button><button id="br">▶</button></div><div><button id="bj">⤒</button><button id="ba" class="atk">⚔</button></div></div>
+<div id="msg">برای شروع ضربه بزن ⚔ (یا کلید X / فاصله)<br><small>◀ ▶ حرکت، ⤒ پرش، ⚔ حمله با شمشیر</small></div>
+<script>
+if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
+const cv=document.getElementById('c'),g=cv.getContext('2d'),W=640,H=360,GY=300;
+const K={l:0,r:0,j:0,a:0};
+const map={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'j',w:'j',' ':'a',x:'a',z:'a'};
+addEventListener('keydown',e=>{const k=map[e.key];if(k){K[k]=1;e.preventDefault();if(k=='a')tapAtk()}});
+addEventListener('keyup',e=>{const k=map[e.key];if(k)K[k]=0});
+function bind(id,k){const b=document.getElementById(id);
+ b.addEventListener('pointerdown',e=>{e.preventDefault();K[k]=1;if(k=='a')tapAtk()});
+ ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>K[k]=0))}
+bind('bl','l');bind('br','r');bind('bj','j');bind('ba','a');
+let P,E,F,score,lives,best=+localStorage.ninjaBest||0,run=false,spawnT,wave,shake=0,hurtT=0;
+document.getElementById('bs').textContent=best;
+function reset(){P={x:320,y:GY,vx:0,vy:0,face:1,atk:0,cd:0,air:false};E=[];F=[];score=0;lives=3;spawnT=60;wave=1;hurtT=0;hud()}
+function hud(){sc.textContent=score;lv.textContent='❤'.repeat(Math.max(lives,0))||'—'}
+// === حمله‌ی شمشیر: بافر ضربه، برای هر ضربه یک بار آسیب، ناحیه‌ی ضربه جلوی نینجا ===
+function tapAtk(){if(!run){start();return}P.buf=8}
+function start(){reset();run=true;msg.style.display='none'}
+function doAttack(){P.atk=14;P.cd=22;P.hit=new Set();sfx(520,.05)}
+function spawn(){const side=Math.random()<.5?-1:1,fly=Math.random()<.3&&wave>1;
+ E.push({x:side<0?-20:W+20,y:fly?GY-70-Math.random()*50:GY,dir:-side,fly,hp:1,sp:(.9+Math.random()*.6+wave*.08)*(fly?1.2:1),t:0})}
+let ac;function sfx(f,d){try{ac=ac||new AudioContext();const o=ac.createOscillator(),v=ac.createGain();o.frequency.value=f;o.type='square';v.gain.value=.04;o.connect(v);v.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+function die(){run=false;best=Math.max(best,score);localStorage.ninjaBest=best;bs.textContent=best;
+ msg.innerHTML='بازی تمام شد — امتیاز '+score+'<br><small>برای شروع دوباره ⚔ بزن</small>';msg.style.display='block'}
+function update(){
+ if(!run)return;
+ const ax=K.r-K.l;P.vx=ax*3.2;if(ax)P.face=ax;
+ if(K.j&&!P.air){P.vy=-9.5;P.air=true}
+ P.vy+=.55;P.x+=P.vx;P.y+=P.vy;if(P.y>=GY){P.y=GY;P.vy=0;P.air=false}
+ P.x=Math.max(14,Math.min(W-14,P.x));
+ if(P.cd>0)P.cd--; if(P.atk>0)P.atk--; if(P.buf>0){P.buf--;if(P.cd<=0&&P.atk<=0){doAttack();P.buf=0}}
+ if(K.a&&P.cd<=0&&P.atk<=0)doAttack(); // نگه داشتن دکمه = ضربه‌ی پیوسته
+ // ناحیه‌ی ضربه (جلوی نینجا، بزرگ و سخاوتمندانه)
+ if(P.atk>0){const hb={x:P.face>0?P.x:P.x-62,w:62,y:P.y-52,h:62};
+  for(const e of E){if(e.hp<=0||P.hit.has(e))continue;
+   if(e.x+12>hb.x&&e.x-12<hb.x+hb.w&&e.y>hb.y&&e.y-30<hb.y+hb.h){P.hit.add(e);e.hp=0;score+=e.fly?30:10;hud();sfx(180,.08);shake=5;
+    for(let i=0;i<10;i++)F.push({x:e.x,y:e.y-15,vx:(Math.random()-.5)*6,vy:-Math.random()*5,t:25,c:e.fly?'#a6f':'#f55'})}}}
+ for(const e of E){if(e.hp<=0)continue;e.t++;
+  e.x+=e.dir*e.sp; if(e.fly)e.y+=Math.sin(e.t/10)*1.2;
+  if(hurtT<=0&&Math.abs(e.x-P.x)<20&&Math.abs((e.y)-(P.y))<(e.fly?30:34)&&!(P.atk>0&&((e.x-P.x)*P.face>0))){
+   lives--;hurtT=70;hud();sfx(90,.2);shake=8;P.vy=-6;P.air=true;if(lives<=0)die()}}
+ E=E.filter(e=>e.hp>0&&e.x>-60&&e.x<W+60);
+ if(hurtT>0)hurtT--;
+ if(--spawnT<=0){spawn();spawnT=Math.max(25,80-wave*5-Math.random()*20)}
+ if(score>=wave*120)wave++;
+ F.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.t--});F=F.filter(p=>p.t>0);
+}
+function ninja(x,y,face,atk,blink){g.save();g.translate(x,y);g.scale(face,1);if(blink)g.globalAlpha=.4;
+ g.fillStyle='#111';g.fillRect(-9,-36,18,26);g.fillRect(-8,-10,6,10);g.fillRect(2,-10,6,10);
+ g.fillStyle='#e8c9a0';g.fillRect(-1,-31,10,6);g.fillStyle='#c22';g.fillRect(-10,-36,20,4);g.fillRect(-16,-34,7,3);
+ // شمشیر
+ g.save();g.translate(8,-24);const a=atk>0?-1.2+(14-atk)/14*2.6:-.9;g.rotate(a);
+ g.fillStyle='#ddd';g.fillRect(0,-2,34,4);g.fillStyle='#8b5a2b';g.fillRect(-6,-3,8,6);g.restore();
+ if(atk>0){g.strokeStyle='rgba(255,255,255,'+(atk/14)+')';g.lineWidth=5;g.beginPath();g.arc(8,-24,36,-1.3,1.4);g.stroke()}
+ g.restore()}
+function draw(){
+ g.save();if(shake>0){g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake--}
+ const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,'#1d1233');gr.addColorStop(1,'#5a3a4a');g.fillStyle=gr;g.fillRect(0,0,W,H);
+ g.fillStyle='#f5e9c8';g.beginPath();g.arc(520,60,28,0,7);g.fill();
+ g.fillStyle='#221829';for(let i=0;i<6;i++){g.beginPath();g.moveTo(i*130-20,GY+4);g.lineTo(i*130+40,GY-90-(i%3)*20);g.lineTo(i*130+100,GY+4);g.fill()}
+ g.fillStyle='#3a2616';g.fillRect(0,GY+4,W,H);g.fillStyle='#4f3720';g.fillRect(0,GY+4,W,5);
+ for(const e of E){g.save();g.translate(e.x,e.y);g.scale(-e.dir,1);
+  if(e.fly){g.fillStyle='#7a3fb5';g.beginPath();g.ellipse(0,-10,12,8,0,0,7);g.fill();g.fillRect(-22,-16+Math.sin(e.t/2)*5,12,4);g.fillRect(10,-16+Math.sin(e.t/2)*5,12,4);g.fillStyle='#fff';g.fillRect(4,-13,3,3)}
+  else{g.fillStyle='#8a2222';g.fillRect(-9,-30,18,24);g.fillStyle='#2b2b2b';g.fillRect(-7,-6,5,6+Math.sin(e.t/4)*2);g.fillRect(2,-6,5,6-Math.sin(e.t/4)*2);g.fillStyle='#f0d9a8';g.fillRect(-2,-26,9,6);g.fillStyle='#000';g.fillRect(3,-24,2,2)}
+  g.restore()}
+ if(run||P)ninja(P.x,P.y,P.face,P.atk,hurtT>0&&hurtT%8<4);
+ for(const p of F){g.fillStyle=p.c;g.fillRect(p.x,p.y,4,4)}
+ g.restore()}
+reset();run=false;
+(function loop(){update();draw();requestAnimationFrame(loop)})();
+</script></body></html>

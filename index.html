@@ -345,7 +345,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
       <div class="sub" style="margin-top:8px;line-height:1.8;font-size:.76rem">دوست را در بخش Friends با آیدی اضافه کن. پیام‌ها رمزنگاری می‌شوند ولی از یک سرور عمومی عبور می‌کنند؛ برای محرمانگی بیشتر در هر گفتگو با 🔑 یک «رمز گفتگو»ی مشترک بگذار. دوست باید آنلاین باشد یا بعداً وارد شود.</div>
     </div>
     <div class="box" id="cchat" hidden>
-      <div class="sr"><button class="al" id="cbk" aria-label="بازگشت">←</button><b id="cname"></b><button class="al" id="ccode" aria-label="رمز گفتگو">🔑</button></div>
+      <div class="sr"><button class="al" id="cbk" aria-label="بازگشت">←</button><b id="cname"></b><button class="al" id="cgame" aria-label="Play online">🎮</button><button class="al" id="ccode" aria-label="رمز گفتگو">🔑</button></div>
       <div id="cmsgs" style="height:46vh;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:6px"></div>
       <div class="prow"><input id="cin" type="text" placeholder="پیام…" maxlength="500" aria-label="پیام" style="flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid rgba(128,128,128,.4);font:inherit;background:var(--card,#fff);color:inherit"><button class="pr" id="csend">ارسال</button></div>
     </div>
@@ -947,7 +947,7 @@ function renderQR(){
   catch(e){q.style.cssText='display:block;word-break:break-all;font-size:.72rem;direction:ltr;padding:10px;border-radius:10px;background:var(--card)';q.textContent=inviteLink()}
 }
 function renderFriends(){
-  $('flist').innerHTML=friends.length?friends.map((f,i)=>'<div class="fr"><div><b>'+esc(f.name||f.id)+'</b><small>'+esc(f.id)+'</small></div><button data-rm="'+i+'" aria-label="Remove">×</button></div>').join(''):'<p class="sub" style="margin:8px 0 0">هنوز دوستی اضافه نکرده‌ای.</p>';
+  $('flist').innerHTML=friends.length?friends.map((f,i)=>'<div class="fr"><div><b>'+esc(f.name||f.id)+'</b><small>'+esc(f.id)+'</small></div><span><button class="al" data-pg="'+i+'" aria-label="Play online">🎮</button> <button data-rm="'+i+'" aria-label="Remove">×</button></span></div>').join(''):'<p class="sub" style="margin:8px 0 0">هنوز دوستی اضافه نکرده‌ای.</p>';
 }
 function copyText(t,msg){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast(msg)).catch(()=>toast(t))}
 $('cpid').onclick=()=>copyText(myId,'ID copied ✓');
@@ -1759,7 +1759,7 @@ async function chIncoming(topic,pl){
   if(m.k==='call'){if(txt&&Date.now()-(m.t||0)<60000){try{callSignal(m.f,JSON.parse(txt),m)}catch(e){}}return}
   if(m.k==='grp'){gIncoming(m,txt);return}
   const arr=chLoad(m.f);if(arr.some(x=>x.i===m.i))return;
-  arr.push({m:0,t:m.t||Date.now(),x:txt==null?'🔒 پیام رمزگذاری‌شده (رمز گفتگو با هم یکی نیست)':txt,i:m.i});chSave(m.f,arr);
+  arr.push({m:0,t:m.t||Date.now(),x:txt==null?'🔒 پیام رمزگذاری‌شده (رمز گفتگو با هم یکی نیست)':txt,i:m.i});chSave(m.f,arr);if(txt&&/\?room=[A-HJ-NP-Z2-9]{6}/.test(txt))toast('🎮 دعوت به بازی آنلاین از '+String(m.n||m.f).slice(0,20));
   if(!friends.some(f=>f.id===m.f)&&!chExtra.some(f=>f.id===m.f)){chExtra.push({id:m.f,name:String(m.n||m.f).slice(0,20)});LS.set('sl-chat-extra',chExtra)}
   if(chCur&&chCur.id===m.f&&!$('cchat').hidden)chShowMsgs();else{chUnread[m.f]=(chUnread[m.f]||0)+1;LS.set('sl-chat-unread',chUnread);chList()}
 }
@@ -1769,7 +1769,7 @@ function chList(){
   $('cfr').innerHTML=c.length?c.map(f=>{const last=chLoad(f.id).slice(-1)[0],u=chUnread[f.id]||0;return '<div class="fr" data-c="'+esc(f.id)+'" style="cursor:pointer"><div><b>'+esc(f.name)+'</b><small>'+(last?esc(String(last.x).slice(0,40)):esc(f.id))+'</small></div>'+(u?'<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 8px;font-size:.75rem">'+u+'</span>':'<span>›</span>')+'</div>'}).join(''):'<p class="sub">هنوز دوستی نداری؛ از بخش Friends اضافه کن.</p>';
   $('cfr').innerHTML=gListHTML()+$('cfr').innerHTML;
 }
-function chShowMsgs(){const box=$('cmsgs'),arr=chLoad(chCur.id);box.innerHTML=arr.length?arr.map(x=>'<div style="align-self:'+(x.m?'flex-start':'flex-end')+';max-width:80%;background:'+(x.m?'#4b6bff':'rgba(128,128,128,.28)')+';color:'+(x.m?'#fff':'inherit')+';padding:6px 10px;border-radius:12px;word-break:break-word;line-height:1.7">'+(chCur.group&&!x.m&&x.s?'<div style="font-size:.66rem;font-weight:700;opacity:.85">'+esc(x.s)+'</div>':'')+esc(x.x)+'<div style="font-size:.62rem;opacity:.7">'+new Date(x.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(x.m&&x.p?' · ⏳':'')+'</div></div>').join(''):'<div class="sub" style="text-align:center">هنوز پیامی نیست. سلام کن 👋</div>';box.scrollTop=box.scrollHeight}
+function chShowMsgs(){const box=$('cmsgs'),arr=chLoad(chCur.id);box.innerHTML=arr.length?arr.map(x=>'<div style="align-self:'+(x.m?'flex-start':'flex-end')+';max-width:80%;background:'+(x.m?'#4b6bff':'rgba(128,128,128,.28)')+';color:'+(x.m?'#fff':'inherit')+';padding:6px 10px;border-radius:12px;word-break:break-word;line-height:1.7">'+(chCur.group&&!x.m&&x.s?'<div style="font-size:.66rem;font-weight:700;opacity:.85">'+esc(x.s)+'</div>':'')+lk(esc(x.x))+'<div style="font-size:.62rem;opacity:.7">'+new Date(x.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(x.m&&x.p?' · ⏳':'')+'</div></div>').join(''):'<div class="sub" style="text-align:center">هنوز پیامی نیست. سلام کن 👋</div>';box.scrollTop=box.scrollHeight}
 function chOpen(id){let f=chContacts().find(q=>q.id===id);if(!f&&String(id).startsWith('g_')){const gg=gFind(id.slice(2));if(gg)f={id,name:'👥 '+gg.name,group:true,gid:gg.id}}if(!f)return;chCur=f;$('cname').textContent=f.name;$('clist').hidden=true;$('cchat').hidden=false;chUnread[id]=0;LS.set('sl-chat-unread',chUnread);chShowMsgs();setTimeout(()=>{try{$('cin').focus()}catch(e){}},50)}
 async function chSendMsg(){
   const t=$('cin').value.trim();if(!t||!chCur)return;$('cin').value='';
@@ -1840,6 +1840,31 @@ function gIncoming(m,txt){
   const k=gKey(g.id),arr=chLoad(k);if(arr.some(v=>v.i===m.i))return;
   arr.push({m:0,t:m.t||Date.now(),x:String(o.x||'').slice(0,500),s:String(o.s||m.n||m.f).slice(0,20),i:m.i});chSave(k,arr);
   if(chCur&&chCur.id===k&&!$('cchat').hidden)chShowMsgs();else{chUnread[k]=(chUnread[k]||0)+1;LS.set('sl-chat-unread',chUnread);chList()}}
+
+/* ---- دعوت به بازی آنلاین ۲ نفره (از Friends یا داخل چت) ---- */
+const OGAMES=[{f:'bowling.html',n:'🎳 Bowling'},{f:'ballvsball.html',n:'⚪ Ball vs Ball'}];
+const lk=h=>h.replace(/(https?:\/\/[^\s<]+\?room=[A-HJ-NP-Z2-9]{6}[^\s<]*)/g,'<a href="$1" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">🎮 ورود به بازی</a>');
+function gameBase(){return (location.origin&&location.origin!=='null')?location.origin+location.pathname.replace(/[^/]*$/,''):String(location.href).split(/[?#]/)[0].replace(/[^/]*$/,'')}
+function myNm(){return ((P&&P.name)||myId).slice(0,16)}
+try{localStorage.setItem('sl-name',myNm())}catch(e){}
+async function chSendText(fid,t){
+  if(!window.crypto||!crypto.subtle)return false;
+  const e=await chEncrypt(fid,t),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6),payload=JSON.stringify({f:myId,n:myNm(),t:Date.now(),iv:e.iv,c:e.c,i:id});
+  const arr=chLoad(fid);arr.push({m:1,t:Date.now(),x:t,p:!chOK,i:id});chSave(fid,arr);
+  if(chOK)chPublish(chTopic(fid),payload);else{chQueue.push({topic:chTopic(fid),payload});chConnect()}
+  if(chCur&&chCur.id===fid&&!$('cchat').hidden)chShowMsgs();return true}
+function pgInvite(fid,fname,g){
+  const code=Array.from({length:6},()=>ALPH[Math.floor(Math.random()*ALPH.length)]).join(''),base=gameBase();
+  const hostUrl=base+g.f+'?room='+code+'&host=1&n='+encodeURIComponent(myNm()),guestUrl=base+g.f+'?room='+code;
+  window.open(hostUrl,'_blank','noopener');
+  chConnect();chSendText(fid,'🎮 '+myNm()+' تو را به بازی آنلاین «'+g.n.replace(/^\S+\s/,'')+'» دعوت کرد:\n'+guestUrl).then(ok=>toast(ok?'دعوت برای '+fname+' فرستاده شد ✓ — منتظرش باش':'ارسال دعوت ممکن نشد (نیاز به HTTPS)'));
+  closePG()}
+function closePG(){const d=$('pgov');if(d)d.remove()}
+function pgChooser(fid,fname){closePG();const d=document.createElement('div');d.id='pgov';d.style.cssText='position:fixed;inset:0;background:#000b;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px';
+  d.innerHTML='<div class="box ctr" style="max-width:320px;width:100%"><b>🎮 بازی آنلاین ۲ نفره با '+esc(fname)+'</b><div class="sub" style="margin:6px 0 10px;font-size:.78rem;line-height:1.8">بازی را انتخاب کن؛ یک اتاق ساخته می‌شود و لینک دعوت برای دوستت فرستاده می‌شود. دوستت باید سایت را باز و پیام‌رسان را فعال داشته باشد.</div>'+OGAMES.map((g,i)=>'<button class="pr" data-gi="'+i+'" style="display:block;width:100%;margin:6px 0">'+g.n+'</button>').join('')+'<button class="al" id="pgx" style="margin-top:6px">بستن</button></div>';
+  d.addEventListener('click',e=>{const b=e.target.closest('[data-gi]');if(b)pgInvite(fid,fname,OGAMES[+b.dataset.gi]);else if(e.target.id==='pgx'||e.target===d)closePG()});document.body.appendChild(d)}
+$('flist').addEventListener('click',e=>{const b=e.target.closest('[data-pg]');if(!b)return;const f=friends[+b.dataset.pg];if(f)pgChooser(f.id,f.name||f.id)});
+$('cgame').onclick=()=>{if(!chCur)return;if(chCur.group){toast('بازی آنلاین فقط بین دو نفر است؛ از چت شخصی دعوت کن');return}pgChooser(chCur.id,chCur.name)};
 
 /* ---- تماس صوتی/تصویری WebRTC (سیگنالینگ از طریق همان MQTT رمزنگاری‌شده) ---- */
 const ICE={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};

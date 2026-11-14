@@ -237,6 +237,16 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   </div>
   <div class="box" id="scanbox" hidden><video id="svid" playsinline muted style="width:100%;border-radius:10px"></video><div class="ctr" style="margin-top:8px"><button class="al" id="sstop">Stop</button></div></div>
   <div class="box"><b>My Friends</b><div id="flist"></div></div>
+  <div class="box" id="gbox"><b>👥 Groups</b>
+    <div id="glist"></div>
+    <div class="ctr" style="margin-top:8px"><button class="pr" id="gnew">➕ New Group</button></div>
+    <div id="gform" hidden style="margin-top:8px">
+      <label for="gname">نام گروه</label><input type="text" id="gname" maxlength="24" autocomplete="off">
+      <div class="sub" style="margin:8px 0 4px">اعضا را انتخاب کن:</div><div id="gpick"></div>
+      <div class="ctr" style="margin-top:10px;display:flex;gap:8px;justify-content:center"><button class="pr" id="gsave">Create</button><button class="al" id="gcancel">Cancel</button></div>
+    </div>
+    <p class="sub" style="font-size:.74rem;margin:8px 0 0;line-height:1.8">پیام‌های گروه برای هر عضو جداگانه رمزنگاری و ارسال می‌شود (مثل پیام شخصی). اعضا باید آنلاین باشند یا بعداً وارد شوند؛ گروه با اولین پیام یا تغییر، روی دستگاه اعضا ساخته می‌شود.</p>
+  </div>
   <p class="sub" style="font-size:.76rem">توجه: این سایت سرور ندارد؛ فهرست دوستان فقط روی همین دستگاه ذخیره می‌شود و نمی‌توان بررسی کرد که آیدی واقعاً وجود دارد یا دوستت آنلاین است.</p>
 </section>
 
@@ -256,7 +266,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <section id="apps" hidden>
   <h2>Apps</h2>
   <div id="apps-home"><p class="sub">برنامه‌های کاربردی S loop</p>
-    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><button class="app" id="app-tuner"><span>🎻</span><b>Violin Tuner</b><small>کوک‌کن ویولن</small></button><button class="app" id="app-metro"><span>🥁</span><b>Metronome</b><small>مترونوم</small></button><button class="app" id="app-sa"><span>🧠</span><b>Super AI</b><small>هوش مصنوعی قوی</small></button><button class="app" id="app-pt"><span>⚛️</span><b>Periodic Table</b><small>جدول مندلیف</small></button><button class="app" id="app-fo"><span>📂</span><b>File Opener</b><small>بازکننده‌ی فایل</small></button><button class="app" id="app-pg"><span>📶</span><b>Ping Tools</b><small>کاهش و سنجش پینگ</small></button><button class="app" id="app-mp"><span>🎬</span><b>Video Player</b><small>پخش فیلم و سریال</small></button><button class="app" id="app-ed"><span>🎨</span><b>Pro Editor</b><small>ادیت عکس و ویدیو</small></button><button class="app" id="app-st"><span>📮</span><b>Stamp Maker</b><small>عکس به تمبر</small></button><button class="app" id="app-sk"><span>🏷</span><b>Sticker Maker</b><small>عکس به استیکر</small></button><button class="app" id="app-tp"><span>🎼</span><b>Tuner - Pitched</b><small>تشخیص نت و کوک ویولن</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
+    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><button class="app" id="app-tuner"><span>🎻</span><b>Violin Tuner</b><small>کوک‌کن ویولن</small></button><button class="app" id="app-metro"><span>🥁</span><b>Metronome</b><small>مترونوم</small></button><button class="app" id="app-sa"><span>🧠</span><b>Super AI</b><small>هوش مصنوعی قوی</small></button><button class="app" id="app-pt"><span>⚛️</span><b>Periodic Table</b><small>جدول مندلیف</small></button><button class="app" id="app-fo"><span>📂</span><b>File Opener</b><small>بازکننده‌ی فایل</small></button><button class="app" id="app-pg"><span>📶</span><b>Ping Tools</b><small>کاهش و سنجش پینگ</small></button><button class="app" id="app-mp"><span>🎬</span><b>Video Player</b><small>پخش فیلم و سریال</small></button><button class="app" id="app-ed"><span>🎨</span><b>Pro Editor</b><small>ادیت عکس و ویدیو</small></button><button class="app" id="app-st"><span>📮</span><b>Stamp Maker</b><small>عکس به تمبر</small></button><button class="app" id="app-sk"><span>🏷</span><b>Sticker Maker</b><small>عکس به استیکر</small></button><button class="app" id="app-sn"><span>🎶</span><b>Sheet Note</b><small>نت‌نویسی و ویرایش آهنگ</small></button><button class="app" id="app-tp"><span>🎼</span><b>Tuner - Pitched</b><small>تشخیص نت و کوک ویولن</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
   </div>
   <div id="notes-app" hidden>
     <div id="nlist-wrap">
@@ -433,7 +443,33 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
       <p class="sub" style="font-size:.74rem;margin:8px 0 0;direction:rtl">روی هر سیم بزن تا صدای مرجع پخش شود و هدف کوک همان سیم شود (دوباره بزن تا حالت خودکار). برای تغییر کم از پیچ ریز (fine tuner) و برای تغییر زیاد از گوشی/پیچ استفاده کن. سیم‌ها از چپ: سل G3، ر D4، لا A4، می E5.</p>
     </div>
   </div>
-<div id="tp-app" hidden>
+<div id="sn-app" hidden>
+    <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎶 Sheet Note</b><span></span></div>
+    <style>
+    #sn-app .tb{direction:ltr;display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;align-items:center}
+    #sn-app .tb button,#sn-app .tb select,#sn-app .tb input{padding:7px 10px;border-radius:10px;font:inherit;font-size:.82rem}
+    #sn-app .tb button.on{background:#d9a441;color:#1b1209;font-weight:700}
+    #sn-app .tb input[type=text]{flex:1;min-width:120px}#sn-app .tb input[type=number]{width:64px}
+    #sn-cv{width:100%;height:auto;background:#fff;border-radius:8px;border:1px solid rgba(128,128,128,.4);touch-action:none;display:block}
+    #sn-songs,#sn-pv{margin-top:8px}
+    #sn-songs .fr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(128,128,128,.4)}
+    #sn-pv img{max-width:100%;border-radius:8px;border:1px solid rgba(128,128,128,.4);background:#fff}
+    </style>
+    <div class="box">
+      <div class="tb"><input type="text" id="sn-title" maxlength="40" placeholder="Song title" aria-label="Title"><input type="number" id="sn-bpm" min="40" max="240" value="100" aria-label="BPM"><span class="sub" style="margin:0">BPM</span>
+        <select id="sn-ts" aria-label="Time"><option>4/4</option><option>3/4</option><option>2/4</option><option>6/8</option></select>
+        <select id="sn-key" aria-label="Key"><option value="C">C</option><option value="G">G (1♯)</option><option value="D">D (2♯)</option><option value="A">A (3♯)</option><option value="E">E (4♯)</option><option value="F">F (1♭)</option><option value="Bb">B♭ (2♭)</option><option value="Eb">E♭ (3♭)</option></select></div>
+      <div class="tb" id="sn-dur"><button data-d="4">1/1</button><button data-d="2">1/2</button><button data-d="1" class="on">1/4</button><button data-d=".5">1/8</button><button data-d=".25">1/16</button>
+        <button id="sn-dot">•</button><button id="sn-rest">Rest</button><button data-a="#">♯</button><button data-a="b">♭</button><button data-a="n">♮</button></div>
+      <div class="tb"><button id="sn-madd" class="on">✚ Add</button><button id="sn-medit">✋ Edit</button><button id="sn-up">▲</button><button id="sn-dn">▼</button><button id="sn-o8u">8va ▲</button><button id="sn-o8d">8va ▼</button></div>
+      <canvas id="sn-cv" width="1280" height="400"></canvas>
+      <div class="tb"><button id="sn-play" class="pr">▶ Play</button><button id="sn-undo">↶</button><button id="sn-redo">↷</button><button id="sn-del">🗑 Delete</button><button id="sn-clear">Clear</button></div>
+      <div class="tb"><button id="sn-save">💾 Save</button><button id="sn-list">📂 My Songs</button><button id="sn-exp">⬇ Export file</button><button id="sn-imp">⬆ Import file</button><button id="sn-img">📷 Image</button><button id="sn-ex">Example</button><input type="file" id="sn-file" accept=".json,.sheet,application/json" hidden></div>
+      <div id="sn-songs" hidden></div><div id="sn-pv" hidden></div>
+      <p class="sub" style="font-size:.74rem;line-height:1.8;margin:6px 0 0">در حالت Add روی خطوط حامل بزن تا نت اضافه شود (ارتفاع = جای لمس، ترتیب = موقعیت افقی). در حالت Edit نت را انتخاب کن، بکش بالا/پایین یا از دکمه‌ها برای تغییر ارزش، دیز/بمل، سکوت و ارتفاع استفاده کن.</p>
+    </div>
+  </div>
+  <div id="tp-app" hidden>
     <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎼 Tuner - Pitched</b><span></span></div>
     <style>
     #tp-app .tpw{max-width:460px;margin:0 auto;text-align:center;direction:ltr}
@@ -784,6 +820,8 @@ const GM=[
 {id:'ballvsball',n:'Ball vs Ball',u:'ballvsball.html',a:'<rect width="100" height="100" fill="#3b8be0"/><circle cx="50" cy="52" r="40" fill="#8895a8" stroke="#e8423a" stroke-width="5"/><circle cx="36" cy="50" r="12" fill="#ff4d4d"/><circle cx="62" cy="46" r="12" fill="#3da5ff"/><circle cx="52" cy="68" r="10" fill="#ffd23f"/><path d="M48 50L50 50" stroke="#fff" stroke-width="3"/>'},
 {id:'redorblue',n:'Red or Blue',u:'redorblue.html',a:'<rect width="100" height="100" fill="#000"/><g fill="#1fe055" font-size="9" font-family="monospace" opacity=".7"><text x="6" y="14">ｱ1ｳ0ｶ</text><text x="60" y="26">0ｷ1ｸ</text><text x="22" y="90">ｺ1ｻ0</text><text x="70" y="88">ｼ0ｽ</text></g><rect x="14" y="40" width="30" height="14" rx="7" fill="#e8342a" transform="rotate(-25 29 47)"/><rect x="56" y="48" width="30" height="14" rx="7" fill="#2a6bff" transform="rotate(25 71 55)"/>'},
 {id:'villagefarm',n:'Village Farm',u:'villagefarm.html',a:'<rect width="100" height="100" fill="#9fd8ff"/><rect y="54" width="100" height="46" fill="#7ab648"/><g fill="#8a5a30"><rect x="8" y="66" width="26" height="12"/><rect x="38" y="66" width="26" height="12"/></g><text x="21" y="76" font-size="12" text-anchor="middle">🌾</text><text x="51" y="76" font-size="12" text-anchor="middle">🥕</text><text x="82" y="82" font-size="22" text-anchor="middle">🐄</text><text x="22" y="46" font-size="26" text-anchor="middle">🏡</text><text x="62" y="92" font-size="14" text-anchor="middle">🐔</text>'},
+{id:'bowling',n:'Bowling',u:'bowling.html',a:'<rect width="100" height="100" fill="#1a1226"/><rect x="26" y="6" width="48" height="88" fill="#d9a05a"/><g fill="#fff" stroke="#d33" stroke-width="1.5"><circle cx="50" cy="18" r="4"/><circle cx="44" cy="26" r="4"/><circle cx="56" cy="26" r="4"/><circle cx="38" cy="34" r="4"/><circle cx="50" cy="34" r="4"/><circle cx="62" cy="34" r="4"/></g><circle cx="50" cy="76" r="9" fill="#1d3fae"/><circle cx="47" cy="72" r="1.5" fill="#050b2a"/><circle cx="52" cy="73" r="1.5" fill="#050b2a"/>'},
+{id:'contra',n:'Contra',u:'contra.html',a:'<rect width="100" height="100" fill="#143d2a"/><path d="M0 80h100v20H0z" fill="#6b4a2a"/><path d="M0 80h100v5H0z" fill="#2f9e44"/><rect x="20" y="52" width="9" height="12" fill="#e0b080"/><rect x="19" y="49" width="11" height="4" fill="#d22"/><rect x="20" y="64" width="9" height="16" fill="#2a4aa8"/><rect x="28" y="57" width="22" height="3" fill="#333"/><circle cx="58" cy="57" r="1.8" fill="#fff"/><circle cx="66" cy="57" r="1.8" fill="#fff"/><rect x="74" y="30" width="26" height="50" fill="#5b616b"/><circle cx="82" cy="52" r="6" fill="#ff3b2a"/>'},
 ];
 let fav=LS.get('sl-fav',[]);
 const SB='<svg class="sb" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#111" stroke="#c6e03c" stroke-width="1.4"/><text x="10" y="13.4" font-size="9" font-weight="700" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif">S</text></svg>';
@@ -1158,7 +1196,7 @@ supRender();
 let notes=LS.get('sl-notes',[]),nCur=null,nQ='',nDelT=0,nTm;
 const NC=['#fff7a8','#ffd1e8','#c9f2e3','#cfe3ff','#e6d6ff'];
 const nSave=()=>LS.set('sl-notes',notes);
-const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app','tuner-app','tp-app','metro-app','sa-app','pt-app','fo-app','pg-app','mp-app','ed-app','st-app','sk-app'];
+const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app','tuner-app','tp-app','sn-app','metro-app','sa-app','pt-app','fo-app','pg-app','mp-app','ed-app','st-app','sk-app'];
 function appsHome(){$('apps-home').hidden=false;APPS.forEach(i=>{$(i).hidden=true})}
 function openApp(id){$('apps-home').hidden=true;APPS.forEach(i=>{$(i).hidden=i!==id})}
 function nList(){
@@ -1719,6 +1757,7 @@ async function chIncoming(topic,pl){
   if(!m||!idOK(m.f)||m.f===myId||!m.iv||!m.c)return;
   const txt=await chDecrypt(m.f,m.iv,m.c);
   if(m.k==='call'){if(txt&&Date.now()-(m.t||0)<60000){try{callSignal(m.f,JSON.parse(txt),m)}catch(e){}}return}
+  if(m.k==='grp'){gIncoming(m,txt);return}
   const arr=chLoad(m.f);if(arr.some(x=>x.i===m.i))return;
   arr.push({m:0,t:m.t||Date.now(),x:txt==null?'🔒 پیام رمزگذاری‌شده (رمز گفتگو با هم یکی نیست)':txt,i:m.i});chSave(m.f,arr);
   if(!friends.some(f=>f.id===m.f)&&!chExtra.some(f=>f.id===m.f)){chExtra.push({id:m.f,name:String(m.n||m.f).slice(0,20)});LS.set('sl-chat-extra',chExtra)}
@@ -1728,11 +1767,13 @@ function chContacts(){const a=friends.map(f=>({id:f.id,name:f.name||f.id}));chEx
 function chList(){
   $('cmy').textContent='آیدی تو: '+myId;const c=chContacts();
   $('cfr').innerHTML=c.length?c.map(f=>{const last=chLoad(f.id).slice(-1)[0],u=chUnread[f.id]||0;return '<div class="fr" data-c="'+esc(f.id)+'" style="cursor:pointer"><div><b>'+esc(f.name)+'</b><small>'+(last?esc(String(last.x).slice(0,40)):esc(f.id))+'</small></div>'+(u?'<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 8px;font-size:.75rem">'+u+'</span>':'<span>›</span>')+'</div>'}).join(''):'<p class="sub">هنوز دوستی نداری؛ از بخش Friends اضافه کن.</p>';
+  $('cfr').innerHTML=gListHTML()+$('cfr').innerHTML;
 }
-function chShowMsgs(){const box=$('cmsgs'),arr=chLoad(chCur.id);box.innerHTML=arr.length?arr.map(x=>'<div style="align-self:'+(x.m?'flex-start':'flex-end')+';max-width:80%;background:'+(x.m?'#4b6bff':'rgba(128,128,128,.28)')+';color:'+(x.m?'#fff':'inherit')+';padding:6px 10px;border-radius:12px;word-break:break-word;line-height:1.7">'+esc(x.x)+'<div style="font-size:.62rem;opacity:.7">'+new Date(x.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(x.m&&x.p?' · ⏳':'')+'</div></div>').join(''):'<div class="sub" style="text-align:center">هنوز پیامی نیست. سلام کن 👋</div>';box.scrollTop=box.scrollHeight}
-function chOpen(id){const f=chContacts().find(q=>q.id===id);if(!f)return;chCur=f;$('cname').textContent=f.name;$('clist').hidden=true;$('cchat').hidden=false;chUnread[id]=0;LS.set('sl-chat-unread',chUnread);chShowMsgs();setTimeout(()=>{try{$('cin').focus()}catch(e){}},50)}
+function chShowMsgs(){const box=$('cmsgs'),arr=chLoad(chCur.id);box.innerHTML=arr.length?arr.map(x=>'<div style="align-self:'+(x.m?'flex-start':'flex-end')+';max-width:80%;background:'+(x.m?'#4b6bff':'rgba(128,128,128,.28)')+';color:'+(x.m?'#fff':'inherit')+';padding:6px 10px;border-radius:12px;word-break:break-word;line-height:1.7">'+(chCur.group&&!x.m&&x.s?'<div style="font-size:.66rem;font-weight:700;opacity:.85">'+esc(x.s)+'</div>':'')+esc(x.x)+'<div style="font-size:.62rem;opacity:.7">'+new Date(x.t).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})+(x.m&&x.p?' · ⏳':'')+'</div></div>').join(''):'<div class="sub" style="text-align:center">هنوز پیامی نیست. سلام کن 👋</div>';box.scrollTop=box.scrollHeight}
+function chOpen(id){let f=chContacts().find(q=>q.id===id);if(!f&&String(id).startsWith('g_')){const gg=gFind(id.slice(2));if(gg)f={id,name:'👥 '+gg.name,group:true,gid:gg.id}}if(!f)return;chCur=f;$('cname').textContent=f.name;$('clist').hidden=true;$('cchat').hidden=false;chUnread[id]=0;LS.set('sl-chat-unread',chUnread);chShowMsgs();setTimeout(()=>{try{$('cin').focus()}catch(e){}},50)}
 async function chSendMsg(){
   const t=$('cin').value.trim();if(!t||!chCur)return;$('cin').value='';
+  if(chCur.group){gSendMsg(t);return}
   if(!window.crypto||!crypto.subtle){toast('رمزنگاری در این مرورگر/آدرس ممکن نیست (نیاز به HTTPS)');return}
   const e=await chEncrypt(chCur.id,t),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const payload=JSON.stringify({f:myId,n:(P&&P.name)||myId,t:Date.now(),iv:e.iv,c:e.c,i:id});
@@ -1744,7 +1785,61 @@ $('app-chat').onclick=()=>{openApp('chat-app');$('clist').hidden=false;$('cchat'
 $('cfr').addEventListener('click',e=>{const r=e.target.closest('[data-c]');if(r)chOpen(r.dataset.c)});
 $('cbk').onclick=()=>{$('cchat').hidden=true;$('clist').hidden=false;chCur=null;chList()};
 $('csend').onclick=chSendMsg;$('cin').addEventListener('keydown',e=>{if(e.key==='Enter')chSendMsg()});
-$('ccode').onclick=()=>{if(!chCur)return;const v=prompt('رمز گفتگوی مشترک با «'+chCur.name+'»\n(هر دو نفر باید دقیقاً یک رمز وارد کنید؛ خالی = پیش‌فرض ضعیف)',chCodes[chCur.id]||'');if(v===null)return;chCodes[chCur.id]=v.trim();LS.set('sl-chat-codes',chCodes);chKeys={};toast('رمز گفتگو ذخیره شد')};
+$('ccode').onclick=()=>{if(!chCur)return;if(chCur.group){toast('در گروه از رمز گفتگوی هر عضو (جداگانه) استفاده می‌شود');return}const v=prompt('رمز گفتگوی مشترک با «'+chCur.name+'»\n(هر دو نفر باید دقیقاً یک رمز وارد کنید؛ خالی = پیش‌فرض ضعیف)',chCodes[chCur.id]||'');if(v===null)return;chCodes[chCur.id]=v.trim();LS.set('sl-chat-codes',chCodes);chKeys={};toast('رمز گفتگو ذخیره شد')};
+
+/* ---- Groups (بدون سرور: هر پیام برای هر عضو جدا رمزنگاری و ارسال می‌شود) ---- */
+let groups=LS.get('sl-groups',[]),gEdit=null;
+const gidOK=v=>/^G[a-z0-9]{8}$/.test(v||''),gKey=id=>'g_'+id,gFind=id=>groups.find(g=>g.id===id);
+function gSave(){LS.set('sl-groups',groups)}
+function myName(){return String((P&&P.name)||myId).slice(0,20)}
+function gListHTML(){return groups.map(g=>{const k=gKey(g.id),last=chLoad(k).slice(-1)[0],u=chUnread[k]||0;return '<div class="fr" data-c="'+esc(k)+'" style="cursor:pointer"><div><b>👥 '+esc(g.name)+'</b><small>'+(last?esc((last.s?last.s+': ':'')+String(last.x).slice(0,34)):g.members.length+' عضو')+'</small></div>'+(u?'<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 8px;font-size:.75rem">'+u+'</span>':'<span>›</span>')+'</div>'}).join('')}
+function renderGroups(){
+  $('glist').innerHTML=groups.length?groups.map(g=>'<div class="fr"><div><b>👥 '+esc(g.name)+'</b><small>'+g.members.length+' عضو'+(g.owner===myId?' · مدیر':'')+'</small></div><span><button class="al" data-ga="open" data-gid="'+g.id+'" aria-label="Chat">💬</button> '+(g.owner===myId?'<button class="al" data-ga="edit" data-gid="'+g.id+'" aria-label="Edit">✏️</button> ':'')+'<button class="al" data-ga="leave" data-gid="'+g.id+'" aria-label="Leave">🚪</button></span></div>').join(''):'<p class="sub" style="margin:8px 0 0">هنوز گروهی نداری.</p>'}
+function gCands(g){const a=[];const add=(id,name)=>{if(id!==myId&&!a.some(x=>x.id===id))a.push({id,name:name||id})};friends.forEach(f=>add(f.id,f.name));chExtra.forEach(f=>add(f.id,f.name));if(g)g.members.forEach(m=>add(m.id,m.name));return a}
+function gOpenForm(g){const c=gCands(g);if(!c.length){toast('اول از بخش بالا دوست اضافه کن');return}
+  gEdit=g?g.id:null;$('gname').value=g?g.name:'';$('gsave').textContent=g?'Save':'Create';
+  $('gpick').innerHTML=c.map(f=>'<label style="display:flex;gap:8px;align-items:center;padding:4px 0"><input type="checkbox" data-gp="'+esc(f.id)+'" '+(g&&g.members.some(m=>m.id===f.id)?'checked':'')+'> <span>'+esc(f.name)+' <small style="opacity:.6">'+esc(f.id)+'</small></span></label>').join('');
+  $('gform').hidden=false;$('gnew').hidden=true;try{$('gname').focus()}catch(e){}}
+function gCloseForm(){$('gform').hidden=true;$('gnew').hidden=false;gEdit=null}
+async function gSendTo(fid,obj){if(!window.crypto||!crypto.subtle)return false;
+  const e=await chEncrypt(fid,JSON.stringify(obj)),payload=JSON.stringify({f:myId,n:myName(),t:Date.now(),iv:e.iv,c:e.c,i:obj.i,k:'grp'});
+  if(chOK)chPublish(chTopic(fid),payload);else{chQueue.push({topic:chTopic(fid),payload});chConnect()}return true}
+const gRid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function gBroadcast(g,extra,obj){const ids=new Set(g.members.map(m=>m.id).concat(extra||[]));ids.delete(myId);ids.forEach(id=>gSendTo(id,obj))}
+function gMeta(g,a){return{a,g:g.id,gn:g.name,o:g.owner,gm:g.members,s:myName(),i:gRid()}}
+$('gnew').onclick=()=>gOpenForm(null);$('gcancel').onclick=gCloseForm;
+$('gsave').onclick=()=>{
+  const name=$('gname').value.trim().slice(0,24);if(!name)return toast('نام گروه را بنویس');
+  const ids=[...document.querySelectorAll('#gpick [data-gp]:checked')].map(c=>c.dataset.gp);if(!ids.length)return toast('حداقل یک عضو انتخاب کن');
+  if(ids.length>20)return toast('حداکثر ۲۰ عضو');
+  const cands=gCands(gEdit?gFind(gEdit):null),mem=[{id:myId,name:myName()}].concat(ids.map(id=>({id,name:(cands.find(c=>c.id===id)||{}).name||id})));
+  let g,removed=[];
+  if(gEdit){g=gFind(gEdit);if(!g)return gCloseForm();removed=g.members.filter(m=>m.id!==myId&&!ids.includes(m.id)).map(m=>m.id);g.name=name;g.members=mem}
+  else{g={id:'G'+Array.from({length:8},()=>'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random()*36)]).join(''),name,owner:myId,members:mem,t:Date.now()};groups.push(g)}
+  const was=gEdit;gSave();gBroadcast(g,removed,gMeta(g,'upd'));gCloseForm();renderGroups();toast(was?'گروه ذخیره شد ✓':'گروه ساخته شد ✓')};
+$('glist').addEventListener('click',e=>{const b=e.target.closest('[data-ga]');if(!b)return;const g=gFind(b.dataset.gid);if(!g)return;
+  if(b.dataset.ga==='open'){go('apps');$('app-chat').onclick();chOpen(gKey(g.id))}
+  else if(b.dataset.ga==='edit')gOpenForm(g);
+  else if(b.dataset.ga==='leave'){if(!confirm('از گروه «'+g.name+'» خارج شوی؟'))return;
+    const o=gMeta(g,'left');gBroadcast(g,[],o);groups=groups.filter(x=>x.id!==g.id);gSave();try{localStorage.removeItem('sl-chat-'+gKey(g.id))}catch(e){}renderGroups();chList();toast('از گروه خارج شدی')}});
+async function gSendMsg(t){const g=gFind(chCur.gid);if(!g)return;
+  if(!window.crypto||!crypto.subtle){toast('رمزنگاری در این مرورگر/آدرس ممکن نیست (نیاز به HTTPS)');return}
+  const o=gMeta(g,'msg');o.x=t;const k=gKey(g.id),arr=chLoad(k);arr.push({m:1,t:Date.now(),x:t,p:!chOK,i:o.i,s:myName()});chSave(k,arr);
+  gBroadcast(g,[],o);chShowMsgs()}
+function gIncoming(m,txt){
+  if(txt==null)return;let o;try{o=JSON.parse(txt)}catch(e){return}
+  if(!o||!gidOK(o.g)||!Array.isArray(o.gm))return;
+  const mem=o.gm.filter(v=>v&&idOK(v.id)).slice(0,30).map(v=>({id:v.id,name:String(v.name||v.id).slice(0,20)}));
+  let g=gFind(o.g);
+  if(o.a==='left'){if(g&&g.members.some(v=>v.id===m.f)){g.members=g.members.filter(v=>v.id!==m.f);if(g.owner===m.f)g.owner=(g.members[0]||{}).id||myId;gSave();renderGroups();toast(String(o.s||m.f).slice(0,20)+' از گروه «'+g.name+'» خارج شد')}return}
+  if(!mem.some(v=>v.id===m.f))return;
+  if(!mem.some(v=>v.id===myId)){if(g&&o.a==='upd'&&g.owner===m.f){groups=groups.filter(v=>v.id!==g.id);gSave();renderGroups();chList();toast('از گروه «'+g.name+'» حذف شدی')}return}
+  if(!g){g={id:o.g,name:String(o.gn||'Group').slice(0,24),owner:idOK(o.o)?o.o:m.f,members:mem,t:Date.now()};groups.push(g);gSave();renderGroups();toast('به گروه «'+g.name+'» اضافه شدی 👥')}
+  else if(o.a==='upd'&&g.owner===m.f){g.name=String(o.gn||g.name).slice(0,24);g.members=mem;gSave();renderGroups()}
+  if(o.a!=='msg')return;
+  const k=gKey(g.id),arr=chLoad(k);if(arr.some(v=>v.i===m.i))return;
+  arr.push({m:0,t:m.t||Date.now(),x:String(o.x||'').slice(0,500),s:String(o.s||m.n||m.f).slice(0,20),i:m.i});chSave(k,arr);
+  if(chCur&&chCur.id===k&&!$('cchat').hidden)chShowMsgs();else{chUnread[k]=(chUnread[k]||0)+1;LS.set('sl-chat-unread',chUnread);chList()}}
 
 /* ---- تماس صوتی/تصویری WebRTC (سیگنالینگ از طریق همان MQTT رمزنگاری‌شده) ---- */
 const ICE={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
@@ -1932,7 +2027,7 @@ setInterval(()=>{
   if(hm>=NT.time&&LS.get('sl-notif-last','')!==dayKey()){LS.set('sl-notif-last',dayKey());slNotify('S Loop',NT_MSG[Math.floor(Math.random()*NT_MSG.length)],'daily')}
 },30000);
 ntRender();
-renderProfile();renderStats();musicBtn();renderTime();go('games');settle();renderFriends();renderQR();try{const ad=new URLSearchParams(location.search).get('add');if(ad)handleInvite(String(location.href))}catch(e){}
+renderProfile();renderStats();musicBtn();renderTime();go('games');settle();renderFriends();renderGroups();renderQR();try{const ad=new URLSearchParams(location.search).get('add');if(ad)handleInvite(String(location.href))}catch(e){}
 if(musicOn)toast('🎵 برای شروع موسیقی یک بار روی صفحه بزن');
 // S Loop mini games — صفحه‌های مستقل داخل مودال باز می‌شوند تا موسیقی‌ی صفحه‌ی اصلی قطع نشود
 (()=>{
@@ -2494,6 +2589,126 @@ function show(f){const m=f2m(f);let target,cents;
  if(mode=='violin'&&Math.abs(m-target)>2.5)g('tp-hint').textContent='نزدیک‌ترین رشته: '+VS[sel].n+' — '+(m>target?'خیلی بالاست':'خیلی پایین است')}
 g('app-tp').onclick=()=>openApp('tp-app');
 setMode();ui();
+})();
+</script>
+<script>
+/* ---- Apps: Sheet Note ---- */
+(function(){
+const g=id=>document.getElementById(id),cv=g('sn-cv'),c=cv.getContext('2d'),W=640,SYSH=120,STEP=5;
+let S={title:'My Song',bpm:100,ts:'4/4',key:'C',notes:[]},tool={d:1,dot:0,rest:0,acc:null},mode='add',sel=-1,undo=[],redo=[],lay=null,playing=-1,actx=null,nodes=[],raf=0,endT=0,sched=[];
+const SH=[3,0,4,1,5,2,6],FL=[6,2,5,1,4,0,3],KEYS={C:[0,0],G:[1,0],D:[2,0],A:[3,0],E:[4,0],F:[0,1],Bb:[0,2],Eb:[0,3]},LET=[0,2,4,5,7,9,11];
+const SHS=[10,7,11,8,5,9,6],FLS=[6,9,5,8,4,7,3];
+const meas=()=>({'4/4':4,'3/4':3,'2/4':2,'6/8':3})[S.ts];
+const dd=n=>n.d*(n.dot?1.5:1);
+function keyAcc(){const k=KEYS[S.key]||[0,0];return{sh:k[0],fl:k[1]}}
+function midi(n){const li=((n.s%7)+7)%7,oct=Math.floor(n.s/7);let a=0;if(n.a==='#')a=1;else if(n.a==='b')a=-1;else if(n.a==='n')a=0;else{const k=keyAcc();if(SH.slice(0,k.sh).includes(li))a=1;else if(FL.slice(0,k.fl).includes(li))a=-1}return 60+12*oct+LET[li]+a}
+function snap(){return JSON.stringify(S.notes)}
+function pushU(){undo.push(snap());if(undo.length>60)undo.shift();redo=[]}
+function save(){try{localStorage.setItem('sl-sheet-cur',JSON.stringify(S))}catch(e){}}
+function changed(){save();draw()}
+// ---------- چیدمان
+function x0(i){const k=keyAcc(),n=k.sh+k.fl;return 16+32+n*9+(i===0?26:0)+10}
+function layout(){const sys=[{notes:[],bars:[]}],pos=[];let x=x0(0),beat=0,mb=meas();
+ S.notes.forEach((n,i)=>{const d=dd(n),w=22+14*Math.pow(d,.6)+(n.a&&!n.r?12:0);
+  if(x+w>W-18&&sys[sys.length-1].notes.length){sys.push({notes:[],bars:[]});x=x0(sys.length-1);}
+  const cx=x+(n.a&&!n.r?12:0)+10;pos[i]={x:cx,sys:sys.length-1};sys[sys.length-1].notes.push(i);x+=w;beat+=d;
+  if(beat>=mb-1e-6){sys[sys.length-1].bars.push(x+2);x+=10;beat=Math.max(0,beat-mb)}});
+ return{sys,pos,H:78+sys.length*SYSH-10}}
+const y0=i=>78+i*SYSH,yOf=(i,st)=>y0(i)+40-(st-2)*STEP;
+// ---------- رسم
+function clef(x,y){c.save();c.translate(x,y);c.lineWidth=2.2;c.strokeStyle='#111';c.lineCap='round';
+ c.beginPath();c.moveTo(8.5,-17);c.lineTo(6.2,46);c.bezierCurveTo(5.5,53,-3.5,53,-2.5,47);c.stroke();
+ c.beginPath();c.moveTo(8.5,-17);c.bezierCurveTo(17,-10,13,3,7,11);c.bezierCurveTo(-5,24,-3,40,7,39);c.bezierCurveTo(16,38,15,23,7,23);c.bezierCurveTo(2,23,0,29,3.5,32);c.stroke();
+ c.beginPath();c.moveTo(8.5,-17);c.bezierCurveTo(4,-12,3,-2,7,11);c.stroke();
+ c.fillStyle='#111';c.beginPath();c.arc(-2.5,47,2.3,0,7);c.fill();c.restore()}
+function rest(x,y,d){c.fillStyle='#111';c.strokeStyle='#111';c.lineWidth=2;
+ if(d>=4)c.fillRect(x-6,y-20,12,5);else if(d>=2)c.fillRect(x-6,y-15,12,5);
+ else if(d>=1){c.beginPath();c.moveTo(x-3,y-18);c.lineTo(x+3,y-9);c.lineTo(x-3,y-1);c.lineTo(x+3,y+8);c.bezierCurveTo(x-4,y+6,x-5,y+12,x+1,y+13);c.stroke()}
+ else{c.beginPath();c.arc(x-2,y-6,2.4,0,7);c.fill();c.beginPath();c.moveTo(x+4,y-8);c.lineTo(x-2,y+10);c.stroke();if(d<.5){c.beginPath();c.arc(x-4,y+1,2.4,0,7);c.fill()}}}
+function note(n,cx,i,col){const st=n.s,y=yOf(lay.pos[i].sys,st);c.strokeStyle=col;c.fillStyle=col;c.lineWidth=1.6;
+ if(n.r){rest(cx,y0(lay.pos[i].sys)+20,n.d);if(n.dot){c.beginPath();c.arc(cx+10,y0(lay.pos[i].sys)+17,1.8,0,7);c.fill()}return}
+ // خط‌های کمکی
+ c.lineWidth=1.3;const top=y0(lay.pos[i].sys);for(let q=0;q>=st;q-=2){const yy=yOf(lay.pos[i].sys,q);c.beginPath();c.moveTo(cx-10,yy);c.lineTo(cx+10,yy);c.stroke()}
+ for(let q=12;q<=st;q+=2){const yy=yOf(lay.pos[i].sys,q);c.beginPath();c.moveTo(cx-10,yy);c.lineTo(cx+10,yy);c.stroke()}
+ c.lineWidth=1.6;
+ c.save();c.translate(cx,y);c.rotate(-.35);c.beginPath();c.ellipse(0,0,6.3,4.5,0,0,7);if(n.d>=2){c.lineWidth=2;c.stroke()}else c.fill();c.restore();
+ if(n.d<4){const down=st>=6,sx=down?cx-5.6:cx+5.6,ey=down?y+32:y-32;c.lineWidth=1.6;c.beginPath();c.moveTo(sx,y);c.lineTo(sx,ey);c.stroke();
+  const fl=n.d<=.25?2:n.d<=.5?1:0;for(let f=0;f<fl;f++){const fy=down?ey-f*6:ey+f*6;c.beginPath();c.moveTo(sx,fy);c.bezierCurveTo(sx+(down?0:12),fy+(down?-6:8),sx+(down?10:14),fy+(down?-14:14),sx+(down?5:7),fy+(down?-18:20));c.stroke()}}
+ if(n.dot){c.beginPath();c.arc(cx+11,y+(st%2===0?-3:0),1.8,0,7);c.fill()}
+ if(n.a){c.font='bold 17px serif';c.textAlign='center';c.fillText(n.a==='#'?'♯':n.a==='b'?'♭':'♮',cx-14,y+5)}}
+function draw(opt){opt=opt||{};lay=layout();const H=lay.H+10;cv.width=W*2;cv.height=H*2;c.setTransform(2,0,0,2,0,0);c.direction='ltr';
+ c.fillStyle='#fff';c.fillRect(0,0,W,H);c.textAlign='center';c.fillStyle='#111';c.font='bold 21px serif';c.fillText(S.title||'Untitled',W/2,30);
+ c.font='13px serif';c.textAlign='left';c.fillText('♩ = '+S.bpm,18,56);
+ const k=keyAcc();
+ lay.sys.forEach((sy,si)=>{const t=y0(si);c.strokeStyle='#111';c.lineWidth=1;for(let l=0;l<5;l++){c.beginPath();c.moveTo(14,t+l*10);c.lineTo(W-14,t+l*10);c.stroke()}
+  c.beginPath();c.moveTo(14,t);c.lineTo(14,t+40);c.stroke();clef(24,t);
+  c.fillStyle='#111';c.font='bold 16px serif';c.textAlign='center';
+  for(let a=0;a<k.sh;a++)c.fillText('♯',50+a*9,yOf(si,SHS[a])+5);for(let a=0;a<k.fl;a++)c.fillText('♭',50+a*9,yOf(si,FLS[a])+5);
+  if(si===0){const tx=16+32+(k.sh+k.fl)*9+16;c.font='bold 20px serif';const[nu,de]=S.ts.split('/');c.fillText(nu,tx,t+17);c.fillText(de,tx,t+37)}
+  sy.bars.forEach((bx,bi)=>{const last=si===lay.sys.length-1&&bi===sy.bars.length-1&&bx>0&&sy.notes.length&&sy.notes[sy.notes.length-1]===S.notes.length-1;c.lineWidth=1.2;c.beginPath();c.moveTo(bx,t);c.lineTo(bx,t+40);c.stroke();if(last){c.lineWidth=3;c.beginPath();c.moveTo(bx+4,t);c.lineTo(bx+4,t+40);c.stroke()}});
+  c.beginPath();c.moveTo(W-14,t);c.lineTo(W-14,t+40);c.stroke()});
+ S.notes.forEach((n,i)=>note(n,lay.pos[i].x,i,opt.plain?'#111':i===playing?'#e53935':i===sel?'#1976d2':'#111'));
+ if(!S.notes.length&&!opt.plain){c.fillStyle='#999';c.font='13px sans-serif';c.textAlign='center';c.fillText('Tap the staff to add notes',W/2,y0(0)+22)}}
+// ---------- ورودی
+function pt(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*(cv.height/2)/r.height}}
+function sysAt(py){let b=0,bd=1e9;lay.sys.forEach((_,i)=>{const d=Math.abs(py-(y0(i)+20));if(d<bd){bd=d;b=i}});return b}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{if(playing>=0)return;e.preventDefault();const p=pt(e);lay=layout();const si=sysAt(p.y);
+ if(mode==='add'){const step=Math.max(-5,Math.min(17,2+Math.round((y0(si)+40-p.y)/STEP))),sn=lay.sys[si].notes;let idx=sn.find(j=>lay.pos[j].x>p.x);if(idx===undefined)idx=sn.length?sn[sn.length-1]+1:S.notes.length;
+  pushU();S.notes.splice(idx,0,{s:tool.rest?6:step,d:tool.d,dot:tool.dot,r:tool.rest,a:tool.rest?null:tool.acc});sel=-1;if(!tool.rest)tone(midi(S.notes[idx]),0,.35);changed();return}
+ let best=-1,bd=16;lay.sys[si].notes.forEach(j=>{const n=S.notes[j],d=Math.abs(lay.pos[j].x-p.x),dy=n.r?0:Math.abs(yOf(si,n.s)-p.y);if(d<bd&&dy<22){bd=d;best=j}});
+ sel=best;if(best>=0){drag={y:p.y,s:S.notes[best].s,u:false};syncTool(S.notes[best])}draw()});
+addEventListener('pointermove',e=>{if(!drag||sel<0)return;const p=pt(e),n=S.notes[sel];if(n.r)return;const ns=Math.max(-5,Math.min(17,drag.s+Math.round((drag.y-p.y)/STEP)));if(ns!==n.s){if(!drag.u){pushU();drag.u=true}n.s=ns;tone(midi(n),0,.12);draw()}});
+addEventListener('pointerup',()=>{if(drag&&drag.u)save();drag=null});
+function syncTool(n){tool.d=n.d;tool.dot=n.dot;tool.rest=n.r;tool.acc=n.a;ui()}
+function ui(){document.querySelectorAll('#sn-dur [data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d===tool.d));g('sn-dot').classList.toggle('on',!!tool.dot);g('sn-rest').classList.toggle('on',!!tool.rest);
+ document.querySelectorAll('#sn-dur [data-a]').forEach(b=>b.classList.toggle('on',tool.acc===b.dataset.a));g('sn-madd').classList.toggle('on',mode==='add');g('sn-medit').classList.toggle('on',mode==='edit')}
+function applySel(f){if(sel>=0&&S.notes[sel]){pushU();f(S.notes[sel]);changed()}}
+document.querySelectorAll('#sn-dur [data-d]').forEach(b=>b.onclick=()=>{tool.d=+b.dataset.d;ui();applySel(n=>n.d=tool.d)});
+g('sn-dot').onclick=()=>{tool.dot=tool.dot?0:1;ui();applySel(n=>n.dot=tool.dot)};
+g('sn-rest').onclick=()=>{tool.rest=tool.rest?0:1;ui();applySel(n=>{n.r=tool.rest;if(n.r)n.a=null})};
+document.querySelectorAll('#sn-dur [data-a]').forEach(b=>b.onclick=()=>{tool.acc=tool.acc===b.dataset.a?null:b.dataset.a;ui();applySel(n=>{if(!n.r)n.a=tool.acc})});
+g('sn-madd').onclick=()=>{mode='add';sel=-1;ui();draw()};g('sn-medit').onclick=()=>{mode='edit';ui()};
+const shift=(d)=>{if(sel>=0&&S.notes[sel]&&!S.notes[sel].r){pushU();S.notes[sel].s=Math.max(-5,Math.min(17,S.notes[sel].s+d));tone(midi(S.notes[sel]),0,.25);changed()}};
+g('sn-up').onclick=()=>shift(1);g('sn-dn').onclick=()=>shift(-1);
+const oct=d=>{pushU();S.notes.forEach(n=>{if(!n.r)n.s=Math.max(-5,Math.min(17,n.s+d))});changed()};g('sn-o8u').onclick=()=>oct(7);g('sn-o8d').onclick=()=>oct(-7);
+g('sn-del').onclick=()=>{if(!S.notes.length)return;pushU();S.notes.splice(sel>=0?sel:S.notes.length-1,1);sel=-1;changed()};
+g('sn-clear').onclick=()=>{if(S.notes.length&&confirm('همه‌ی نت‌ها پاک شود؟')){pushU();S.notes=[];sel=-1;changed()}};
+g('sn-undo').onclick=()=>{if(!undo.length)return;redo.push(snap());S.notes=JSON.parse(undo.pop());sel=-1;changed()};
+g('sn-redo').onclick=()=>{if(!redo.length)return;undo.push(snap());S.notes=JSON.parse(redo.pop());sel=-1;changed()};
+g('sn-title').oninput=e=>{S.title=e.target.value.slice(0,40);changed()};g('sn-bpm').onchange=e=>{S.bpm=Math.max(40,Math.min(240,+e.target.value||100));e.target.value=S.bpm;changed()};
+g('sn-ts').onchange=e=>{S.ts=e.target.value;changed()};g('sn-key').onchange=e=>{S.key=e.target.value;changed()};
+// ---------- پخش
+function tone(m,t,dur){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();const f=440*Math.pow(2,(m-69)/12),at=actx.currentTime+t,o=actx.createOscillator(),o2=actx.createOscillator(),gn=actx.createGain();
+ o.type='triangle';o.frequency.value=f;o2.type='sine';o2.frequency.value=f*2;const g2=actx.createGain();g2.gain.value=.3;o2.connect(g2);g2.connect(gn);o.connect(gn);gn.connect(actx.destination);
+ gn.gain.setValueAtTime(0.0001,at);gn.gain.exponentialRampToValueAtTime(.28,at+.012);gn.gain.exponentialRampToValueAtTime(.0001,at+Math.max(.08,dur));o.start(at);o2.start(at);o.stop(at+dur+.05);o2.stop(at+dur+.05);nodes.push(o,o2)}catch(e){}}
+function stop(){cancelAnimationFrame(raf);nodes.forEach(o=>{try{o.stop()}catch(e){}});nodes=[];playing=-1;g('sn-play').textContent='▶ Play';draw()}
+g('sn-play').onclick=()=>{if(playing>=0||nodes.length){stop();return}if(!S.notes.length)return;
+ try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume()}catch(e){return}
+ const spb=60/S.bpm;let t=0;sched=[];S.notes.forEach((n,i)=>{const d=dd(n)*spb;if(!n.r)tone(midi(n),t+.1,d*.96);sched.push({i,t:t+.1,e:t+.1+d});t+=d});const t0=actx.currentTime;endT=t+.2;g('sn-play').textContent='⏹ Stop';sel=-1;
+ const loop=()=>{const now=actx.currentTime-t0;const cur=sched.find(s=>now>=s.t&&now<s.e);const ni=cur?cur.i:-1;if(ni!==playing){playing=ni;draw()}if(now>endT){stop();return}raf=requestAnimationFrame(loop)};playing=-1;nodes.length||nodes.push({stop(){}});raf=requestAnimationFrame(loop)};
+// ---------- ذخیره/بارگذاری/تصویر
+const LSK='sl-sheets';const songs=()=>{try{return JSON.parse(localStorage.getItem(LSK)||'[]')}catch(e){return[]}};
+function clean(o){const ok=o&&Array.isArray(o.notes);if(!ok)return null;const n=o.notes.slice(0,600).map(v=>({s:Math.max(-5,Math.min(17,Math.round(+v.s)||0)),d:[4,2,1,.5,.25].includes(+v.d)?+v.d:1,dot:v.dot?1:0,r:v.r?1:0,a:['#','b','n'].includes(v.a)?v.a:null}));
+ return{title:String(o.title||'Untitled').slice(0,40),bpm:Math.max(40,Math.min(240,+o.bpm||100)),ts:['4/4','3/4','2/4','6/8'].includes(o.ts)?o.ts:'4/4',key:KEYS[o.key]?o.key:'C',notes:n}}
+function setSong(o){S=o;sel=-1;undo=[];redo=[];g('sn-title').value=S.title;g('sn-bpm').value=S.bpm;g('sn-ts').value=S.ts;g('sn-key').value=S.key;changed()}
+g('sn-save').onclick=()=>{const a=songs(),i=a.findIndex(x=>x.name===S.title),rec={name:S.title||'Untitled',t:Date.now(),data:S};if(i>=0)a[i]=rec;else a.unshift(rec);try{localStorage.setItem(LSK,JSON.stringify(a.slice(0,40)));toast('ذخیره شد ✓')}catch(e){toast('ذخیره ممکن نشد')}listSongs()};
+function listSongs(){const a=songs(),box=g('sn-songs');box.innerHTML=a.length?a.map((x,i)=>'<div class="fr"><div><b>'+esc(x.name)+'</b><small style="display:block;opacity:.6">'+x.data.notes.length+' نت</small></div><span><button class="al" data-l="'+i+'">Load</button> <button class="al" data-x="'+i+'">×</button></span></div>').join(''):'<p class="sub">هنوز آهنگی ذخیره نکرده‌ای.</p>'}
+g('sn-list').onclick=()=>{const b=g('sn-songs');b.hidden=!b.hidden;if(!b.hidden)listSongs()};
+g('sn-songs').addEventListener('click',e=>{const l=e.target.closest('[data-l]'),x=e.target.closest('[data-x]'),a=songs();if(l){const o=clean(a[+l.dataset.l].data);if(o){setSong(o);toast('بارگذاری شد ✓')}}else if(x){a.splice(+x.dataset.x,1);localStorage.setItem(LSK,JSON.stringify(a));listSongs()}});
+function dl(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+g('sn-exp').onclick=()=>dl(new Blob([JSON.stringify(S)],{type:'application/json'}),(S.title||'song').replace(/[^\w\u0600-\u06FF-]+/g,'_')+'.sheet.json');
+g('sn-imp').onclick=()=>g('sn-file').click();
+g('sn-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=clean(JSON.parse(r.result));if(!o)throw 0;setSong(o);toast('فایل بارگذاری شد ✓')}catch(x){toast('فایل نت معتبر نیست')}};r.readAsText(f);e.target.value=''};
+g('sn-img').onclick=()=>{draw({plain:true});cv.toBlob(async b=>{draw();if(!b)return;const name=(S.title||'song').replace(/[^\w\u0600-\u06FF-]+/g,'_')+'.png',url=URL.createObjectURL(b),pv=g('sn-pv');
+  pv.hidden=false;pv.innerHTML='<div class="sub" style="margin-bottom:4px">عکس نت (اگر دانلود نشد، روی عکس نگه دار و ذخیره کن):</div><img alt="sheet" src="'+url+'">';
+  try{const file=new File([b],name,{type:'image/png'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:S.title});return}}catch(e){if(e&&e.name==='AbortError')return}
+  dl(b,name);toast('عکس ذخیره شد ✓')},'image/png')};
+g('sn-ex').onclick=()=>{const N=(s,d)=>({s,d,dot:0,r:0,a:null});setSong({title:'Twinkle Twinkle',bpm:100,ts:'4/4',key:'C',notes:[N(0,1),N(0,1),N(4,1),N(4,1),N(5,1),N(5,1),N(4,2),N(3,1),N(3,1),N(2,1),N(2,1),N(1,1),N(1,1),N(0,2),N(4,1),N(4,1),N(3,1),N(3,1),N(2,1),N(2,1),N(1,2)]})};
+g('app-sn').onclick=()=>{openApp('sn-app');setTimeout(()=>{draw()},30)};
+// بازیابی کار قبلی
+try{const o=clean(JSON.parse(localStorage.getItem('sl-sheet-cur')||'null'));if(o){S=o;g('sn-title').value=S.title;g('sn-bpm').value=S.bpm;g('sn-ts').value=S.ts;g('sn-key').value=S.key}else g('sn-title').value=S.title}catch(e){g('sn-title').value=S.title}
+ui();draw();
 })();
 </script>
 </body>

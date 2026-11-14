@@ -76,7 +76,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 .sw span::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
 .sw input:checked+span{background:var(--btn)}
 .sw input:checked+span::after{transform:translateX(22px)}
-#category{min-height:62vh}#catchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}#catchips button{padding:7px 12px;border-radius:18px;border:1px solid rgba(128,128,128,.55);background:rgba(255,255,255,.35);color:inherit;font:inherit;font-size:.82rem}#catchips button.on{background:#d9a441;color:#1b1209;border-color:#d9a441;font-weight:700}#catchips small{opacity:.7}.cth{margin:18px 0 8px;font-size:1.05rem}.cth small{opacity:.6;font-weight:400}
+#category{min-height:62vh}.tlshare{display:flex;gap:8px;align-items:center;font-size:.85rem;margin:6px 0}.tlrow{border:1px solid rgba(128,128,128,.45);border-radius:12px;margin:6px 0;background:rgba(255,255,255,.35);overflow:hidden}.tlh{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer}.tlh svg{width:42px;height:42px;border-radius:9px;flex:none}.tlh b{flex:1}.tlp{padding:8px 12px 10px;border-top:1px dashed rgba(128,128,128,.45);font-size:.88rem;line-height:1.9}.tlp ol{margin:6px 0 0;padding:0 18px}.tlp li.me{font-weight:700;color:#b8730a}.tlbest{font-size:1rem}#catchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 14px}#catchips button{padding:7px 12px;border-radius:18px;border:1px solid rgba(128,128,128,.55);background:rgba(255,255,255,.35);color:inherit;font:inherit;font-size:.82rem}#catchips button.on{background:#d9a441;color:#1b1209;border-color:#d9a441;font-weight:700}#catchips small{opacity:.7}.cth{margin:18px 0 8px;font-size:1.05rem}.cth small{opacity:.6;font-weight:400}
 .soon{position:relative;font-size:3.2rem;font-weight:800;color:var(--tq);text-shadow:0 0 26px var(--lime);padding:34px 44px}
 .soon::before{content:"";position:absolute;inset:0;border:3px dashed var(--lime);border-radius:50%;animation:sp 14s linear infinite}
 .cr{display:flex;align-items:center;gap:14px}
@@ -195,7 +195,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   <div class="hb"><button class="ib" id="mu" aria-label="Music">🔊</button><button class="ib" id="mb" aria-label="Menu">☰ Menu</button></div>
 </header>
 <nav id="menu">
-  <button data-s="games">🎮 Games</button><button data-s="favorites">❤️ Favorite Games</button><button data-s="friends">👥 Friends</button><button data-s="ai">🤖 AI</button><button data-s="support">🎧 Support</button><button data-s="apps">🧰 Apps</button><button data-s="account">👤 Account</button><button data-s="category">🗂️ Category</button><button data-s="settings">⚙️ Settings</button><button data-s="creator">✨ Creator</button>
+  <button data-s="games">🎮 Games</button><button data-s="favorites">❤️ Favorite Games</button><button data-s="friends">👥 Friends</button><button data-s="ai">🤖 AI</button><button data-s="support">🎧 Support</button><button data-s="apps">🧰 Apps</button><button data-s="account">👤 Account</button><button data-s="category">🗂️ Category</button><button data-s="leader">🏆 Top Leader</button><button data-s="settings">⚙️ Settings</button><button data-s="creator">✨ Creator</button>
 </nav>
 <main>
 <section id="games"><h2>Games</h2><p class="sub">آخرین بازی‌ای که بازی کردی روی گرامافون می‌چرخد. یک صفحه را انتخاب کن؛ داخل گرامافون می‌چرخد، از شیپور نت‌ها بیرون می‌آیند و بازی شروع می‌شود.</p><div class="box" id="onbox" style="margin:10px 0;text-align:center"><b>🌐 بازی آنلاین ۲ نفره</b><div class="sub" style="font-size:.8rem;line-height:1.8;margin:4px 0 8px">بدون نیاز به دوست‌اضافه‌کردن: اتاق بساز و کد یا لینک را به هر کسی بده. بازی را انتخاب کن:</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="pr" data-og="0">🎳 Bowling</button><button class="pr" data-og="1">⚪ Ball vs Ball</button></div><div class="sub" style="font-size:.68rem;opacity:.6;margin-top:8px">نسخه‌ی بازی آنلاین: ۲ • این بازی‌ها روی کارت‌ها نشان 🌐 دارند</div></div><div id="gramo" aria-hidden="true">
@@ -266,7 +266,7 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
 <section id="apps" hidden>
   <h2>Apps</h2>
   <div id="apps-home"><p class="sub">برنامه‌های کاربردی S loop</p>
-    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><button class="app" id="app-tuner"><span>🎻</span><b>Violin Tuner</b><small>کوک‌کن ویولن</small></button><button class="app" id="app-metro"><span>🥁</span><b>Metronome</b><small>مترونوم</small></button><button class="app" id="app-sa"><span>🧠</span><b>Super AI</b><small>هوش مصنوعی قوی</small></button><button class="app" id="app-pt"><span>⚛️</span><b>Periodic Table</b><small>جدول مندلیف</small></button><button class="app" id="app-fo"><span>📂</span><b>File Opener</b><small>بازکننده‌ی فایل</small></button><button class="app" id="app-pg"><span>📶</span><b>Ping Tools</b><small>کاهش و سنجش پینگ</small></button><button class="app" id="app-mp"><span>🎬</span><b>Video Player</b><small>پخش فیلم و سریال</small></button><button class="app" id="app-ed"><span>🎨</span><b>Pro Editor</b><small>ادیت عکس و ویدیو</small></button><button class="app" id="app-st"><span>📮</span><b>Stamp Maker</b><small>عکس به تمبر</small></button><button class="app" id="app-sk"><span>🏷</span><b>Sticker Maker</b><small>عکس به استیکر</small></button><button class="app" id="app-sn"><span>🎶</span><b>Sheet Note</b><small>نت‌نویسی و ویرایش آهنگ</small></button><button class="app" id="app-tp"><span>🎼</span><b>Tuner - Pitched</b><small>تشخیص نت و کوک ویولن</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
+    <div class="appgrid"><button class="app" id="app-notes"><span>📝</span><b>Notes</b><small>یادداشت</small></button><button class="app" id="app-calc"><span>🧮</span><b>Calculator</b><small>ماشین حساب</small></button><button class="app" id="app-paint"><span>🎨</span><b>Paint</b><small>نقاشی</small></button><button class="app" id="app-cal"><span>📅</span><b>Calendar</b><small>تقویم</small></button><button class="app" id="app-clock"><span>⏰</span><b>Clock</b><small>ساعت، تایمر، زنگ</small></button><button class="app" id="app-rec"><span>🎙</span><b>Recorder</b><small>ضبط صدا</small></button><button class="app" id="app-call"><span>📞</span><b>Call</b><small>تماس صوتی و تصویری</small></button><button class="app" id="app-chat"><span>💬</span><b>Chat</b><small>پیام به دوستان</small></button><button class="app" id="app-br"><span>🌐</span><b>Browser</b><small>مرورگر Google</small></button><button class="app" id="app-shz"><span>🎧</span><b>Song ID</b><small>تشخیص آهنگ</small></button><button class="app" id="app-map"><span>🗺</span><b>Route</b><small>مسیریابی Google Maps</small></button><button class="app" id="app-song"><span>🎵</span><b>Song Search</b><small>پیدا کردن آهنگ</small></button><button class="app" id="app-essay"><span>✍️</span><b>Essay</b><small>موضوع تصادفی انشا</small></button><button class="app" id="app-focus"><span>🎯</span><b>Focus</b><small>تمرکز و پومودورو</small></button><button class="app" id="app-tuner"><span>🎻</span><b>Violin Tuner</b><small>کوک‌کن ویولن</small></button><button class="app" id="app-metro"><span>🥁</span><b>Metronome</b><small>مترونوم</small></button><button class="app" id="app-sa"><span>🧠</span><b>Super AI</b><small>هوش مصنوعی قوی</small></button><button class="app" id="app-pt"><span>⚛️</span><b>Periodic Table</b><small>جدول مندلیف</small></button><button class="app" id="app-fo"><span>📂</span><b>File Opener</b><small>بازکننده‌ی فایل</small></button><button class="app" id="app-pg"><span>📶</span><b>Ping Tools</b><small>کاهش و سنجش پینگ</small></button><button class="app" id="app-mp"><span>🎬</span><b>Video Player</b><small>پخش فیلم و سریال</small></button><button class="app" id="app-ed"><span>🎨</span><b>Pro Editor</b><small>ادیت عکس و ویدیو</small></button><button class="app" id="app-st"><span>📮</span><b>Stamp Maker</b><small>عکس به تمبر</small></button><button class="app" id="app-sk"><span>🏷</span><b>Sticker Maker</b><small>عکس به استیکر</small></button><button class="app" id="app-ws"><span>🗓️</span><b>Weekly Schedule</b><small>برنامه‌ی هفتگی شنبه تا چهارشنبه</small></button><button class="app" id="app-sn"><span>🎶</span><b>Sheet Note</b><small>نت‌نویسی و ویرایش آهنگ</small></button><button class="app" id="app-tp"><span>🎼</span><b>Tuner - Pitched</b><small>تشخیص نت و کوک ویولن</small></button><div class="app soon"><span>➕</span><b>به‌زودی</b><small>برنامه‌های بیشتر</small></div></div>
   </div>
   <div id="notes-app" hidden>
     <div id="nlist-wrap">
@@ -443,7 +443,28 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
       <p class="sub" style="font-size:.74rem;margin:8px 0 0;direction:rtl">روی هر سیم بزن تا صدای مرجع پخش شود و هدف کوک همان سیم شود (دوباره بزن تا حالت خودکار). برای تغییر کم از پیچ ریز (fine tuner) و برای تغییر زیاد از گوشی/پیچ استفاده کن. سیم‌ها از چپ: سل G3، ر D4، لا A4، می E5.</p>
     </div>
   </div>
-<div id="sn-app" hidden>
+<div id="ws-app" hidden>
+    <div class="sr"><button class="al" data-back="1">← Apps</button><b>🗓️ Weekly Schedule</b><span></span></div>
+    <style>
+    #ws-app .wtabs{display:flex;gap:6px;overflow-x:auto;margin:6px 0 10px}
+    #ws-app .wtabs button{flex:1;min-width:64px;padding:8px 4px;border-radius:12px;border:1px solid rgba(128,128,128,.5);background:rgba(255,255,255,.35);color:inherit;font:inherit;font-size:.82rem;line-height:1.5}
+    #ws-app .wtabs button.on{background:#d9a441;color:#1b1209;font-weight:700;border-color:#d9a441}#ws-app .wtabs small{display:block;opacity:.7;font-size:.68rem}
+    #ws-app .wsec{border:1px solid rgba(128,128,128,.45);border-radius:12px;margin:8px 0;overflow:hidden;background:rgba(255,255,255,.3)}
+    #ws-app .wsh{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(217,164,65,.22);font-weight:700}
+    #ws-app .wt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px dashed rgba(128,128,128,.4)}
+    #ws-app .wt.done .wtt{text-decoration:line-through;opacity:.55}#ws-app .wtm{font-weight:800;direction:ltr;min-width:48px}#ws-app .wtt{flex:1}
+    #ws-app .wf{padding:8px 10px;border-top:1px dashed rgba(128,128,128,.4);display:grid;gap:6px}
+    #ws-app .wf .wd{display:flex;gap:6px;flex-wrap:wrap;font-size:.78rem}#ws-app .wf .wd label{display:flex;gap:3px;align-items:center}
+    #ws-app table{width:100%;border-collapse:collapse;font-size:.78rem;text-align:center}#ws-app td,#ws-app th{border:1px solid rgba(128,128,128,.4);padding:5px 2px}#ws-app td{cursor:pointer}
+    </style>
+    <div class="box">
+      <div class="wtabs" id="ws-tabs"></div>
+      <div id="ws-day"></div>
+      <h3 style="margin:14px 0 6px;font-size:.95rem">📊 خلاصه‌ی هفته</h3><div id="ws-sum"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="al" id="ws-reset">♻ شروع هفته‌ی جدید (تیک‌ها پاک شود)</button><button class="al" id="ws-clear">🗑 پاک کردن همه</button></div>
+    </div>
+  </div>
+  <div id="sn-app" hidden>
     <div class="sr"><button class="al" data-back="1">← Apps</button><b>🎶 Sheet Note</b><span></span></div>
     <style>
     #sn-app .tb{direction:ltr;display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;align-items:center}
@@ -652,6 +673,11 @@ button.al{font:inherit;background:transparent;color:var(--ink);border:1px solid 
   </div>
 </section>
 
+<section id="leader" hidden><h2>🏆 Top Leader</h2><p class="sub">روی هر بازی بزن تا بهترین رکورد و نام اکانتش را ببینی.</p>
+  <label class="tlshare"><input type="checkbox" id="tlshare"> نام اکانت و رکوردهایم در لیدربورد عمومی نشان داده شود</label>
+  <div id="tlstat" class="sub" style="font-size:.78rem;margin:4px 0 8px"></div>
+  <input type="search" id="tlq" placeholder="Search game…" style="width:100%;margin-bottom:8px"><div id="tll"></div>
+  <p class="sub" style="font-size:.72rem;line-height:1.8">رکوردها بدون سرور و از طریق یک کانال عمومی رد و بدل می‌شوند و تأیید نمی‌شوند. رکوردِ بازی‌های قدیمی فقط وقتی دیده می‌شود که بازی رکوردش را با نامی شبیه best/high ذخیره کرده باشد؛ بازی‌های جدیدتر مستقیم ثبت می‌شوند.</p></section>
 <section id="category" hidden><h2>Category</h2><p class="sub">بازی‌ها بر اساس دسته‌بندی؛ یکی را انتخاب کن یا همه را ببین. ۳ فیلتر ویژه: 👥 چندنفره، 🌐 آنلاین.</p><div id="catchips"></div><div id="catgrid"></div></section>
 
 <section id="settings" hidden>
@@ -852,8 +878,8 @@ $('rs').onclick=()=>{stats={};LS.set('sl-stats',stats);renderStats();toast('آم
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(au)au.suspend();if(cAud)cAud.pause();if(dAud)dAud.pause()}else{settle();if(au&&musicOn&&!cMus&&!dAud)au.resume();if(cAud&&cMus&&musicOn)cAud.play().catch(()=>{});if(dAud&&musOk&&musicOn&&!cMus)dAud.play().catch(()=>{})}});
 addEventListener('focus',settle);
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
-const SEC=['games','favorites','friends','ai','support','apps','account','category','settings','creator'];
-function go(n){if(n==='category')renderCat();SEC.forEach(s=>$(s).hidden=s!==n);document.querySelectorAll('#menu button').forEach(b=>b.classList.toggle('on',b.dataset.s===n));$('menu').classList.remove('open');scrollTo(0,0)}
+const SEC=['games','favorites','friends','ai','support','apps','account','category','leader','settings','creator'];
+function go(n){if(n==='category')renderCat();if(n==='leader'&&window.tlOpen)setTimeout(tlOpen,0);SEC.forEach(s=>$(s).hidden=s!==n);document.querySelectorAll('#menu button').forEach(b=>b.classList.toggle('on',b.dataset.s===n));$('menu').classList.remove('open');scrollTo(0,0)}
 document.querySelectorAll('#menu button').forEach(b=>b.onclick=()=>go(b.dataset.s));
 $('mb').onclick=e=>{e.stopPropagation();$('menu').classList.toggle('open')};
 document.addEventListener('click',e=>{if(!e.target.closest('#menu'))$('menu').classList.remove('open')});
@@ -1196,7 +1222,7 @@ supRender();
 let notes=LS.get('sl-notes',[]),nCur=null,nQ='',nDelT=0,nTm;
 const NC=['#fff7a8','#ffd1e8','#c9f2e3','#cfe3ff','#e6d6ff'];
 const nSave=()=>LS.set('sl-notes',notes);
-const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app','tuner-app','tp-app','sn-app','metro-app','sa-app','pt-app','fo-app','pg-app','mp-app','ed-app','st-app','sk-app'];
+const APPS=['notes-app','calc-app','paint-app','cal-app','clock-app','rec-app','focus-app','essay-app','song-app','shz-app','map-app','chat-app','br-app','call-app','tuner-app','tp-app','sn-app','ws-app','metro-app','sa-app','pt-app','fo-app','pg-app','mp-app','ed-app','st-app','sk-app'];
 function appsHome(){$('apps-home').hidden=false;APPS.forEach(i=>{$(i).hidden=true})}
 function openApp(id){$('apps-home').hidden=true;APPS.forEach(i=>{$(i).hidden=i!==id})}
 function nList(){
@@ -2765,6 +2791,102 @@ g('app-sn').onclick=()=>{openApp('sn-app');setTimeout(()=>{draw()},30)};
 // بازیابی کار قبلی
 try{const o=clean(JSON.parse(localStorage.getItem('sl-sheet-cur')||'null'));if(o){S=o;g('sn-title').value=S.title;g('sn-bpm').value=S.bpm;g('sn-ts').value=S.ts;g('sn-key').value=S.key}else g('sn-title').value=S.title}catch(e){g('sn-title').value=S.title}
 ui();draw();
+})();
+</script>
+<script>
+/* ---- Top Leader ---- */
+(function(){
+const $$=id=>document.getElementById(id),enc=new TextEncoder(),dec=new TextDecoder();
+const LOWER=new Set(['memory','minesweeper','jigsaw','sudoku']);
+const BR=['wss://broker.hivemq.com:8884/mqtt','wss://broker.emqx.io:8084/mqtt','wss://test.mosquitto.org:8081/mqtt'];
+const LB={};let conns=[],open=false,share=LS.get('sl-lb-share',true),openId=null,rt=0,connected=0,timer=0;
+const nameMe=()=>String((P&&P.name)||myId).replace(/[<>&"]/g,'').slice(0,16)||myId;
+const fmt=n=>Number(n).toLocaleString('en-US');
+function mine(){const out={};try{const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}');for(const k in o)if(o[k]&&isFinite(o[k].s)&&o[k].s>0)out[k]={s:+o[k].s}}catch(e){}
+ for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),kl=k.toLowerCase();if(!/best|high|record/.test(kl))continue;const v=parseFloat(localStorage.getItem(k));if(!(v>0))continue;
+  let g=null;for(const q of GM){const id=q.id.toLowerCase();if(kl.includes(id)&&(!g||id.length>g.id.length))g=q}
+  if(g&&!out[g.id])out[g.id]={s:v,legacy:1}}return out}
+// ---------- MQTT
+const str=s=>{const b=enc.encode(s);return[b.length>>8,b.length&255,...b]};
+const pkt=(h,body)=>{const rl=[];let n=body.length;do{let d=n%128;n=Math.floor(n/128);if(n>0)d|=128;rl.push(d)}while(n>0);return Uint8Array.from([h,...rl,...body])};
+function publish(c){if(!c.ok)return;const m=mine();for(const g of GM){const t='sloop-lb/v1/'+g.id+'/'+myId;
+  if(share&&m[g.id])c.ws.send(pkt(0x31,[...str(t),...enc.encode(JSON.stringify({n:nameMe(),s:m[g.id].s,t:Date.now()}))]));
+  else if(!share)c.ws.send(pkt(0x31,[...str(t)]))}}
+function conn(i){let ws;try{ws=new WebSocket(BR[i],'mqtt')}catch(e){return}const c={ws,ok:false,buf:new Uint8Array(0)};conns[i]=c;ws.binaryType='arraybuffer';
+ ws.onopen=()=>ws.send(pkt(0x10,[...str('MQTT'),4,2,0,60,...str('sllb-'+myId+'-'+i+'-'+Math.random().toString(36).slice(2,6))]));
+ ws.onmessage=e=>{const n=new Uint8Array(e.data),b=new Uint8Array(c.buf.length+n.length);b.set(c.buf);b.set(n,c.buf.length);c.buf=b;
+  for(;;){if(c.buf.length<2)return;let p=1,mult=1,len=0,x;do{if(p>=c.buf.length)return;x=c.buf[p++];len+=(x&127)*mult;mult*=128}while(x&128);if(c.buf.length<p+len)return;
+   const type=c.buf[0]>>4,body=c.buf.slice(p,p+len);c.buf=c.buf.slice(p+len);
+   if(type===2&&body[1]===0){c.ok=true;connected++;ws.send(pkt(0x82,[0,1,...str('sloop-lb/v1/+/+'),0]));publish(c);stat()}
+   else if(type===3){const tl=(body[0]<<8)|body[1],topic=dec.decode(body.slice(2,2+tl)),pl=body.slice(2+tl);incoming(topic,pl)}}};
+ ws.onclose=()=>{if(c.ok){c.ok=false;connected=Math.max(0,connected-1)}stat()};ws.onerror=()=>{try{ws.close()}catch(e){}}}
+function incoming(topic,pl){const m=/^sloop-lb\/v1\/([a-z0-9]+)\/(SL-[A-Z0-9]+)$/.exec(topic);if(!m)return;const gid=m[1],uid=m[2];if(!GM.some(g=>g.id===gid)||!idOK(uid))return;
+ if(!pl.length){if(LB[gid])delete LB[gid][uid];refresh();return}
+ let o;try{o=JSON.parse(dec.decode(pl))}catch(e){return}if(!o||!isFinite(o.s)||o.s<0||o.s>1e9)return;
+ (LB[gid]=LB[gid]||{});const old=LB[gid][uid];if(old&&old.t>=o.t)return;LB[gid][uid]={n:String(o.n||uid).replace(/[<>&"]/g,'').slice(0,16)||uid,s:+o.s,t:+o.t||0};refresh()}
+function connect(){if(conns.length)return;for(let i=0;i<BR.length;i++)conn(i);clearTimeout(timer);timer=setTimeout(()=>{if(!connected)stat()},4000)}
+function disconnect(){conns.forEach(c=>{if(c){try{c.ws.close()}catch(e){}}});conns=[];connected=0}
+function stat(){const e=$$('tlstat');if(!e)return;e.textContent=connected?'🌐 به لیدربورد عمومی وصل شدی':(conns.length?'⏳ در حال اتصال…':'📴 آفلاین — فقط رکورد خودت نمایش داده می‌شود')}
+// ---------- نمایش
+function entries(g){const list=Object.entries(LB[g.id]||{}).map(([uid,v])=>({uid,n:v.n,s:v.s,me:uid===myId}));const m=mine()[g.id];
+ const i=list.findIndex(x=>x.me);if(m){if(i>=0){if(LOWER.has(g.id)?m.s<list[i].s:m.s>list[i].s)list[i].s=m.s;list[i].n=nameMe()}else list.push({uid:myId,n:nameMe(),s:m.s,me:true})}
+ else if(i>=0&&!share)list.splice(i,1);
+ list.sort((a,b)=>LOWER.has(g.id)?a.s-b.s:b.s-a.s);return list}
+function panel(g){const L=entries(g);if(!L.length)return'<div>هنوز رکوردی ثبت نشده — اولین نفر باش! 🚀</div>';
+ const top=L[0],me=L.findIndex(x=>x.me);
+ return '<div class="tlbest">🥇 بهترین: <b>'+fmt(top.s)+'</b> — '+esc(top.n)+(top.me?' (تو)':'')+'</div><ol>'+L.slice(0,10).map(x=>'<li'+(x.me?' class="me"':'')+'>'+esc(x.n)+' — '+fmt(x.s)+'</li>').join('')+'</ol>'+(me>9?'<div>رتبه‌ی تو: #'+(me+1)+' با '+fmt(L[me].s)+'</div>':'')+(LOWER.has(g.id)?'<div class="sub" style="font-size:.7rem">در این بازی عدد کمتر بهتر است.</div>':'')}
+function renderList(){const q=($$('tlq').value||'').trim().toLowerCase();
+ $$('tll').innerHTML=GM.filter(g=>!q||g.n.toLowerCase().includes(q)).map(g=>'<div class="tlrow" data-tg="'+g.id+'"><div class="tlh"><svg viewBox="0 0 100 100" aria-hidden="true">'+g.a+'</svg><b>'+esc(g.n)+(g.on?' 🌐':'')+'</b><span>'+(openId===g.id?'⌃':'⌄')+'</span></div>'+(openId===g.id?'<div class="tlp">'+panel(g)+'</div>':'')+'</div>').join('')||'<p class="sub">بازی‌ای پیدا نشد.</p>'}
+function refresh(){if($$('leader').hidden)return;clearTimeout(rt);rt=setTimeout(renderList,250)}
+$$('tll').addEventListener('click',e=>{const r=e.target.closest('[data-tg]');if(!r||!e.target.closest('.tlh'))return;openId=openId===r.dataset.tg?null:r.dataset.tg;renderList()});
+$$('tlq').addEventListener('input',renderList);
+$$('tlshare').addEventListener('change',e=>{share=e.target.checked;LS.set('sl-lb-share',share);conns.forEach(c=>c&&publish(c));toast(share?'رکوردهایت عمومی شد':'رکوردهایت از لیدربورد عمومی حذف شد');renderList()});
+window.tlOpen=()=>{$$('tlshare').checked=share;renderList();stat();connect()};
+// همگام‌سازی بی‌صدا هنگام باز شدن سایت (اگر رکوردی هست)
+setTimeout(()=>{if(share&&Object.keys(mine()).length&&!conns.length){connect();setTimeout(()=>{if($$('leader').hidden)disconnect()},9000)}},4000);
+})();
+/* ---- Apps: Weekly Schedule ---- */
+(function(){
+const g=id=>document.getElementById(id),KEY='sl-weekly';
+const DAYS=[['sat','شنبه','Sat'],['sun','یکشنبه','Sun'],['mon','دوشنبه','Mon'],['tue','سه‌شنبه','Tue'],['wed','چهارشنبه','Wed']];
+const SECS=[['m','🌅','صبح','Morning','08:00'],['n','☀️','ظهر','Noon','13:00'],['e','🌇','عصر','Evening','17:00'],['t','🌙','شب','Night','21:00']];
+let W;try{W=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}if(!W||!Array.isArray(W.tasks))W={tasks:[]};
+const dm={6:0,0:1,1:2,2:3,3:4};let day=dm[new Date().getDay()]||0,form=null;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(W))}catch(e){}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const cnt=(d,s)=>{const L=W.tasks.filter(t=>t.d===DAYS[d][0]&&(!s||t.s===s));return[L.filter(t=>t.done).length,L.length]};
+function render(){
+ g('ws-tabs').innerHTML=DAYS.map((d,i)=>{const c=cnt(i);return'<button data-d="'+i+'" class="'+(i===day?'on':'')+'">'+d[1]+'<small>'+c[0]+'/'+c[1]+'</small></button>'}).join('');
+ let h='';
+ for(const s of SECS){const L=W.tasks.filter(t=>t.d===DAYS[day][0]&&t.s===s[0]).sort((a,b)=>a.time.localeCompare(b.time));
+  h+='<div class="wsec"><div class="wsh"><span>'+s[1]+' '+s[2]+' <small style="opacity:.6;font-weight:400">'+s[3]+'</small></span><button class="al" data-add="'+s[0]+'">＋</button></div>';
+  h+=L.map(t=>'<div class="wt'+(t.done?' done':'')+'"><input type="checkbox" data-wk="'+t.id+'" '+(t.done?'checked':'')+' aria-label="Done"><span class="wtm">'+esc(t.time)+'</span><span class="wtt">'+esc(t.title)+'</span><button class="al" data-ed="'+t.id+'" aria-label="Edit">✏️</button><button class="al" data-rm="'+t.id+'" aria-label="Delete">🗑</button></div>').join('');
+  if(!L.length&&!(form&&form.s===s[0]))h+='<div class="wt" style="opacity:.55;font-size:.8rem">کاری ثبت نشده</div>';
+  if(form&&form.s===s[0]){const t=form.id?W.tasks.find(x=>x.id===form.id):null;
+   h+='<div class="wf"><input type="text" id="ws-title" maxlength="60" placeholder="چه کاری؟" value="'+esc(t?t.title:'')+'"><div style="display:flex;gap:8px;align-items:center"><label>ساعت:</label><input type="time" id="ws-time" value="'+esc(t?t.time:s[4])+'" style="direction:ltr"></div>'+
+    (t?'':'<div class="wd"><span>روزها:</span>'+DAYS.map((d,i)=>'<label><input type="checkbox" data-wd="'+d[0]+'" '+(i===day?'checked':'')+'>'+d[1]+'</label>').join('')+'</div>')+
+    '<div style="display:flex;gap:8px"><button class="pr" id="ws-save">ذخیره</button><button class="al" id="ws-cancel">انصراف</button></div></div>'}
+  h+='</div>'}
+ g('ws-day').innerHTML=h;
+ let t='<table><tr><th></th>'+SECS.map(s=>'<th>'+s[1]+'<br>'+s[2]+'</th>').join('')+'</tr>';
+ DAYS.forEach((d,i)=>{t+='<tr><th>'+d[1]+'</th>'+SECS.map(s=>{const c=cnt(i,s[0]);return'<td data-go="'+i+'" style="'+(c[1]&&c[0]===c[1]?'background:#2fd56b44':'')+'">'+(c[1]?c[0]+'/'+c[1]:'—')+'</td>'}).join('')+'</tr>'});
+ g('ws-sum').innerHTML=t+'</table>'}
+g('ws-app').addEventListener('click',e=>{const T=e.target;let b;
+ if(b=T.closest('[data-d]')){day=+b.dataset.d;form=null;render()}
+ else if(b=T.closest('[data-go]')){day=+b.dataset.go;form=null;render();g('ws-tabs').scrollIntoView({behavior:'smooth',block:'center'})}
+ else if(b=T.closest('[data-add]')){form={s:b.dataset.add};render();const i=g('ws-title');if(i)i.focus()}
+ else if(b=T.closest('[data-ed]')){const t=W.tasks.find(x=>x.id===b.dataset.ed);if(t){form={s:t.s,id:t.id};render()}}
+ else if(b=T.closest('[data-rm]')){W.tasks=W.tasks.filter(x=>x.id!==b.dataset.rm);save();render()}
+ else if(T.id==='ws-cancel'){form=null;render()}
+ else if(T.id==='ws-save'){const title=g('ws-title').value.trim().slice(0,60),time=g('ws-time').value||'08:00';if(!title){toast('عنوان کار را بنویس');return}
+  if(form.id){const t=W.tasks.find(x=>x.id===form.id);if(t){t.title=title;t.time=time}}
+  else{const ds=[...document.querySelectorAll('#ws-app [data-wd]:checked')].map(c=>c.dataset.wd);if(!ds.length){toast('حداقل یک روز را انتخاب کن');return}ds.forEach(d=>W.tasks.push({id:uid(),d,s:form.s,time,title,done:0}))}
+  form=null;save();render();toast('ذخیره شد ✓')}});
+g('ws-app').addEventListener('change',e=>{const c=e.target.closest('[data-wk]');if(c){const t=W.tasks.find(x=>x.id===c.dataset.wk);if(t){t.done=c.checked?1:0;save();render()}}});
+g('ws-reset').onclick=()=>{W.tasks.forEach(t=>t.done=0);save();render();toast('هفته‌ی جدید شروع شد ✓')};
+g('ws-clear').onclick=()=>{if(W.tasks.length&&confirm('همه‌ی کارهای برنامه پاک شود؟')){W.tasks=[];save();render()}};
+g('app-ws').onclick=()=>{openApp('ws-app');form=null;render()};
+render();
 })();
 </script>
 </body>

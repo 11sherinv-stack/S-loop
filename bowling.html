@@ -18,17 +18,20 @@ canvas{height:100%;max-width:100%;aspect-ratio:360/520;touch-action:none}
 #ctl label{display:flex;flex-direction:column;gap:2px;text-align:center}
 #ctl input{width:100%}
 #roll{height:46px;padding:0 16px;border-radius:12px;border:0;background:#e8423a;color:#fff;font-weight:800;font-size:15px}
+#top2{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:430px}#onl{margin:0 10px;padding:5px 12px;border:1px solid #ffd84a;border-radius:14px;background:transparent;color:#ffd84a;font-size:12px}#st{width:min(100vw,430px);text-align:center;font-size:12px;min-height:16px;color:#ffd84a}.nm{font-size:10px;text-align:left;direction:ltr;padding:0 6px;opacity:.8}
 #msg{position:absolute;inset:0;margin:auto;height:fit-content;width:84%;text-align:center;background:#000c;padding:16px;border-radius:12px;font-size:17px;line-height:1.8;display:none}
 #msg button{margin-top:8px;padding:10px 24px;border:0;border-radius:10px;background:#ffd84a;font-weight:800;font-size:15px}
 </style></head><body>
-<a class="back" href="index.html">← S loop</a>
-<div id="sb"></div>
+<div id="top2"><a class="back" href="index.html">← S loop</a><button id="onl">🌐 Online 1v1</button></div>
+<div id="st"></div><div id="sb"></div>
 <div id="wrap"><canvas id="c" width="360" height="520"></canvas><div id="msg"></div></div>
 <div id="ctl"><label>Position<input type="range" id="pos" min="0" max="100" value="50"></label><label>Angle<input type="range" id="ang" min="-100" max="100" value="0"></label><label>Hook<input type="range" id="spin" min="-100" max="100" value="0"></label><button id="roll">ROLL 🎳</button></div>
+<script src="slnet.js"></script>
 <script>
 if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
 const $=i=>document.getElementById(i),cv=$('c'),g=cv.getContext('2d');
 const LX0=70,LX1=290,FOUL=455,BR=12.5;
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1';let ON=false,orolls=[],iAgain=0,oAgain=0,lastSay='';
 let rolls=[],fr=0,bi=0,pins=[],ball=null,state='aim',settle=0,banner='',bannerT=0,best=+localStorage.bowlBest||0,fl=null,t=0,prev=10;
 let ac;function beep(f,d,v){try{ac=ac||new AudioContext();const o=ac.createOscillator(),k=ac.createGain();o.type='triangle';o.frequency.value=f;k.gain.value=v||.05;o.connect(k);k.connect(ac.destination);o.start();k.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.stop(ac.currentTime+d)}catch(e){}}
 function newPins(){pins=[];let k=0;for(let r=0;r<4;r++)for(let i=0;i<=r;i++)pins.push({x:180+(i-r/2)*28,y:95+r*24,vx:0,vy:0,r:6.5,m:1,down:0,dt:0,id:k++,ang:0})}
@@ -42,23 +45,41 @@ function calc(R){const f=[];let i=0,tot=0;
    const need=(a===10||(b!==undefined&&a+b===10))?3:2,have=[a,b,c].filter(v=>v!==undefined).length;
    f.push({m,s:have>=need?(tot+=a+(b||0)+(c||0)):null})}}
  return{f,tot}}
-function renderSB(){const{f,tot}=calc(rolls);let h='';
- for(let n=0;n<10;n++){const x=f[n],cur=n===fr&&state!=='over';
-  h+='<div class="fm'+(cur?' cur':'')+'"><div class="m">'+(x?x.m.map(v=>'<span>'+(v===0?'-':v)+'</span>').join(''):'<span>&nbsp;</span>')+'</div><div class="s">'+(x&&x.s!==null?x.s:'&nbsp;')+'</div></div>'}
+function rowHTML(R,cur){const{f}=calc(R);let h='';
+ for(let n=0;n<10;n++){const x=f[n],c=n===cur;
+  h+='<div class="fm'+(c?' cur':'')+'"><div class="m">'+(x?x.m.map(v=>'<span>'+(v===0?'-':v)+'</span>').join(''):'<span>&nbsp;</span>')+'</div><div class="s">'+(x&&x.s!==null?x.s:'&nbsp;')+'</div></div>'}return h}
+function renderSB(){const{tot}=calc(rolls);let h=rowHTML(rolls,state==='over'?-1:fr);
+ if(ON){const myT=total2(rolls),opT=total2(orolls);$('sb').style.flexWrap='wrap';
+  h='<div class="nm" style="width:100%">'+esc(SLNet.name)+' — '+myT+'</div>'+h+'<div class="nm" style="width:100%">'+esc(SLNet.peerName||'…')+' — '+opT+'</div>'+rowHTML(orolls,-1)}
  $('sb').innerHTML=h;return tot}
+const esc=v=>String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function total2(R){const{f}=calc(R);let t2=0;f.forEach(x=>{if(x.s!==null)t2=x.s});return t2}
+function framesDone(R){let i=0,d=0;for(let n=0;n<9;n++){const a=R[i];if(a===undefined)return d;if(a===10){d++;i++}else if(R[i+1]!==undefined){d++;i+=2}else return d}
+ const a=R[i],b=R[i+1],c=R[i+2];if(a===undefined)return d;const need=(a===10||(b!==undefined&&a+b===10))?3:2,have=[a,b,c].filter(v=>v!==undefined).length;return have>=need?10:d}
 function total(){const{f}=calc(rolls);let t2=0;f.forEach(x=>{if(x.s!==null)t2=x.s});return t2}
-function reset(){rolls=[];fr=0;bi=0;newPins();ball=null;state='aim';$('msg').style.display='none';renderSB()}
+function reset(){rolls=[];orolls=[];iAgain=0;oAgain=0;fr=0;bi=0;newPins();ball=null;state='aim';$('msg').style.display='none';renderSB()}
 function say(s){banner=s;bannerT=80}
 function afterRoll(n){rolls.push(n);const first=bi===0;
  if(fr<9){if(first&&n===10){say('STRIKE!');fr++;bi=0;newPins()}else if(first)bi=1;else{if(!pins.length)say('SPARE!');fr++;bi=0;newPins()}}
  else{if(bi===0){if(n===10){say('STRIKE!');newPins()}bi=1}
   else if(bi===1){const a=rolls[rolls.length-2];if(a===10){if(n===10)newPins();bi=2}else if(a+n===10){say('SPARE!');newPins();bi=2}else bi=3}
   else bi=3}
- prev=pins.length;const tot=renderSB();
+ prev=pins.length;if(ON)SLNet.send({k:'r',n});const tot=renderSB();
+ if(ON&&fr===9&&bi===3){state='over';checkEnd();return}
  if(fr===9&&bi===3){state='over';const sc=total();best=Math.max(best,sc);localStorage.bowlBest=best;
   $('msg').innerHTML='پایان بازی 🎳<br>امتیاز: <b>'+sc+'</b> • رکورد: '+best+'<br><button id="again">Play again</button>';$('msg').style.display='block';$('again').onclick=reset}
- else state='aim'}
-function launch(ang,spd){if(state!=='aim')return;const x=95+$('pos').value/100*170;ball={x,y:440,vx:Math.sin(ang)*spd,vy:-Math.cos(ang)*spd,r:BR,m:5.5,spin:+$('spin').value/100,gut:0,rot:0};state='roll';prev=pins.length;beep(160,.25,.06)}
+ else state='aim';status()}
+function myTurn(){if(!ON)return true;if(!SLNet.peer||SLNet.state!=='online')return false;const dm=framesDone(rolls),dop=framesDone(orolls);if(dm>=10)return false;return HOST?dm===dop:dop>dm}
+function status(){if(!ON)return;const e=$('st');if(SLNet.state!=='online'){e.textContent='⚠ قطع شدی — در حال اتصال دوباره…';return}if(!SLNet.peer){e.textContent='منتظر حریف…';return}
+ if(SLNet.alive()>15000){e.textContent='⚠ ارتباط با '+SLNet.peerName+' قطع شده';return}
+ e.textContent=state==='over'?'':myTurn()?'🟢 نوبت توست':'⏳ نوبت '+SLNet.peerName;$('roll').style.opacity=myTurn()?1:.45}
+function checkEnd(){renderSB();if(framesDone(rolls)<10||framesDone(orolls)<10){$('st').textContent='⏳ منتظر پایان بازی '+SLNet.peerName;return}
+ const a=total2(rolls),b=total2(orolls),w=a>b?'🏆 تو بردی!':a<b?'😔 '+SLNet.peerName+' برد':'🤝 مساوی';best=Math.max(best,a);localStorage.bowlBest=best;
+ $('msg').innerHTML=w+'<br>'+a+' — '+b+'<br><button id="again">Rematch</button>';$('msg').style.display='block';$('again').onclick=()=>{iAgain=1;SLNet.send({k:'again'});$('again').textContent='منتظر حریف…';if(oAgain)rematch()}}
+function rematch(){reset();status()}
+function onMsg(o){if(o.k==='r'){orolls.push(o.n);const f=calc(orolls).f,last=orolls.length;if(o.n===10&&(f.length&&f[f.length-1].m[0]==='X'))say(SLNet.peerName+': STRIKE!');renderSB();if(state==='over')checkEnd();status()}
+ else if(o.k==='again'){oAgain=1;if(iAgain)rematch();else if($('again'))$('again').textContent='Rematch (حریف آماده است)'}}
+function launch(ang,spd){if(state!=='aim'||!myTurn())return;const x=95+$('pos').value/100*170;ball={x,y:440,vx:Math.sin(ang)*spd,vy:-Math.cos(ang)*spd,r:BR,m:5.5,spin:+$('spin').value/100,gut:0,rot:0};state='roll';prev=pins.length;beep(160,.25,.06)}
 function col(a,b,e){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy),mn=a.r+b.r;if(d>=mn||d===0)return 0;const nx=dx/d,ny=dy/d,ov=mn-d,tm=a.m+b.m;
  a.x-=nx*ov*b.m/tm;a.y-=ny*ov*b.m/tm;b.x+=nx*ov*a.m/tm;b.y+=ny*ov*a.m/tm;
  const vn=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(vn<0){const j=-(1+e)*vn/(1/a.m+1/b.m);a.vx-=j*nx/a.m;a.vy-=j*ny/a.m;b.vx+=j*nx/b.m;b.vy+=j*ny/b.m;return -vn}return 0}
@@ -104,5 +125,8 @@ cv.addEventListener('pointerdown',e=>{if(state!=='aim')return;const r=cv.getBoun
 cv.addEventListener('pointermove',e=>{if(!fl)return;const r=cv.getBoundingClientRect();fl.x1=(e.clientX-r.left)*360/r.width;fl.y1=(e.clientY-r.top)*520/r.height});
 addEventListener('pointerup',()=>{if(!fl)return;const dx=fl.x1-fl.x0,dy=fl.y1-fl.y0,dt=Math.max(40,performance.now()-fl.t0);fl=null;
  if(dy<-30){const ang=Math.max(-.3,Math.min(.3,Math.atan2(dx,-dy)));const sp=Math.max(6,Math.min(11.5,Math.hypot(dx,dy)/dt*14));launch(ang,sp)}});
+$('onl').onclick=()=>SLNet.menu('bowling.html','Bowling');
+if(ROOM&&/^[A-HJ-NP-Z2-9]{6}$/.test(ROOM)){ON=true;$('onl').style.display='none';reset();
+ SLNet.open(ROOM,{host:HOST,state:()=>status(),peer:n=>{SLNet.hide();$('st').textContent='';$('onl').style.display='none';reset();say(n+' وارد شد!');status()},msg:onMsg});SLNet.wait('bowling.html','Bowling');setInterval(status,1000)}
 reset();(function loop(){step();draw();requestAnimationFrame(loop)})();
 </script></body></html>

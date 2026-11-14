@@ -58,8 +58,8 @@ function hitFx(x0,y0,c){for(let i=0;i<6;i++)fx.push({x:x0,y:y0,vx:(Math.random()
 function update(){t++;if(st!=='play')return;
  const ax=K.r-K.l;P.prone=K.d&&P.on&&!ax?1:0;if(ax)P.face=ax;
  P.h=P.prone?14:30;P.w=P.prone?26:12;
- const sp0=P.prone?0:2.1;P.vx=ax*sp0;
- if(K.jp){K.jp=0;if(P.on){if(K.d&&P.y+P.h<GY-6){P.drop=14;P.y+=4;P.on=false}else{P.vy=-8.2;P.on=false;beep(500,.07)}}}
+ const sp0=P.prone?0:(P.on?2.1:2.5);P.vx=ax*sp0;
+ if(K.jp){K.jp=0;if(P.on){if(K.d&&P.y+P.h<GY-6){P.drop=14;P.y+=4;P.on=false}else{P.vy=-10.4;P.on=false;beep(500,.07)}}}
  P.vy+=.42;if(P.vy>10)P.vy=10;P.x+=P.vx;P.y+=P.vy;if(P.drop>0)P.drop--;
  P.on=ground(P);P.x=Math.max(cam+6,Math.min(boss.x-10,P.x));
  if(P.y>VH+10)die();

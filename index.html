@@ -3011,19 +3011,39 @@ const say=m=>{const t=E('div');t.style.cssText='position:absolute;left:50%;botto
 // ================= فایل‌سیستم مجازی =================
 const KEY='sl-winfs',SKEY='sl-winset';let FS;try{FS=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!FS||FS.t!=='d'||!FS.c){FS={t:'d',c:{Desktop:{t:'d',c:{'Welcome.txt':{t:'f',v:'Welcome to Windows Sim!\n\n- Double-click icons to open them\n- Right-click (or long-press) for menus\n- On a phone, use Mouse mode (the mouse button on the taskbar)\n- Notepad, Paint, Calculator, Terminal, Minesweeper and more are in the Start menu.',k:'txt'}}},Documents:{t:'d',c:{}},Downloads:{t:'d',c:{}},Pictures:{t:'d',c:{}},Music:{t:'d',c:{}},Recycle:{t:'d',c:{}}}}}
-let ST={wall:'w1',acc:'#0078d4',dark:1,img:null,mouse:null};try{ST=Object.assign(ST,JSON.parse(localStorage.getItem(SKEY)||'{}'))}catch(e){}
+let ST={wall:'w1',acc:'#0078d4',dark:1,img:null,mouse:null,br:1,vol:.7,ipos:{},pin:null,fview:'icons'};try{ST=Object.assign(ST,JSON.parse(localStorage.getItem(SKEY)||'{}'))}catch(e){}
 const saveFS=()=>{try{localStorage.setItem(KEY,JSON.stringify(FS))}catch(e){say('حافظه پر است')}},saveST=()=>{try{localStorage.setItem(SKEY,JSON.stringify(ST))}catch(e){}};
 const parts=p=>String(p).split('/').filter(Boolean);
 function get(p){let n=FS;for(const k of parts(p)){if(!n||n.t!=='d'||!n.c[k])return null;n=n.c[k]}return n}
 function split(p){const a=parts(p),name=a.pop();return{dir:get('/'+a.join('/')),name,path:'/'+a.join('/')}}
 function uniq(dp,name){const d=get(dp);if(!d.c[name])return name;const m=/^(.*?)(\.[^.]*)?$/.exec(name);let i=2;while(d.c[m[1]+' ('+i+')'+(m[2]||'')])i++;return m[1]+' ('+i+')'+(m[2]||'')}
 const clean=n=>String(n).replace(/[\\\/:*?"<>|]/g,'').trim().slice(0,60);
-function mkdir(dp,name){const d=get(dp);name=clean(name);if(!d||d.t!=='d'||!name)return null;name=uniq(dp,name);d.c[name]={t:'d',c:{}};saveFS();return name}
-function write(dp,name,v,k,over){const d=get(dp);name=clean(name);if(!d||d.t!=='d'||!name)return null;if(!over)name=uniq(dp,name);d.c[name]={t:'f',v:v,k:k||'txt'};saveFS();return name}
-function remove(path,perm){const s=split(path);if(!s.dir||!s.dir.c[s.name])return;const n=s.dir.c[s.name];delete s.dir.c[s.name];if(!perm&&!path.startsWith('/Recycle')){const nn=uniq('/Recycle',s.name);n.from=path;get('/Recycle').c[nn]=n}saveFS()}
+function mkdir(dp,name){const d=get(dp);name=clean(name);if(!d||d.t!=='d'||!name)return null;name=uniq(dp,name);d.c[name]={t:'d',c:{},m:Date.now()};saveFS();return name}
+function write(dp,name,v,k,over){const d=get(dp);name=clean(name);if(!d||d.t!=='d'||!name)return null;if(!over)name=uniq(dp,name);d.c[name]={t:'f',v:v,k:k||'txt',m:Date.now()};saveFS();return name}
+function remove(path,perm){const s=split(path);if(!s.dir||!s.dir.c[s.name])return;const n=s.dir.c[s.name];delete s.dir.c[s.name];if(!perm&&!path.startsWith('/Recycle')){const nn=uniq('/Recycle',s.name);n.from=path;get('/Recycle').c[nn]=n}saveFS();if(perm||path.startsWith('/Recycle'))gcBlobs()}
 function renameP(path,nn){const s=split(path);nn=clean(nn);if(!s.dir||!s.dir.c[s.name]||!nn||(s.dir.c[nn]&&nn!==s.name))return false;if(nn===s.name)return true;s.dir.c[nn]=s.dir.c[s.name];delete s.dir.c[s.name];saveFS();return true}
-const ext=n=>(/\.([^.]+)$/.exec(n)||[])[1]?(/\.([^.]+)$/.exec(n)[1]).toLowerCase():'';
-const icoOf=(n,node)=>node.t==='d'?(n==='Recycle'?'🗑️':'📁'):/png|jpg|jpeg|gif|webp/.test(ext(n))?'🖼️':/txt|md|log|json|js|css|html|csv/.test(ext(n))?'📄':'📃';
+const ext=n=>{const m=/\.([^.]+)$/.exec(n);return m?m[1].toLowerCase():''};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const icoOf=(n,node)=>KIC[node.t==='d'?(n==='Recycle'?'recycle':'dir'):kindOf(n,node)]||'📃';
+
+// ---------- ذخیره‌ی فایل‌های آپلودی (IndexedDB)
+let DBP=null;const idb=()=>DBP||(DBP=new Promise((res,rej)=>{const r=indexedDB.open('sl-winblobs',1);r.onupgradeneeded=()=>r.result.createObjectStore('b');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+const bput=(id,b)=>idb().then(db=>new Promise((res,rej)=>{const t=db.transaction('b','readwrite');t.objectStore('b').put(b,id);t.oncomplete=res;t.onerror=()=>rej(t.error)}));
+const bget=id=>idb().then(db=>new Promise((res,rej)=>{const r=db.transaction('b').objectStore('b').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+function refs(n,set){if(n.t==='d')Object.values(n.c).forEach(c=>refs(c,set));else if(n.id)set.add(n.id);return set}
+function gcBlobs(){const used=refs(FS,new Set());idb().then(db=>{const st=db.transaction('b','readwrite').objectStore('b');st.openKeyCursor().onsuccess=e=>{const c=e.target.result;if(c){if(!used.has(c.key))st.delete(c.key);c.continue()}}}).catch(()=>{})}
+const fmtSize=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB';
+const MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',svg:'image/svg+xml',mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',m4a:'audio/mp4',mp4:'video/mp4',webm:'video/webm',mov:'video/quicktime',pdf:'application/pdf',html:'text/html',htm:'text/html',txt:'text/plain',json:'application/json'};
+const mimeOf=n=>MIME[ext(n)]||'application/octet-stream';
+const IMGX=/^(png|jpe?g|gif|webp|bmp|svg|avif|ico)$/,AUDX=/^(mp3|wav|ogg|m4a|aac|flac|opus)$/,VIDX=/^(mp4|webm|mov|mkv|ogv|m4v)$/,TXTX=/^(txt|md|json|js|css|csv|log|xml|ini|bat|py|c|cpp|java|yml|yaml)$/;
+const KIC={dir:'📁',recycle:'🗑️',img:'🖼️',aud:'🎵',vid:'🎞️',html:'🌐',pdf:'📕',txt:'📄',bin:'📦'};
+function kindOf(n,node){const e=ext(n);if(node.k==='img'||IMGX.test(e))return'img';if(AUDX.test(e))return'aud';if(VIDX.test(e))return'vid';if(/^html?$/.test(e))return'html';if(e==='pdf')return'pdf';if(TXTX.test(e))return'txt';if(node.k==='up')return(node.mime||'').startsWith('text/')?'txt':'bin';return'txt'}
+async function nodeBlob(p){const n=get(p);if(!n)return null;if(n.k==='up')return bget(n.id);if(n.k==='img'&&n.v)return fetch(n.v).then(r=>r.blob());return new Blob([n.v||''],{type:'text/plain'})}
+async function download(p){const b=await nodeBlob(p);if(!b)return say('File not found');const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=split(p).name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}
+async function upload(files,dp){files=[...files];let n=0;for(const f of files){if(f.size>40*1048576){say(f.name+': too large (max 40 MB)');continue}
+ try{const id=uid();await bput(id,f);const d=get(dp);if(!d)continue;const nm=uniq(dp,clean(f.name)||'file');d.c[nm]={t:'f',k:'up',id,mime:f.type||mimeOf(f.name),size:f.size,m:Date.now()};n++}catch(e){say('Could not store '+f.name)}}
+ saveFS();refreshAll();if(n)say(n+' file(s) uploaded to '+winPath(dp)+' ✓')}
+function pickUpload(dp){const i=E('input');i.type='file';i.multiple=true;i.style.display='none';root.appendChild(i);i.onchange=()=>{upload(i.files,dp);setTimeout(()=>i.remove(),500)};i.click()}
 const winPath=p=>'C:\\Users\\User'+parts(p).map(s=>'\\'+s).join('');
 // ================= پوسته =================
 const WALLS={w1:'radial-gradient(circle at 30% 20%,#4aa3ff,#0b3a8a 55%,#06142f)',w2:'linear-gradient(135deg,#ff7e5f,#feb47b 45%,#6a3d7c)',w3:'linear-gradient(160deg,#134e4a,#2f9e44 60%,#a3e635)',w4:'radial-gradient(circle at 70% 30%,#6d28d9,#1e1b4b 60%,#020617)',w5:'linear-gradient(120deg,#0f2027,#2c5364)',w6:'#008080'};
@@ -3031,8 +3051,8 @@ const css=E('style');css.textContent=`
 #wsim{position:fixed;inset:0;z-index:90;background:#000;color:#fff;font:13px 'Segoe UI',Tahoma,system-ui,sans-serif;direction:ltr;user-select:none;-webkit-user-select:none;overflow:hidden;--acc:#0078d4}
 #wsim[hidden]{display:none}#wsim *{box-sizing:border-box}
 #wsim .wd{position:absolute;left:0;right:0;top:0;bottom:44px;background-size:cover;background-position:center;overflow:hidden}
-#wsim .wi{position:absolute;inset:6px;display:grid;grid-auto-flow:column;grid-template-rows:repeat(auto-fill,86px);grid-auto-columns:80px;gap:2px;align-content:start;justify-content:start}
-#wsim .ic{width:80px;height:84px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;border:1px solid transparent;border-radius:4px;text-align:center;font-size:12px;text-shadow:0 1px 3px #000;word-break:break-word;line-height:1.15;overflow:hidden}
+#wsim .wi{position:absolute;inset:6px}
+#wsim .ic{position:absolute;width:80px;height:86px;touch-action:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;border:1px solid transparent;border-radius:4px;text-align:center;font-size:12px;text-shadow:0 1px 3px #000;word-break:break-word;line-height:1.15;overflow:hidden}
 #wsim .ic b{font-size:30px;line-height:1.1;font-weight:400;filter:drop-shadow(0 1px 2px #0008)}#wsim .ic.sel{background:#ffffff33;border-color:#ffffff66}
 #wsim .win{position:absolute;background:#f3f3f3;color:#111;border:1px solid #444;border-radius:8px;box-shadow:0 8px 28px #000a;display:flex;flex-direction:column;overflow:hidden;min-width:200px;min-height:120px}
 #wsim .win.act{box-shadow:0 12px 40px #000c;border-color:var(--acc)}#wsim .win.min{display:none}
@@ -3069,7 +3089,7 @@ const css=E('style');css.textContent=`
 #wsim .fx{display:flex;flex-direction:column;height:100%;color:#111;font-size:12px}#wsim .fxb{display:flex;gap:4px;padding:6px;background:#f0f0f0;border-bottom:1px solid #ccc;align-items:center}#wsim .fxb button{padding:4px 9px;border:1px solid #bbb;border-radius:4px;background:#fafafa;color:#111}#wsim .fxb input{flex:1;min-width:0;padding:4px 6px}
 #wsim .fxm{flex:1;display:flex;min-height:0}#wsim .fxs{width:118px;background:#f7f7f7;border-right:1px solid #ddd;padding:6px 2px;overflow:auto;flex:none}#wsim .fxs div{padding:6px 8px;border-radius:4px}#wsim .fxs div:hover,#wsim .fxs div.on{background:#cde4fb}
 #wsim .fxl{flex:1;overflow:auto;padding:6px;display:grid;grid-template-columns:repeat(auto-fill,82px);grid-auto-rows:84px;gap:4px;align-content:start}
-#wsim .fxl .ic{text-shadow:none;color:#111;width:82px}#wsim .fxl .ic.sel{background:#cde4fb;border-color:#7ab5ee}
+#wsim .fxl .ic{position:relative;text-shadow:none;color:#111;width:82px;height:84px}#wsim .fxl .ic.sel{background:#cde4fb;border-color:#7ab5ee}
 #wsim .np{display:flex;flex-direction:column;height:100%;color:#111}#wsim .npb{display:flex;gap:4px;padding:4px;background:#f0f0f0;border-bottom:1px solid #ccc;flex-wrap:wrap;align-items:center}#wsim .npb button{padding:3px 9px;border:1px solid #bbb;border-radius:4px;background:#fafafa;color:#111}
 #wsim .np textarea{flex:1;border:0;outline:0;resize:none;padding:6px;font:14px Consolas,monospace;color:#111;background:#fff;user-select:text;-webkit-user-select:text}#wsim .nps{font-size:11px;padding:2px 8px;background:#f0f0f0;border-top:1px solid #ccc;color:#333}
 #wsim .calc{display:flex;flex-direction:column;height:100%;background:#eef1f5;color:#111}#wsim .cd{padding:10px 12px;text-align:right;min-height:84px}#wsim .cd small{display:block;height:18px;color:#555;font-size:12px}#wsim .cd b{font-size:34px;font-weight:600;word-break:break-all}
@@ -3082,9 +3102,25 @@ const css=E('style');css.textContent=`
 #wsim .tk{height:100%;color:#111;overflow:auto;font-size:12px}#wsim .tk table{width:100%;border-collapse:collapse}#wsim .tk td,#wsim .tk th{padding:6px 8px;border-bottom:1px solid #ddd;text-align:left}#wsim .meter{height:8px;background:#ddd;border-radius:4px;overflow:hidden;margin:3px 0 8px}#wsim .meter i{display:block;height:100%;background:var(--acc)}
 #wsim .ms{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;height:100%;background:#c0c0c0;color:#111;overflow:auto}#wsim .msg{display:grid;gap:1px;background:#777;border:3px inset #fff}#wsim .msg div{width:26px;height:26px;background:#c0c0c0;border:2px outset #fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}#wsim .msg div.o{border:1px solid #888;background:#d6d6d6}
 #wsim .br{display:flex;flex-direction:column;height:100%;color:#111}#wsim .brb{display:flex;gap:4px;padding:5px;background:#f0f0f0;border-bottom:1px solid #ccc}#wsim .brb input{flex:1;min-width:0}#wsim .brb button{padding:3px 9px;border:1px solid #bbb;border-radius:4px;background:#fafafa;color:#111}#wsim .br iframe{flex:1;border:0;width:100%;background:#fff}
+
+#wsim .snp{position:absolute;z-index:7000;background:#4cc2ff44;border:2px solid #4cc2ff;border-radius:8px;pointer-events:none;transition:all .12s}#wsim .snp[hidden]{display:none}
+#wsim .wqp{position:absolute;right:8px;bottom:52px;width:min(320px,calc(100% - 16px));background:#232323f5;backdrop-filter:blur(18px);border:1px solid #fff2;border-radius:12px;padding:12px;z-index:9100;display:grid;gap:10px;box-shadow:0 12px 40px #000b}#wsim .wqp[hidden]{display:none}
+#wsim .wqp .qg{display:grid;grid-template-columns:1fr 1fr;gap:8px}#wsim .wqp .qg button{height:44px;border-radius:8px;border:0;background:#ffffff1c;color:#fff;font:inherit;font-size:12px}#wsim .wqp .qg button.on{background:var(--acc)}
+#wsim .wqp .qs{display:flex;align-items:center;gap:6px;font-size:13px}#wsim .wqp .qs input{flex:1}#wsim .wqp .qs button{width:30px;height:30px;border-radius:6px;border:0;background:#ffffff1c;color:#fff}
+#wsim .wboot{position:absolute;inset:0;background:#000;z-index:9990;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px}#wsim .wboot[hidden]{display:none}
+#wsim .wboot .logo{grid-template-columns:34px 34px;gap:5px}#wsim .wboot .logo i{width:34px;height:34px}#wsim .spin{width:34px;height:34px;border:4px solid #fff3;border-top-color:#fff;border-radius:50%;animation:wsp 1s linear infinite}@keyframes wsp{to{transform:rotate(360deg)}}
+#wsim .wlock{position:absolute;inset:0;z-index:9980;background:radial-gradient(circle at 30% 20%,#4aa3ff,#0b3a8a 55%,#06142f);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}#wsim .wlock[hidden]{display:none}
+#wsim .wlock .lt{font-size:min(22vw,110px);font-weight:300;line-height:1}#wsim .wlock .ld{font-size:18px;margin-bottom:40px;opacity:.9}#wsim .wlock .av{width:84px;height:84px;border-radius:50%;background:#ffffff33;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 8px}
+#wsim .wlock .lu{display:grid;gap:8px;justify-items:center}#wsim .wlock input{padding:9px 12px;border-radius:6px;border:1px solid #fff6;background:#0005;color:#fff;font:inherit;text-align:center;letter-spacing:4px;width:180px}#wsim .wlock button{padding:8px 18px;border-radius:6px;border:0;background:#ffffff33;color:#fff;font:inherit}#wsim .wlock .le{color:#ffb4b4;min-height:18px}
+#wsim .ph{display:flex;flex-direction:column;height:100%;background:#202020;color:#eee}#wsim .phb{display:flex;gap:4px;padding:5px;background:#2b2b2b;align-items:center;flex-wrap:wrap}#wsim .phb button{padding:4px 9px;border:0;border-radius:4px;background:#ffffff1c;color:#fff;font:inherit}#wsim .phv{flex:1;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;touch-action:none;cursor:grab}#wsim .phv img{max-width:100%;max-height:100%;transform-origin:center;user-select:none;-webkit-user-drag:none}#wsim .phs{padding:3px 8px;font-size:11px;background:#2b2b2b;color:#bbb}
+#wsim .mp{display:flex;flex-direction:column;height:100%;background:#111;color:#eee}#wsim .mpv{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;font-size:80px}#wsim .mpv video{max-width:100%;max-height:100%}#wsim .mpv audio{width:92%}#wsim .mpb{display:flex;gap:6px;padding:6px;background:#222;align-items:center;font-size:12px}#wsim .mpb button{padding:4px 10px;border:0;border-radius:4px;background:#ffffff1c;color:#fff;font:inherit}
+#wsim .ck2{padding:12px;color:#111;height:100%;overflow:auto;background:#f3f3f3}#wsim .ck2 .tabs{display:flex;gap:6px;margin-bottom:10px}#wsim .ck2 .tabs button,#wsim .ck2 button.b{padding:6px 14px;border:1px solid #aaa;border-radius:4px;background:#e1e1e1;color:#111;font:inherit}#wsim .ck2 .tabs button.on,#wsim .ck2 button.b.p{background:var(--acc);color:#fff;border-color:var(--acc)}#wsim .ck2 .big{font:300 46px 'Segoe UI',sans-serif;text-align:center;margin:12px 0;font-variant-numeric:tabular-nums}
+#wsim .sn{height:100%;overflow:auto;padding:8px;background:#fff8c6;display:grid;gap:8px;align-content:start;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}#wsim .sn div{background:#fff176;border-radius:4px;box-shadow:0 2px 6px #0003;display:flex;flex-direction:column;min-height:130px}#wsim .sn textarea{flex:1;border:0;background:transparent;resize:none;padding:8px;font:14px 'Segoe Print','Comic Sans MS',cursive;color:#222;outline:0;user-select:text;-webkit-user-select:text}#wsim .sn button{align-self:flex-end;border:0;background:transparent;font-size:14px;padding:2px 6px;color:#555}
+#wsim .fxt{padding:3px 10px;font-size:11px;background:#f0f0f0;border-top:1px solid #ccc;color:#444;display:flex;justify-content:space-between}#wsim .fxl.det{display:block;padding:0}#wsim .fxl.det table{width:100%;border-collapse:collapse;color:#111;font-size:12px}#wsim .fxl.det th{position:sticky;top:0;background:#f7f7f7;text-align:left;padding:5px 8px;border-bottom:1px solid #ddd;font-weight:600;cursor:pointer}#wsim .fxl.det td{padding:5px 8px;border-bottom:1px solid #f0f0f0;white-space:nowrap}#wsim .fxl.det tr.sel td{background:#cde4fb}
+#wsim .drop{outline:3px dashed #4cc2ff;outline-offset:-6px}
 `;
 root.appendChild(css);
-root.insertAdjacentHTML('beforeend','<div class="wd" id="wd"><div class="wi" id="wi"></div></div><div class="wsm" id="wsm" hidden><input type="text" id="wsq" placeholder="Search apps"><div class="wsg" id="wsg"></div><div class="wsf"><span id="wsu">👤 User</span><span><button id="wsx" title="Exit">⏻</button></span></div></div><div class="wtb" id="wtb"><button id="wst" aria-label="Start"><span class="logo"><i></i><i></i><i></i><i></i></span></button><span id="wtba" style="display:flex;gap:2px"></span><span class="grow"></span><button id="wmt" title="Mouse mode">🖱️</button><div class="wclk" id="wclk"></div></div><div class="wcx" id="wcx" hidden></div><div class="wpad" id="wpad" hidden></div><div class="wcur" id="wcur" hidden><svg viewBox="0 0 22 30" width="22" height="30"><path d="M2 2l0 22 6-6 4 9 4-2-4-9h8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></div>');
+root.insertAdjacentHTML('beforeend','<div class="wd" id="wd"><div class="wi" id="wi"></div></div><div class="wsm" id="wsm" hidden><input type="text" id="wsq" placeholder="Search apps"><div class="wsg" id="wsg"></div><div class="wsf"><span id="wsu">👤 User</span><span><button id="wsl" title="Back to S loop" style="width:auto;padding:0 10px;font-size:13px">↩ S loop</button><button id="wlk" title="Lock">🔒</button><button id="wsx" title="Shut down">⏻</button></span></div></div><div class="wtb" id="wtb"><button id="wst" aria-label="Start"><span class="logo"><i></i><i></i><i></i><i></i></span></button><span id="wtba" style="display:flex;gap:2px"></span><span class="grow"></span><button id="wqs" title="Quick settings">📶🔊</button><button id="wmt" title="Mouse mode">🖱️</button><div class="wclk" id="wclk"></div></div><div class="wcx" id="wcx" hidden></div><div class="wpad" id="wpad" hidden></div><div class="wcur" id="wcur" hidden><svg viewBox="0 0 22 30" width="22" height="30"><path d="M2 2l0 22 6-6 4 9 4-2-4-9h8z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg></div><div class="wqp" id="wqp" hidden></div><div class="snp" id="snp" hidden></div><div class="wlock" id="wlock" hidden></div><div class="wboot" id="wboot" hidden></div>');
 const D=Q('#wd'),I=Q('#wi'),SM=Q('#wsm'),CX=Q('#wcx'),PAD=Q('#wpad'),CUR=Q('#wcur'),APPS={};
 function theme(){root.style.setProperty('--acc',ST.acc);root.classList.toggle('light',!ST.dark);D.style.background=ST.img?'url('+ST.img+') center/cover':(WALLS[ST.wall]||WALLS.w1)}
 // ---------- پنجره‌ها
@@ -3100,73 +3136,113 @@ function openApp(id,arg){const A=APPS[id];if(!A)return;const vw=D.clientWidth,vh
  const o={id:++idc,app:id,el,body:el.querySelector('.wbd'),title:A.n,icon:A.i,min:0,max:0,onclose:null,setTitle(t){o.title=t;el.querySelector('.wti').textContent=t;tb()}};
  wins.push(o);D.appendChild(el);A.open(o,arg);focus(o);if(vw<640)maxi(o,1);return o}
 D.addEventListener('pointerdown',e=>{const w=e.target.closest('.win');if(w){const o=wins.find(x=>x.el===w);if(o&&o!==act)focus(o)}hideMenus(e)},true);
-let drag=null;
+let drag=null,tsup=0;
 D.addEventListener('pointerdown',e=>{const t=e.target;if(t.closest('.wbtn'))return;const w=t.closest('.win');if(!w)return;const o=wins.find(x=>x.el===w);if(!o)return;
- if(t.closest('.wtt')&&!o.max){drag={o,m:'m',x:e.clientX,y:e.clientY,l:w.offsetLeft,t:w.offsetTop};e.preventDefault()}
+ if(t.closest('.wtt')&&!o.max){if(o.sn){const r=root.getBoundingClientRect();w.style.width=o.sn.w+'px';w.style.height=o.sn.h+'px';w.style.left=Math.max(0,e.clientX-r.left-o.sn.w*.4)+'px';w.style.top='0px';o.sn=null}drag={o,m:'m',x:e.clientX,y:e.clientY,l:w.offsetLeft,t:w.offsetTop};e.preventDefault()}
  else if(t.closest('.wrz')){drag={o,m:'r',x:e.clientX,y:e.clientY,w:w.offsetWidth,h:w.offsetHeight};e.preventDefault()}});
-document.addEventListener('pointermove',e=>{if(!drag||root.hidden)return;const w=drag.o.el;if(drag.m==='m'){w.style.left=(drag.l+e.clientX-drag.x)+'px';w.style.top=Math.max(0,drag.t+e.clientY-drag.y)+'px'}else{w.style.width=Math.max(220,drag.w+e.clientX-drag.x)+'px';w.style.height=Math.max(140,drag.h+e.clientY-drag.y)+'px'}});
-document.addEventListener('pointerup',()=>{drag=null});
+document.addEventListener('pointermove',e=>{if(!drag||root.hidden)return;const w=drag.o.el;if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>3)drag.mvd=true;if(drag.m==='m'){w.style.left=(drag.l+e.clientX-drag.x)+'px';w.style.top=Math.max(0,drag.t+e.clientY-drag.y)+'px';const r=root.getBoundingClientRect(),x1=e.clientX-r.left,y1=e.clientY-r.top,vh=r.height-44,sp=Q('#snp');drag.snap=y1<6?'max':x1<6?'L':x1>r.width-6?'R':null;if(drag.snap){sp.hidden=false;Object.assign(sp.style,drag.snap==='max'?{left:'0',top:'0',width:'100%',height:vh+'px'}:{left:drag.snap==='L'?'0':'50%',top:'0',width:'50%',height:vh+'px'})}else sp.hidden=true}else{w.style.width=Math.max(220,drag.w+e.clientX-drag.x)+'px';w.style.height=Math.max(140,drag.h+e.clientY-drag.y)+'px'}});
+document.addEventListener('pointerup',()=>{const sp=Q('#snp');if(drag&&drag.mvd)tsup=Date.now()+450;if(drag&&drag.snap){const o=drag.o,w=o.el;if(drag.snap==='max')maxi(o,1);else{o.sn={w:w.offsetWidth,h:w.offsetHeight};w.style.left=drag.snap==='L'?'0':'50%';w.style.top='0';w.style.width='50%';w.style.height=D.clientHeight+'px'}}drag=null;sp.hidden=true});
 D.addEventListener('click',e=>{const b=e.target.closest('.wbtn button');if(b){const o=wins.find(x=>x.el===b.closest('.win'));if(!o)return;const a=b.dataset.a;if(a==='cls')closeW(o);else if(a==='max')maxi(o);else{o.min=1;o.el.classList.add('min');if(act===o){act=wins.filter(w=>!w.min).slice(-1)[0]||null;if(act)focus(act)}tb()}return}
- const t=e.target.closest('.wtt');if(t&&isDbl('tt'+(wins.find(x=>x.el===t.closest('.win'))||{}).id)){maxi(wins.find(x=>x.el===t.closest('.win')))}});
+ const t=e.target.closest('.wtt');if(t&&Date.now()>tsup&&isDbl('tt'+(wins.find(x=>x.el===t.closest('.win'))||{}).id)){maxi(wins.find(x=>x.el===t.closest('.win')))}});
 Q('#wtba').addEventListener('click',e=>{const b=e.target.closest('[data-w]');if(!b)return;const o=wins.find(x=>x.id==+b.dataset.w);if(!o)return;if(o.min||o!==act)focus(o);else{o.min=1;o.el.classList.add('min');act=wins.filter(w=>!w.min).slice(-1)[0]||null;if(act)focus(act);tb()}});
 // ---------- منوی Start، منوی راست‌کلیک، پنجره‌ی گفتگو
 function hideMenus(e){if(e&&e.target.closest&&(e.target.closest('#wsm')||e.target.closest('#wst')||e.target.closest('#wcx')))return;SM.hidden=true;CX.hidden=true}
-function startMenu(){const q=(Q('#wsq').value||'').toLowerCase();Q('#wsg').innerHTML=Object.keys(APPS).filter(k=>!APPS[k].hide&&APPS[k].n.toLowerCase().includes(q)).map(k=>'<div data-app="'+k+'"><b>'+APPS[k].i+'</b>'+X(APPS[k].n)+'</div>').join('')}
+function flat(d,pre,out){for(const [n,v] of Object.entries(d.c)){const p=(pre==='/'?'':pre)+'/'+n;out.push([p,n,v]);if(v.t==='d')flat(v,p,out)}return out}
+function startMenu(){const q=(Q('#wsq').value||'').toLowerCase();let h=Object.keys(APPS).filter(k=>!APPS[k].hide&&APPS[k].n.toLowerCase().includes(q)).map(k=>'<div data-app="'+k+'"><b>'+APPS[k].i+'</b>'+X(APPS[k].n)+'</div>').join('');
+ if(q.length>=2){const f=flat(FS,'/',[]).filter(x=>!x[0].startsWith('/Recycle')&&x[1].toLowerCase().includes(q)).slice(0,12);if(f.length)h+='<div style="grid-column:1/-1;text-align:left;font-size:11px;opacity:.7;padding:6px 8px;flex-direction:row;justify-content:flex-start">Files &amp; folders</div>'+f.map(x=>'<div data-file="'+X(x[0])+'" style="grid-column:1/-1;flex-direction:row;justify-content:flex-start;gap:10px;padding:8px;text-align:left"><b style="font-size:20px">'+icoOf(x[1],x[2])+'</b>'+X(x[1])+'</div>').join('')}
+ Q('#wsg').innerHTML=h}
 Q('#wst').addEventListener('click',()=>{SM.hidden=!SM.hidden;CX.hidden=true;if(!SM.hidden){Q('#wsq').value='';startMenu()}});
 Q('#wsq').addEventListener('input',startMenu);
-Q('#wsg').addEventListener('click',e=>{const a=e.target.closest('[data-app]');if(a){SM.hidden=true;openApp(a.dataset.app)}});
+Q('#wsg').addEventListener('click',e=>{const a=e.target.closest('[data-app]');if(a){SM.hidden=true;openApp(a.dataset.app);return}const f=e.target.closest('[data-file]');if(f){SM.hidden=true;openPath(f.dataset.file)}});
 function ctx(x,y,items){CX.innerHTML=items.map(i=>i==='-'?'<hr>':'<div>'+i[0]+'</div>').join('');CX.hidden=false;const r=root.getBoundingClientRect();CX.style.left=Math.max(0,Math.min(x-r.left,r.width-CX.offsetWidth-4))+'px';CX.style.top=Math.max(0,Math.min(y-r.top,r.height-CX.offsetHeight-48))+'px';const fs=items.filter(i=>i!=='-');QA('div',CX).forEach((d,i)=>d.onclick=()=>{CX.hidden=true;fs[i][1]()})}
 function modal(title,html,btns){const m=E('div','mdl','<div class="mdb"><h4>'+X(title)+'</h4><div class="c">'+html+'</div><div class="f"></div></div>');const f=Q('.f',m);const close=()=>m.remove();
  btns.forEach(b=>{const x=E('button',b[2]||'',b[0]);x.onclick=()=>{if(!b[1]||b[1](m)!==false)close()};f.appendChild(x)});D.appendChild(m);const i=Q('input,select',m);if(i)setTimeout(()=>{try{i.focus();if(i.select)i.select()}catch(e){}},30);return m}
 function ask(title,label,val,ok){modal(title,'<label>'+X(label)+'</label><input type="text" value="'+X(val||'')+'">',[['OK',m=>ok(Q('input',m).value),'p'],['Cancel']])}
 function note(t,msg){modal(t,'<div>'+X(msg)+'</div>',[['OK',null,'p']])}
-// ================= آیکون‌های دسکتاپ و باز کردن فایل‌ها =================
-const SHORT=[['files','File Explorer'],['notepad','Notepad'],['calc','Calculator'],['paint','Paint'],['term','Command Prompt'],['mines','Minesweeper'],['browser','Browser'],['settings','Settings']];
+// ================= آیکون‌های دسکتاپ، فایل‌ها، آپلود =================
+const SHORT=[['files','File Explorer'],['notepad','Notepad'],['calc','Calculator'],['paint','Paint'],['photos','Photos'],['media','Media Player'],['term','Command Prompt'],['mines','Minesweeper'],['browser','Browser'],['clock','Clock'],['sticky','Sticky Notes'],['settings','Settings']];
+let CLIP=null,iconDrag=null,iconSup=0;const IW=82,IH=88;
 function refreshAll(){icons();wins.forEach(w=>w.refresh&&w.refresh())}
-function icons(){const d=get('/Desktop')||{c:{}};
- const sys=[['sys:pc','🖥️','This PC'],['sys:rb',Object.keys((get('/Recycle')||{c:{}}).c).length?'🗑️':'🗑️','Recycle Bin']];
- I.innerHTML=sys.map(s=>'<div class="ic" data-ic="'+s[0]+'"><b>'+s[1]+'</b>'+s[2]+'</div>').join('')+SHORT.map(s=>'<div class="ic" data-ic="app:'+s[0]+'"><b>'+APPS[s[0]].i+'</b>'+s[1]+'</div>').join('')+Object.entries(d.c).sort((a,b)=>(a[1].t==='d'?0:1)-(b[1].t==='d'?0:1)||a[0].localeCompare(b[0])).map(([n,v])=>'<div class="ic" data-ic="file:/Desktop/'+X(n)+'"><b>'+icoOf(n,v)+'</b>'+X(n)+'</div>').join('')}
-function openPath(p){const n=get(p);if(!n)return;if(n.t==='d')return openApp('files',{path:p});const e=ext(p);if(/png|jpg|jpeg|gif|webp/.test(e)||n.k==='img')return openApp('paint',{path:p});openApp('notepad',{path:p})}
-function openIc(k){if(k==='sys:pc')openApp('files',{path:'/'});else if(k==='sys:rb')openApp('files',{path:'/Recycle'});else if(k.startsWith('app:'))openApp(k.slice(4));else openPath(k.slice(5))}
+function iconList(){const d=get('/Desktop')||{c:{}};return [['sys:pc','🖥️','This PC'],['sys:rb','🗑️','Recycle Bin'],['sys:sl','🎮','Back to S loop']].concat(SHORT.map(s=>['app:'+s[0],APPS[s[0]]?APPS[s[0]].i:'📦',s[1]]),Object.entries(d.c).sort((a,b)=>(a[1].t==='d'?0:1)-(b[1].t==='d'?0:1)||a[0].localeCompare(b[0])).map(([n,v])=>['file:/Desktop/'+n,icoOf(n,v),n]))}
+function icons(){const L=iconList(),rows=Math.max(1,Math.floor((D.clientHeight-10)/IH)),used=new Set();L.forEach(x=>{const p=ST.ipos[x[0]];if(p)used.add(p.c+','+p.r)});let i=0;
+ I.innerHTML=L.map(x=>{let p=ST.ipos[x[0]];if(!p){for(;;){const c=Math.floor(i/rows),r=i%rows,k=c+','+r;i++;if(!used.has(k)){p={c,r};used.add(k);break}}}
+  return '<div class="ic" data-ic="'+X(x[0])+'" style="left:'+(p.c*IW)+'px;top:'+(p.r*IH)+'px"><b>'+x[1]+'</b>'+X(x[2])+'</div>'}).join('')}
+function openPath(p){const n=get(p);if(!n)return;if(n.t==='d')return openApp('files',{path:p});const nm=split(p).name,k=kindOf(nm,n);
+ if(k==='txt')openApp('notepad',{path:p});else if(k==='img')openApp('photos',{path:p});else if(k==='aud'||k==='vid')openApp('media',{path:p});else if(k==='html'||k==='pdf')openApp('browser',{path:p});
+ else modal('Cannot open file','<div>No app can open “'+X(nm)+'” here. You can download it instead.</div>',[['Download',()=>download(p),'p'],['Cancel']])}
+function openIc(k){if(k==='sys:pc')openApp('files',{path:'/'});else if(k==='sys:rb')openApp('files',{path:'/Recycle'});else if(k==='sys:sl')hideSim();else if(k.startsWith('app:'))openApp(k.slice(4));else openPath(k.slice(5))}
 let selIc=null;
-I.addEventListener('click',e=>{const ic=e.target.closest('.ic');QA('.ic.sel',I).forEach(x=>x.classList.remove('sel'));if(!ic){selIc=null;return}ic.classList.add('sel');selIc=ic.dataset.ic;if(isDbl(ic.dataset.ic))openIc(ic.dataset.ic)});
-function newItem(dp,kind){if(kind==='d'){const n=mkdir(dp,'New folder');if(n)ask('Rename','Folder name',n,v=>{if(v&&v!==n)renameP(dp.replace(/\/$/,'')+'/'+n,v);refreshAll()})}else{const n=write(dp,'New Text Document.txt','','txt');if(n)ask('Rename','File name',n,v=>{if(v&&v!==n)renameP(dp.replace(/\/$/,'')+'/'+n,v);refreshAll()})}refreshAll()}
-function itemMenu(path,x,y){const inRb=path.startsWith('/Recycle/'),n=get(path);if(!n)return;
- const items=inRb?[['↩ Restore',()=>{const s=split(path);const to=n.from||('/Desktop/'+s.name),t=split(to);const dir=get(t.path)?t.path:'/Desktop';const nm=uniq(dir,t.name);delete n.from;get(dir).c[nm]=n;delete s.dir.c[s.name];saveFS();refreshAll()}],['✕ Delete permanently',()=>{remove(path,true);refreshAll()}]]:
- [['Open',()=>openPath(path)],'-',['✏ Rename',()=>ask('Rename','New name',split(path).name,v=>{if(!renameP(path,v))say('Name already exists');refreshAll()})],['🗑 Delete',()=>{remove(path);refreshAll()}]];ctx(x,y,items)}
-function deskMenu(x,y){ctx(x,y,[['🔄 Refresh',refreshAll],'-',['📁 New folder',()=>newItem('/Desktop','d')],['📄 New text document',()=>newItem('/Desktop','f')],'-',['🎨 Personalize',()=>openApp('settings')],['⌨ Open Command Prompt',()=>openApp('term')]])}
-root.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('textarea,input[type=text]'))return;e.preventDefault();if(e.__h)return;const ic=e.target.closest('#wi .ic');if(ic){const k=ic.dataset.ic;QA('.ic.sel',I).forEach(x=>x.classList.remove('sel'));ic.classList.add('sel');if(k.startsWith('file:'))itemMenu(k.slice(5),e.clientX,e.clientY);else ctx(e.clientX,e.clientY,[['Open',()=>openIc(k)]]);return}
+I.addEventListener('click',e=>{if(Date.now()<iconSup)return;const ic=e.target.closest('.ic');QA('.ic.sel',I).forEach(x=>x.classList.remove('sel'));if(!ic){selIc=null;return}ic.classList.add('sel');selIc=ic.dataset.ic;if(isDbl(ic.dataset.ic))openIc(ic.dataset.ic)});
+I.addEventListener('pointerdown',e=>{const ic=e.target.closest('.ic');if(!ic||e.button>0)return;iconDrag={ic,x:e.clientX,y:e.clientY,l:ic.offsetLeft,t:ic.offsetTop,mv:false}});
+document.addEventListener('pointermove',e=>{if(!iconDrag)return;const dx=e.clientX-iconDrag.x,dy=e.clientY-iconDrag.y;if(!iconDrag.mv&&Math.abs(dx)+Math.abs(dy)<8)return;iconDrag.mv=true;iconDrag.ic.style.left=(iconDrag.l+dx)+'px';iconDrag.ic.style.top=(iconDrag.t+dy)+'px';iconDrag.ic.style.zIndex=50});
+document.addEventListener('pointerup',()=>{if(!iconDrag)return;const d=iconDrag;iconDrag=null;if(!d.mv)return;iconSup=Date.now()+350;const rows=Math.max(1,Math.floor((D.clientHeight-10)/IH));let c=Math.max(0,Math.round(d.ic.offsetLeft/IW)),r=Math.max(0,Math.min(rows-1,Math.round(d.ic.offsetTop/IH)));
+ const occ=new Set([...I.children].filter(x=>x!==d.ic).map(x=>Math.round(x.offsetLeft/IW)+','+Math.round(x.offsetTop/IH)));
+ if(occ.has(c+','+r)){let best=null,bd=1e9;for(let cc=0;cc<40;cc++)for(let rr=0;rr<rows;rr++){if(occ.has(cc+','+rr))continue;const dd=(cc-c)**2+(rr-r)**2;if(dd<bd){bd=dd;best=[cc,rr]}}if(best){c=best[0];r=best[1]}}
+ ST.ipos[d.ic.dataset.ic]={c,r};saveST();icons()});
+function newItem(dp,kind){const base=dp.replace(/\/$/,'');if(kind==='d'){const n=mkdir(dp,'New folder');if(n)ask('Rename','Folder name',n,v=>{if(v&&v!==n)renameP(base+'/'+n,v);refreshAll()})}else{const n=write(dp,'New Text Document.txt','','txt');if(n)ask('Rename','File name',n,v=>{if(v&&v!==n)renameP(base+'/'+n,v);refreshAll()})}refreshAll()}
+function restore(path){const n=get(path),s=split(path);if(!n)return;const to=n.from||('/Desktop/'+s.name),t=split(to),dir=get(t.path)?t.path:'/Desktop',nm=uniq(dir,t.name);delete n.from;get(dir).c[nm]=n;delete s.dir.c[s.name];saveFS()}
+function props(path){const n=get(path),s=split(path);if(!n)return;const k=n.t==='d'?'File folder':kindOf(s.name,n);let size=n.t==='d'?Object.keys(n.c).length+' item(s)':fmtSize(n.size||String(n.v||'').length);
+ modal('Properties','<div><b>'+(n.t==='d'?'📁':icoOf(s.name,n))+' '+X(s.name)+'</b></div><div>Type: '+X(k)+(n.mime?' ('+X(n.mime)+')':'')+'</div><div>Location: '+X(winPath(s.path))+'</div><div>Size: '+X(size)+'</div><div>Modified: '+(n.m?new Date(n.m).toLocaleString():'—')+'</div>',[['OK',null,'p']])}
+async function paste(dp){if(!CLIP||!get(dp)||dp==='/')return;const n=get(CLIP.path);if(!n){CLIP=null;return}const s=split(CLIP.path),nn=uniq(dp,s.name),cp=JSON.parse(JSON.stringify(n));delete cp.from;cp.m=Date.now();get(dp).c[nn]=cp;if(CLIP.op==='cut'){delete s.dir.c[s.name];CLIP=null}saveFS();refreshAll();say('Pasted ✓')}
+function fileMenu(paths,x,y){const one=paths.length===1,p=paths[0],n=get(p);if(!n)return;const inRb=p.startsWith('/Recycle/');
+ if(inRb)return ctx(x,y,[['↩ Restore',()=>{paths.forEach(restore);refreshAll()}],['✕ Delete permanently',()=>{paths.forEach(q=>remove(q,true));refreshAll()}]]);
+ const nm=split(p).name,items=[];if(one)items.push(['Open',()=>openPath(p)]);
+ if(one&&n.t==='f'&&kindOf(nm,n)==='img')items.push(['🎨 Edit in Paint',()=>openApp('paint',{path:p})]);
+ if(one&&n.t==='f'&&(kindOf(nm,n)==='txt'))items.push(['📝 Open in Notepad',()=>openApp('notepad',{path:p})]);
+ if(one&&n.t==='f')items.push(['⬇ Download',()=>download(p)]);
+ items.push('-',['✂ Cut',()=>{CLIP={op:'cut',path:p};say('Cut')}],['⧉ Copy',()=>{CLIP={op:'copy',path:p};say('Copied')}],'-');
+ if(one)items.push(['✏ Rename',()=>ask('Rename','New name',nm,v=>{if(!renameP(p,v))say('Name already exists');refreshAll()})]);
+ items.push(['🗑 Delete'+(one?'':' ('+paths.length+')'),()=>{paths.forEach(q=>remove(q));refreshAll()}]);if(one)items.push('-',['ℹ Properties',()=>props(p)]);ctx(x,y,items)}
+function deskMenu(x,y){const it=[['🔄 Refresh',refreshAll],['🧩 Auto arrange icons',()=>{ST.ipos={};saveST();icons()}],'-',['📁 New folder',()=>newItem('/Desktop','d')],['📄 New text document',()=>newItem('/Desktop','f')],['⬆ Upload files here…',()=>pickUpload('/Desktop')]];
+ if(CLIP)it.push(['📋 Paste',()=>paste('/Desktop')]);it.push('-',['🎨 Personalize',()=>openApp('settings')],['⌨ Open Command Prompt',()=>openApp('term')]);ctx(x,y,it)}
+root.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('textarea,input[type=text]'))return;e.preventDefault();if(e.__h)return;const ic=e.target.closest('#wi .ic');if(ic){const k=ic.dataset.ic;QA('.ic.sel',I).forEach(x=>x.classList.remove('sel'));ic.classList.add('sel');if(k.startsWith('file:'))fileMenu([k.slice(5)],e.clientX,e.clientY);else ctx(e.clientX,e.clientY,[['Open',()=>openIc(k)]]);return}
  if(e.target.closest('#wi')||e.target===D)deskMenu(e.clientX,e.clientY)});
+// کشیدن و رها کردن فایل از دستگاه
+root.addEventListener('dragover',e=>{if(e.dataTransfer&&[...(e.dataTransfer.types||[])].includes('Files')){e.preventDefault();D.classList.add('drop')}});
+['dragleave','drop'].forEach(n=>root.addEventListener(n,()=>D.classList.remove('drop')));
+root.addEventListener('drop',e=>{if(!e.dataTransfer||!e.dataTransfer.files||!e.dataTransfer.files.length)return;e.preventDefault();const w=e.target.closest&&e.target.closest('.win'),o=w&&wins.find(x=>x.el===w);const dp=(o&&o.app==='files'&&o.path&&o.path()!=='/'&&o.path()!=='/Recycle')?o.path():'/Desktop';upload(e.dataTransfer.files,dp)});
 // ================= File Explorer =================
-APPS.files={n:'File Explorer',i:'📁',w:580,h:380,open(o,arg){let path=(arg&&arg.path)||'/Desktop',hist=[];
- o.body.innerHTML='<div class="fx"><div class="fxb"><button data-x="back">←</button><button data-x="up">↑</button><input type="text" class="fxa" readonly><button data-x="nd" title="New folder">📁＋</button><button data-x="nf" title="New text file">📄＋</button></div><div class="fxm"><div class="fxs"></div><div class="fxl"></div></div></div>';
- const side=Q('.fxs',o.body),list=Q('.fxl',o.body),addr=Q('.fxa',o.body);
+APPS.files={n:'File Explorer',i:'📁',w:660,h:430,open(o,arg){let path=(arg&&arg.path)||'/Desktop',hist=[],sel=new Set(),sk='name',asc=true;o.path=()=>path;
+ o.body.innerHTML='<div class="fx" tabindex="0"><div class="fxb"><button data-x="back">←</button><button data-x="up">↑</button><input type="text" class="fxa" readonly><button data-x="upl" title="Upload files from this device">⬆ Upload</button><button data-x="nd" title="New folder">📁＋</button><button data-x="nf" title="New text file">📄＋</button><button data-x="vw" title="Switch view">☰</button></div><div class="fxm"><div class="fxs"></div><div class="fxl"></div></div><div class="fxt"><span class="fi"></span><span class="fq"></span></div></div>';
+ const side=Q('.fxs',o.body),list=Q('.fxl',o.body),addr=Q('.fxa',o.body),fi=Q('.fi',o.body),fq=Q('.fq',o.body),fx=Q('.fx',o.body);
  const SIDE=[['🖥️ This PC','/'],['🖥 Desktop','/Desktop'],['📄 Documents','/Documents'],['⬇ Downloads','/Downloads'],['🖼 Pictures','/Pictures'],['🎵 Music','/Music'],['🗑 Recycle Bin','/Recycle']];
+ const full=n=>(path==='/'?'':path)+'/'+n,sz=v=>v.t==='d'?0:(v.size||String(v.v||'').length),TY=v=>v.t==='d'?'Folder':({img:'Image',aud:'Audio',vid:'Video',html:'Web page',pdf:'PDF',txt:'Text file',bin:'File'})[kindOf('',v)||'bin'];
+ const ents=()=>{const d=get(path)||FS,C={name:(a,b)=>a[0].localeCompare(b[0]),size:(a,b)=>sz(a[1])-sz(b[1]),date:(a,b)=>(a[1].m||0)-(b[1].m||0),type:(a,b)=>kindOf(a[0],a[1]).localeCompare(kindOf(b[0],b[1]))}[sk];return Object.entries(d.c).sort((a,b)=>(a[1].t==='d'?0:1)-(b[1].t==='d'?0:1)||(asc?1:-1)*C(a,b))};
  function render(){let d=get(path);if(!d||d.t!=='d'){path='/';d=FS}addr.value=path==='/'?'This PC':winPath(path);o.setTitle(path==='/'?'This PC':parts(path).slice(-1)[0]);
-  side.innerHTML=SIDE.map(s=>'<div data-p="'+s[1]+'" class="'+(s[1]===path?'on':'')+'">'+s[0]+'</div>').join('');
-  const ents=Object.entries(d.c).sort((a,b)=>(a[1].t==='d'?0:1)-(b[1].t==='d'?0:1)||a[0].localeCompare(b[0]));
-  list.innerHTML=ents.map(([n,v])=>'<div class="ic" data-n="'+X(n)+'"><b>'+icoOf(n,v)+'</b>'+X(n)+'</div>').join('')||'<div style="grid-column:1/-1;color:#777;padding:10px">This folder is empty.</div>'}
- const go=p=>{hist.push(path);path=p;render()};o.refresh=render;render();
+  side.innerHTML=SIDE.map(s=>'<div data-p="'+s[1]+'" class="'+(s[1]===path?'on':'')+'">'+s[0]+'</div>').join('');const E2=ents();
+  if(ST.fview==='det'){list.className='fxl det';list.innerHTML='<table><tr>'+[['name','Name'],['date','Modified'],['type','Type'],['size','Size']].map(h=>'<th data-sk="'+h[0]+'">'+h[1]+(sk===h[0]?(asc?' ▲':' ▼'):'')+'</th>').join('')+'</tr>'+E2.map(([n,v])=>'<tr data-n="'+X(n)+'" class="'+(sel.has(n)?'sel':'')+'"><td>'+icoOf(n,v)+' '+X(n)+'</td><td>'+(v.m?new Date(v.m).toLocaleDateString():'')+'</td><td>'+TY(v)+'</td><td>'+(v.t==='d'?'':fmtSize(sz(v)))+'</td></tr>').join('')+'</table>'}
+  else{list.className='fxl';list.innerHTML=E2.map(([n,v])=>'<div class="ic'+(sel.has(n)?' sel':'')+'" data-n="'+X(n)+'"><b>'+icoOf(n,v)+'</b>'+X(n)+'</div>').join('')||'<div style="grid-column:1/-1;color:#777;padding:10px">This folder is empty.</div>'}
+  fi.textContent=E2.length+' item(s)'+(sel.size?'  |  '+sel.size+' selected':'');fq.textContent=E2.some(x=>x[1].k==='up')?'Uploaded: '+fmtSize(E2.reduce((a,x)=>a+(x[1].k==='up'?x[1].size:0),0)):''}
+ const go=p=>{hist.push(path);path=p;sel.clear();render()};o.refresh=render;render();
+ const selP=()=>[...sel].map(full);
  side.addEventListener('click',e=>{const s=e.target.closest('[data-p]');if(s)go(s.dataset.p)});
- const full=n=>(path==='/'?'':path)+'/'+n;
- list.addEventListener('click',e=>{const ic=e.target.closest('.ic');QA('.ic.sel',list).forEach(x=>x.classList.remove('sel'));if(!ic)return;ic.classList.add('sel');if(isDbl(o.id+ic.dataset.n)){const p=full(ic.dataset.n),n=get(p);if(n&&n.t==='d')go(p);else openPath(p)}});
- list.addEventListener('contextmenu',e=>{e.preventDefault();e.__h=1;e.stopPropagation();const ic=e.target.closest('.ic');
-  if(ic){QA('.ic.sel',list).forEach(x=>x.classList.remove('sel'));ic.classList.add('sel');itemMenu(full(ic.dataset.n),e.clientX,e.clientY)}
-  else if(path==='/Recycle')ctx(e.clientX,e.clientY,[['🗑 Empty Recycle Bin',()=>{get('/Recycle').c={};saveFS();refreshAll()}]]);
-  else if(path!=='/')ctx(e.clientX,e.clientY,[['📁 New folder',()=>newItem(path,'d')],['📄 New text document',()=>newItem(path,'f')],'-',['🔄 Refresh',render]])});
- Q('.fxb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-x]');if(!b)return;const x=b.dataset.x;
-  if(x==='back'&&hist.length){path=hist.pop();render()}else if(x==='up'&&path!=='/'){go('/'+parts(path).slice(0,-1).join('/'))}else if(x==='nd'&&path!=='/')newItem(path,'d');else if(x==='nf'&&path!=='/')newItem(path,'f')})}};
+ list.addEventListener('click',e=>{const th=e.target.closest('[data-sk]');if(th){if(sk===th.dataset.sk)asc=!asc;else{sk=th.dataset.sk;asc=true}render();return}
+  const it=e.target.closest('[data-n]');if(!it){sel.clear();render();return}const n=it.dataset.n;if(e.ctrlKey||e.metaKey){sel.has(n)?sel.delete(n):sel.add(n);render();return}
+  sel=new Set([n]);render();if(isDbl(o.id+n)){const p=full(n),nd=get(p);if(nd&&nd.t==='d')go(p);else openPath(p)}});
+ list.addEventListener('contextmenu',e=>{e.preventDefault();e.__h=1;e.stopPropagation();const it=e.target.closest('[data-n]');
+  if(it){if(!sel.has(it.dataset.n)){sel=new Set([it.dataset.n]);render()}fileMenu(selP(),e.clientX,e.clientY)}
+  else if(path==='/Recycle')ctx(e.clientX,e.clientY,[['🗑 Empty Recycle Bin',()=>{get('/Recycle').c={};saveFS();gcBlobs();refreshAll()}]]);
+  else if(path!=='/'){const it2=[['⬆ Upload files here…',()=>pickUpload(path)],['📁 New folder',()=>newItem(path,'d')],['📄 New text document',()=>newItem(path,'f')]];if(CLIP)it2.push(['📋 Paste',()=>paste(path)]);it2.push('-',['🔄 Refresh',render]);ctx(e.clientX,e.clientY,it2)}});
+ Q('.fxb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-x]');if(!b)return;const x=b.dataset.x,ok=path!=='/'&&path!=='/Recycle';
+  if(x==='back'&&hist.length){path=hist.pop();sel.clear();render()}else if(x==='up'&&path!=='/')go('/'+parts(path).slice(0,-1).join('/'));
+  else if(x==='nd'){if(ok)newItem(path,'d');else say('Open a folder first')}else if(x==='nf'){if(ok)newItem(path,'f');else say('Open a folder first')}
+  else if(x==='upl'){if(ok)pickUpload(path);else say('Open a folder first (for example Documents)')}
+  else if(x==='vw'){ST.fview=ST.fview==='det'?'icons':'det';saveST();render()}});
+ fx.addEventListener('keydown',e=>{const k=e.key,c=e.ctrlKey||e.metaKey;if(k==='Delete'&&sel.size){selP().forEach(p=>remove(p));sel.clear();refreshAll()}
+  else if(k==='F2'&&sel.size===1){const p=selP()[0];ask('Rename','New name',split(p).name,v=>{if(!renameP(p,v))say('Name already exists');refreshAll()})}
+  else if(c&&k==='c'&&sel.size){CLIP={op:'copy',path:selP()[0]};say('Copied')}else if(c&&k==='x'&&sel.size){CLIP={op:'cut',path:selP()[0]};say('Cut')}else if(c&&k==='v'){paste(path)}
+  else if(c&&k==='a'){e.preventDefault();ents().forEach(x=>sel.add(x[0]));render()}else if(k==='Enter'&&sel.size===1){const p=selP()[0],nd=get(p);if(nd&&nd.t==='d')go(p);else openPath(p)}else if(k==='Backspace'&&path!=='/')go('/'+parts(path).slice(0,-1).join('/'))})}};
 // ================= Notepad =================
 function allTexts(dir,pre,out){for(const [n,v] of Object.entries(dir.c)){if(pre==='/'&&n==='Recycle')continue;const p=(pre==='/'?'':pre)+'/'+n;if(v.t==='d')allTexts(v,p,out);else if(v.k!=='img')out.push(p)}return out}
 APPS.notepad={n:'Notepad',i:'📝',w:540,h:360,open(o,arg){let path=arg&&arg.path||null,dirty=false;
  o.body.innerHTML='<div class="np"><div class="npb"><button data-n="new">New</button><button data-n="open">Open</button><button data-n="save">Save</button><button data-n="as">Save As</button><label style="color:#111"><input type="checkbox" data-n="wrap" checked> Wrap</label></div><textarea spellcheck="false"></textarea><div class="nps">Ln 1, Col 1</div></div>';
  const ta=Q('textarea',o.body),st=Q('.nps',o.body);
  const title=()=>o.setTitle((dirty?'*':'')+(path?split(path).name:'Untitled')+' - Notepad');
- if(path){const n=get(path);ta.value=n?String(n.v||''):''}title();
+ if(path){const n=get(path);if(n&&n.k==='up'){ta.value='Loading…';nodeBlob(path).then(b=>{if(!b||b.size>3e6){ta.value='';say('File too large for Notepad (3 MB limit)');return}return b.text()}).then(t=>{if(t!=null)ta.value=t})}else ta.value=n?String(n.v||''):''}title();
  const pos=()=>{const v=ta.value.slice(0,ta.selectionStart).split('\n');st.textContent='Ln '+v.length+', Col '+(v[v.length-1].length+1)+'  |  '+ta.value.length+' chars'};
  ta.addEventListener('input',()=>{dirty=true;title();pos()});['keyup','click'].forEach(ev=>ta.addEventListener(ev,pos));
- const save=()=>{if(!path)return saveAs();const s=split(path);write(s.path,s.name,ta.value,'txt',true);dirty=false;title();refreshAll();say('Saved ✓')};
- const saveAs=()=>modal('Save As','<label>Folder</label><select><option value="/Desktop">Desktop</option><option value="/Documents" selected>Documents</option><option value="/Downloads">Downloads</option></select><label>File name</label><input type="text" value="'+X(path?split(path).name:'Untitled.txt')+'">',[['Save',m=>{const dp=Q('select',m).value;let nm=clean(Q('input',m).value);if(!nm)return false;if(!/\.[a-z0-9]+$/i.test(nm))nm+='.txt';const f=write(dp,nm,ta.value,'txt',true);path=dp+'/'+f;dirty=false;title();refreshAll();say('Saved ✓')},'p'],['Cancel']]);
+ const save=()=>{if(!path)return saveAs();const s=split(path);write(s.path,s.name,ta.value,'txt',true);gcBlobs();dirty=false;title();refreshAll();say('Saved ✓')};
+ const saveAs=()=>modal('Save As','<label>Folder</label><select><option value="/Desktop">Desktop</option><option value="/Documents" selected>Documents</option><option value="/Downloads">Downloads</option></select><label>File name</label><input type="text" value="'+X(path?split(path).name:'Untitled.txt')+'">',[['Save',m=>{const dp=Q('select',m).value;let nm=clean(Q('input',m).value);if(!nm)return false;if(!/\.[a-z0-9]+$/i.test(nm))nm+='.txt';const f=write(dp,nm,ta.value,'txt',true);gcBlobs();path=dp+'/'+f;dirty=false;title();refreshAll();say('Saved ✓')},'p'],['Cancel']]);
  const openF=()=>{const L=allTexts(FS,'/',[]);modal('Open','<div>'+(L.length?L.map(p=>'<div data-p="'+X(p)+'" style="padding:6px;border-radius:4px;cursor:pointer">📄 '+X(winPath(p))+'</div>').join(''):'No text files yet.')+'</div>',[['Cancel']]).addEventListener('click',e=>{const d=e.target.closest('[data-p]');if(d){path=d.dataset.p;ta.value=String((get(path)||{}).v||'');dirty=false;title();pos();e.currentTarget.remove()}})};
  Q('.npb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-n]');if(!b)return;const k=b.dataset.n;if(k==='wrap')ta.style.whiteSpace=b.checked?'pre-wrap':'pre';else if(k==='new'){ta.value='';path=null;dirty=false;title()}else if(k==='open')openF();else if(k==='save')save();else if(k==='as')saveAs()});
  ta.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();save()}});
@@ -3201,7 +3277,7 @@ APPS.paint={n:'Paint',i:'🎨',w:640,h:440,open(o,arg){let tool='pen',col='#0000
  const TL=[['pen','✏️'],['eraser','🧽'],['line','／'],['rect','▭'],['oval','◯'],['fill','🪣']];
  o.body.innerHTML='<div class="pt"><div class="ptb">'+TL.map(t=>'<button data-t="'+t[0]+'" class="'+(t[0]===tool?'on':'')+'" title="'+t[0]+'">'+t[1]+'</button>').join('')+'<button data-s="-">−</button><b class="sz" style="color:#111;min-width:22px;text-align:center">3</b><button data-s="+">+</button><div class="pal">'+COLS.map(c=>'<i data-c="'+c+'" style="background:'+c+'"></i>').join('')+'</div><button data-a="new">New</button><button data-a="save">Save</button><button data-a="dl">⬇</button></div><div class="pw"><canvas width="640" height="400"></canvas></div></div>';
  const cv=Q('canvas',o.body),c=cv.getContext('2d',{willReadFrequently:true});c.fillStyle='#fff';c.fillRect(0,0,640,400);
- if(arg&&arg.path){const n=get(arg.path);if(n&&n.v){const im=new Image();im.onload=()=>{c.drawImage(im,0,0,Math.min(640,im.width),Math.min(400,im.height))};im.src=n.v;o.setTitle(split(arg.path).name+' - Paint')}}
+ if(arg&&arg.path&&get(arg.path)){nodeBlob(arg.path).then(b=>{if(!b)return;const u=URL.createObjectURL(b),im=new Image();im.onload=()=>{const k=Math.min(1,640/im.width,400/im.height);c.drawImage(im,0,0,im.width*k,im.height*k);URL.revokeObjectURL(u)};im.src=u;o.setTitle(split(arg.path).name+' - Paint')})}
  const P=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};
  const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
  function fill(x,y){x|=0;y|=0;const W=cv.width,H=cv.height,im=c.getImageData(0,0,W,H),d=im.data,t=(y*W+x)*4,tr=d[t],tg=d[t+1],tb2=d[t+2],[r,g,b]=hex(col);if(tr===r&&tg===g&&tb2===b)return;
@@ -3227,9 +3303,9 @@ APPS.term={n:'Command Prompt',i:'⌨️',w:580,h:340,open(o){let cwd='/',hist=[]
  const out=(s,html)=>{const d=E('div');if(html)d.innerHTML=s;else d.textContent=s;T.insertBefore(d,pl);T.scrollTop=T.scrollHeight};
  const res=p=>{p=String(p||'').replace(/^"|"$/g,'').replace(/\\/g,'/').replace(/^c:\/users\/user/i,'').replace(/^c:/i,'');let a=p.startsWith('/')?[]:parts(cwd);for(const s of p.split('/')){if(!s||s==='.')continue;if(s==='..')a.pop();else a.push(s)}return '/'+a.join('/')};
  const find=n=>{const m=Object.keys((get(cwd)||{c:{}}).c).find(k=>k.toLowerCase()===String(n).toLowerCase());return m};
- const APPN={notepad:'notepad',calc:'calc',paint:'paint',mspaint:'paint',explorer:'files',cmd:'term',mines:'mines',minesweeper:'mines',settings:'settings',browser:'browser',taskmgr:'tasks'};
+ const APPN={photos:'photos',clock:'clock',media:'media',sticky:'sticky',notepad:'notepad',calc:'calc',paint:'paint',mspaint:'paint',explorer:'files',cmd:'term',mines:'mines',minesweeper:'mines',settings:'settings',browser:'browser',taskmgr:'tasks'};
  const run=line=>{const m=/^(\S+)\s*(.*)$/.exec(line.trim());if(!m)return;const c=m[1].toLowerCase(),a=m[2];
-  if(c==='help')out('help  dir/ls  cd  mkdir  rmdir  del  type/cat  echo  copy  move  ren  tree  cls  date  time  ver  whoami  hostname  ipconfig  ping  tasklist  taskkill  start <app>  notepad [file]  paint  calc  explorer  exit');
+  if(c==='help')out('help  open  download  dir/ls  cd  mkdir  rmdir  del  type/cat  echo  copy  move  ren  tree  cls  date  time  ver  whoami  hostname  ipconfig  ping  tasklist  taskkill  start <app>  notepad [file]  paint  calc  explorer  exit');
   else if(c==='cls'||c==='clear'){QA('div:not(.pl)',T).forEach(d=>d.remove())}
   else if(c==='dir'||c==='ls'){const p=a?res(a):cwd,d=get(p);if(!d||d.t!=='d')return out('The system cannot find the path specified.');out(' Directory of '+winPath(p));let nd=0,nf=0;for(const [n,v] of Object.entries(d.c)){if(v.t==='d'){nd++;out('<DIR>          '+n)}else{nf++;out(String((v.v||'').length).padStart(14)+' '+n)}}out('        '+nf+' File(s)   '+nd+' Dir(s)')}
   else if(c==='cd'||c==='chdir'){if(!a)return out(winPath(cwd));const p=res(a),d=get(p);if(d&&d.t==='d'){cwd=p;pt()}else out('The system cannot find the path specified.')}
@@ -3247,23 +3323,75 @@ APPS.term={n:'Command Prompt',i:'⌨️',w:580,h:340,open(o){let cwd='/',hist=[]
   else if(c==='ping'){const h=a||'localhost';out('Pinging '+h+' with 32 bytes of data:');for(let i=0;i<4;i++)setTimeout(()=>out('Reply from '+h+': bytes=32 time='+(8+Math.random()*30|0)+'ms TTL=118'),350*(i+1))}
   else if(c==='tasklist'){out('Image Name                 PID');wins.forEach(w=>out((w.title+'.exe').padEnd(26)+(1000+w.id*37)))}
   else if(c==='taskkill'){const w=wins.find(x=>x.title.toLowerCase().includes(a.toLowerCase().replace(/\.exe$/,'')));if(w&&w!==o){closeW(w);out('SUCCESS: process terminated.')}else out('ERROR: process not found.')}
-  else if(c==='start'||APPN[c]){const n=c==='start'?a.split(/\s+/)[0]:c,rest=c==='start'?a.split(/\s+/).slice(1).join(' '):a,id=APPN[n.toLowerCase()];if(!id)return out("'"+n+"' is not recognized.");openApp(id,rest&&find(rest)?{path:(cwd==='/'?'':cwd)+'/'+find(rest)}:undefined)}
+  else if(c==='start'||APPN[c]||c==='photos'||c==='clock'){const n=c==='start'?a.split(/\s+/)[0]:c,rest=c==='start'?a.split(/\s+/).slice(1).join(' '):a,id=APPN[n.toLowerCase()];if(!id)return out("'"+n+"' is not recognized.");openApp(id,rest&&find(rest)?{path:(cwd==='/'?'':cwd)+'/'+find(rest)}:undefined)}
+  else if(c==='open'){const k=find(a.replace(/"/g,''));if(!k)return out('The system cannot find the file specified.');openPath((cwd==='/'?'':cwd)+'/'+k)}
+  else if(c==='download'||c==='dl'){const k=find(a.replace(/"/g,''));if(!k)return out('The system cannot find the file specified.');download((cwd==='/'?'':cwd)+'/'+k);out('Downloading '+k+'...')}
   else if(c==='exit')closeW(o);else out("'"+m[1]+"' is not recognized as an internal or external command.")};
  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){const v=inp.value;out(pr.textContent+v);if(v.trim()){hist.push(v);hi=hist.length;run(v)}inp.value='';pt();T.scrollTop=T.scrollHeight}
   else if(e.key==='ArrowUp'){if(hi>0)inp.value=hist[--hi];e.preventDefault()}else if(e.key==='ArrowDown'){inp.value=hi<hist.length-1?hist[++hi]:'';hi=Math.min(hi+1,hist.length)}});
  T.addEventListener('click',()=>{if(!getSelection().toString())inp.focus()});setTimeout(()=>inp.focus(),50)}};
 // ================= Settings =================
-APPS.settings={n:'Settings',i:'⚙️',w:560,h:400,open(o){let tab='p';
- const draw=()=>{const sc=Q('.sc',o.body);Q('.sd',o.body).innerHTML='<div data-t="p" class="'+(tab==='p'?'on':'')+'">🎨 Personalization</div><div data-t="a" class="'+(tab==='a'?'on':'')+'">ℹ About</div>';
-  if(tab==='p')sc.innerHTML='<b>Background</b><div class="wg">'+Object.keys(WALLS).map(k=>'<i data-w="'+k+'" class="'+(!ST.img&&ST.wall===k?'on':'')+'" style="background:'+WALLS[k]+'"></i>').join('')+(ST.img?'<i class="on" style="background:url('+ST.img+') center/cover"></i>':'')+'</div><button class="b" id="up">📷 Choose picture…</button> <input type="file" accept="image/*" hidden><br><br><b>Accent color</b><div class="wg">'+['#0078d4','#e81123','#107c10','#8e24aa','#ff8c00','#00b7c3','#e3008c','#767676'].map(c=>'<i data-c="'+c+'" class="'+(ST.acc===c?'on':'')+'" style="background:'+c+'"></i>').join('')+'</div><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dm" '+(ST.dark?'checked':'')+'> Dark taskbar</label><br><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ms" '+(mouse?'checked':'')+'> Mouse mode (virtual pointer for touch screens)</label>';
-  else sc.innerHTML='<b>Windows Sim</b><br>Version 11.0.2026<br>A tiny desktop simulator running in your browser.<br><br>Storage: files are saved on this device only.<br>Apps: '+Object.keys(APPS).length+' installed.<br><br><button class="b" id="rs">Reset Windows Sim (delete all files & settings)</button>'};
+APPS.settings={n:'Settings',i:'⚙️',w:580,h:430,open(o){let tab='p';
+ const slider=(id,label,val)=>'<div style="display:flex;align-items:center;gap:6px;margin:8px 0"><span style="width:90px">'+label+'</span><button class="b" data-q="'+id+'-">−</button><input type="range" min="0" max="100" value="'+Math.round(val*100)+'" data-r="'+id+'" style="flex:1"><button class="b" data-q="'+id+'+">＋</button><b class="rv" data-v="'+id+'" style="width:40px">'+Math.round(val*100)+'%</b></div>';
+ const draw=()=>{const sc=Q('.sc',o.body);Q('.sd',o.body).innerHTML=[['p','🎨 Personalization'],['d','🖥 Display & sound'],['s','🔐 Sign-in'],['a','ℹ Storage & about']].map(t=>'<div data-t="'+t[0]+'" class="'+(tab===t[0]?'on':'')+'">'+t[1]+'</div>').join('');
+  if(tab==='p')sc.innerHTML='<b>Background</b><div class="wg">'+Object.keys(WALLS).map(k=>'<i data-w="'+k+'" class="'+(!ST.img&&ST.wall===k?'on':'')+'" style="background:'+WALLS[k]+'"></i>').join('')+(ST.img?'<i class="on" style="background:url('+ST.img+') center/cover"></i>':'')+'</div><button class="b" id="up">📷 Choose picture…</button> <input type="file" accept="image/*" hidden><br><br><b>Accent color</b><div class="wg">'+['#0078d4','#e81123','#107c10','#8e24aa','#ff8c00','#00b7c3','#e3008c','#767676'].map(c=>'<i data-c="'+c+'" class="'+(ST.acc===c?'on':'')+'" style="background:'+c+'"></i>').join('')+'</div><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="dm" '+(ST.dark?'checked':'')+'> Dark taskbar</label>';
+  else if(tab==='d')sc.innerHTML='<b>Display</b>'+slider('b','Brightness',ST.br)+'<b>Sound</b>'+slider('v','Volume',ST.vol)+'<br><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="ms" '+(mouse?'checked':'')+'> Mouse mode (virtual pointer for touch screens)</label>';
+  else if(tab==='s')sc.innerHTML='<b>PIN</b><p>'+(ST.pin?'A PIN is required to sign in.':'No PIN set — the lock screen opens with a click.')+'</p><input type="text" id="wpin" inputmode="numeric" maxlength="12" placeholder="New PIN (4–12 digits)" style="max-width:240px"> <button class="b p" id="pset">Set PIN</button> '+(ST.pin?'<button class="b" id="prm">Remove PIN</button>':'')+'<p style="color:#666;font-size:12px">The PIN protects this simulated desktop only; it is stored as a hash on this device.</p>';
+  else{const files=flat(FS,'/',[]).filter(x=>x[2].t==='f'),up=files.filter(x=>x[2].k==='up'),tot=up.reduce((a,x)=>a+x[2].size,0);
+   sc.innerHTML='<b>Windows Sim</b> 11.0.2026<br><br><b>Storage</b><br>Files: '+files.length+' • Uploaded: '+up.length+' ('+fmtSize(tot)+')<div class="meter"><i id="qm" style="width:0%"></i></div><span id="qt" style="font-size:12px;color:#555"></span><br><br><button class="b" id="dup">🗑 Delete all uploaded files</button> <button class="b" id="wrst">♻ Reset Windows Sim</button><br><br><button class="b" id="sl">↩ Back to S loop</button>';
+   if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(e=>{const m=Q('#qm',o.body),t=Q('#qt',o.body);if(m&&e.quota){m.style.width=Math.max(1,e.usage/e.quota*100)+'%';t.textContent='Browser storage used: '+fmtSize(e.usage)+' of '+fmtSize(e.quota)}})}};
  o.body.innerHTML='<div class="stn"><div class="sd"></div><div class="sc"></div></div>';draw();
- o.body.addEventListener('click',e=>{const t=e.target.closest('[data-t]'),w=e.target.closest('[data-w]'),c=e.target.closest('[data-c]');
+ const upd=(id,v)=>{v=Math.max(0,Math.min(1,v));if(id==='b'){ST.br=Math.max(.3,v);applyBr()}else ST.vol=v;saveST();const r=Q('[data-r="'+id+'"]',o.body);if(r)r.value=Math.round((id==='b'?ST.br:ST.vol)*100);const t=Q('[data-v="'+id+'"]',o.body);if(t)t.textContent=Math.round((id==='b'?ST.br:ST.vol)*100)+'%'};
+ o.body.addEventListener('input',e=>{const r=e.target.dataset&&e.target.dataset.r;if(r)upd(r,e.target.value/100)});
+ o.body.addEventListener('click',e=>{const t=e.target.closest('[data-t]'),w=e.target.closest('[data-w]'),c=e.target.closest('[data-c]'),q=e.target.closest('[data-q]');
   if(t){tab=t.dataset.t;draw()}else if(w){ST.wall=w.dataset.w;ST.img=null;saveST();theme();draw()}else if(c){ST.acc=c.dataset.c;saveST();theme();draw()}
+  else if(q){const id=q.dataset.q[0],d=q.dataset.q[1]==='+'?.1:-.1;upd(id,(id==='b'?ST.br:ST.vol)+d)}
   else if(e.target.id==='up')Q('input[type=file]',o.body).click();
   else if(e.target.id==='dm'){ST.dark=e.target.checked?1:0;saveST();theme()}else if(e.target.id==='ms')setMouse(e.target.checked);
-  else if(e.target.id==='rs'){modal('Reset','<div>Delete all files and settings?</div>',[['Reset',()=>{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);location.reload()},'p'],['Cancel']])}});
+  else if(e.target.id==='pset'){const v=Q('#wpin',o.body).value.trim();if(!/^\d{4,12}$/.test(v))return say('PIN must be 4–12 digits');sha(v).then(h=>{ST.pin=h;saveST();say('PIN set ✓');draw()})}
+  else if(e.target.id==='prm'){ST.pin=null;saveST();say('PIN removed');draw()}
+  else if(e.target.id==='dup'){modal('Delete uploads','<div>Delete every uploaded file from Windows Sim?</div>',[['Delete',()=>{const del=d=>{for(const [n,v] of Object.entries(d.c)){if(v.t==='d')del(v);else if(v.k==='up')delete d.c[n]}};del(FS);saveFS();gcBlobs();refreshAll();draw()},'p'],['Cancel']])}
+  else if(e.target.id==='sl')hideSim();
+  else if(e.target.id==='wrst'){modal('Reset','<div>Delete all files and settings?</div>',[['Reset',()=>{localStorage.removeItem(KEY);localStorage.removeItem(SKEY);try{indexedDB.deleteDatabase('sl-winblobs')}catch(x){}location.reload()},'p'],['Cancel']])}});
  o.body.addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f||e.target.type!=='file')return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1280/im.width),cv=document.createElement('canvas');cv.width=im.width*k;cv.height=im.height*k;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);ST.img=cv.toDataURL('image/jpeg',.8);saveST();theme();draw()};im.src=r.result};r.readAsDataURL(f)})}};
+// ================= Photos =================
+APPS.photos={n:'Photos',i:'🖼️',w:660,h:470,open(o,arg){let path=arg&&arg.path,z=1,rot=0,px=0,py=0,url=null,pd=null;
+ o.body.innerHTML='<div class="ph"><div class="phb"><button data-p="prev">◀</button><button data-p="next">▶</button><button data-p="zo">−</button><b class="zv" style="min-width:44px;text-align:center">100%</b><button data-p="zi">＋</button><button data-p="fit">Fit</button><button data-p="rot">⟳</button><button data-p="paint">🎨 Edit</button><button data-p="dl">⬇</button></div><div class="phv" tabindex="0"><img alt=""></div><div class="phs"></div></div>';
+ const img=Q('img',o.body),v=Q('.phv',o.body),st=Q('.phs',o.body),zv=Q('.zv',o.body);
+ const sib=()=>{const d=get(split(path).path)||{c:{}};return Object.entries(d.c).filter(([n,x])=>x.t==='f'&&kindOf(n,x)==='img').map(x=>x[0]).sort()};
+ const tr=()=>{img.style.transform='translate('+px+'px,'+py+'px) scale('+z+') rotate('+rot+'deg)';zv.textContent=Math.round(z*100)+'%'};
+ async function load(){const b=await nodeBlob(path);if(!b){st.textContent='File not found';return}if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(b);z=1;rot=0;px=py=0;tr();img.onload=()=>{st.textContent=split(path).name+'  •  '+img.naturalWidth+' × '+img.naturalHeight+'  •  '+fmtSize(b.size)+'  •  '+(sib().indexOf(split(path).name)+1)+'/'+sib().length};img.src=url;o.setTitle(split(path).name+' - Photos')}
+ const step=d=>{const L=sib(),i=L.indexOf(split(path).name);if(!L.length)return;path=split(path).path.replace(/\/$/,'')+'/'+L[(i+d+L.length)%L.length];load()};
+ Q('.phb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const a=b.dataset.p;if(a==='prev')step(-1);else if(a==='next')step(1);else if(a==='zi'){z=Math.min(8,z*1.25);tr()}else if(a==='zo'){z=Math.max(.1,z/1.25);tr()}else if(a==='fit'){z=1;px=py=0;tr()}else if(a==='rot'){rot=(rot+90)%360;tr()}else if(a==='paint')openApp('paint',{path});else if(a==='dl')download(path)});
+ v.addEventListener('wheel',e=>{e.preventDefault();z=Math.max(.1,Math.min(8,z*(e.deltaY<0?1.1:.9)));tr()},{passive:false});
+ v.addEventListener('pointerdown',e=>{pd={x:e.clientX-px,y:e.clientY-py};v.style.cursor='grabbing'});document.addEventListener('pointermove',e=>{if(!pd)return;px=e.clientX-pd.x;py=e.clientY-pd.y;tr()});document.addEventListener('pointerup',()=>{pd=null;v.style.cursor=''});
+ v.addEventListener('keydown',e=>{if(e.key==='ArrowRight')step(1);else if(e.key==='ArrowLeft')step(-1)});
+ o.onclose=()=>{if(url)URL.revokeObjectURL(url);return true};load()}};
+// ================= Media Player =================
+APPS.media={n:'Media Player',i:'🎵',w:520,h:380,open(o,arg){let path=arg&&arg.path,url=null,el=null;
+ o.body.innerHTML='<div class="mp"><div class="mpv"></div><div class="mpb"><button data-m="prev">⏮</button><button data-m="next">⏭</button><span class="mt" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span></div></div>';
+ const box=Q('.mpv',o.body),mt=Q('.mt',o.body),sib=()=>{const d=get(split(path).path)||{c:{}};return Object.entries(d.c).filter(([n,x])=>x.t==='f'&&/aud|vid/.test(kindOf(n,x))).map(x=>x[0]).sort()};
+ async function load(){const nm=split(path).name,n=get(path),b=n&&await nodeBlob(path);if(!b){mt.textContent='File not found';return}if(url)URL.revokeObjectURL(url);url=URL.createObjectURL(new Blob([b],{type:(n&&n.mime)||mimeOf(nm)}));const vid=kindOf(nm,n)==='vid';
+  box.innerHTML=vid?'<video controls playsinline></video>':'<div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%"><div>🎵</div><audio controls></audio></div>';el=Q(vid?'video':'audio',box);el.src=url;el.volume=ST.vol;el.onended=()=>step(1);el.play().catch(()=>{});mt.textContent=nm;o.setTitle(nm+' - Media Player')}
+ const step=d=>{const L=sib(),i=L.indexOf(split(path).name);if(L.length<2)return;path=split(path).path.replace(/\/$/,'')+'/'+L[(i+d+L.length)%L.length];load()};
+ Q('.mpb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(b)step(b.dataset.m==='next'?1:-1)});
+ o.onclose=()=>{if(el)el.pause();if(url)URL.revokeObjectURL(url);return true};load()}};
+// ================= Clock =================
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)(),a=c.createOscillator(),g2=c.createGain();a.frequency.value=880;g2.gain.value=.15*ST.vol;a.connect(g2);g2.connect(c.destination);a.start();a.stop(c.currentTime+.35)}catch(e){}}
+APPS.clock={n:'Clock',i:'⏰',w:380,h:380,open(o){let tab='sw',acc=0,t0=0,run=0,laps=[],tl=0,tr2=0,tt=0;
+ const f=ms=>{const s=ms/1000,m=Math.floor(s/60);return pad2(m)+':'+pad2(Math.floor(s%60))+'.'+String(Math.floor(ms%1000/10)).padStart(2,'0')},pad2=n=>String(n).padStart(2,'0');
+ const draw=()=>{const b=Q('.ck2',o.body);b.innerHTML='<div class="tabs"><button data-t="sw" class="'+(tab==='sw'?'on':'')+'">Stopwatch</button><button data-t="tm" class="'+(tab==='tm'?'on':'')+'">Timer</button></div>'+(tab==='sw'?'<div class="big" id="sw">'+f(acc+(run?Date.now()-t0:0))+'</div><div style="display:flex;gap:8px;justify-content:center"><button class="b p" data-a="s">'+(run?'Pause':'Start')+'</button><button class="b" data-a="l">Lap</button><button class="b" data-a="r">Reset</button></div><div style="margin-top:10px;font-size:13px">'+laps.map((l,i)=>'<div>Lap '+(laps.length-i)+' — '+f(l)+'</div>').reverse().join('')+'</div>':'<div class="big" id="tm">'+f(tr2?tl-(Date.now()-tt):tl||0)+'</div><div style="display:flex;gap:6px;justify-content:center;align-items:center"><input type="text" id="tmin" value="5" style="width:60px"> min <input type="text" id="tsec" value="0" style="width:60px"> sec</div><div style="display:flex;gap:8px;justify-content:center;margin-top:10px"><button class="b p" data-a="ts">'+(tr2?'Pause':'Start')+'</button><button class="b" data-a="tr">Reset</button></div>')};
+ o.body.innerHTML='<div class="ck2"></div>';draw();
+ o.body.addEventListener('click',e=>{const t=e.target.closest('[data-t]'),a=e.target.dataset.a;if(t){tab=t.dataset.t;draw();return}
+  if(a==='s'){if(run){acc+=Date.now()-t0;run=0}else{t0=Date.now();run=1}draw()}else if(a==='l'){if(run)laps.push(acc+Date.now()-t0);draw()}else if(a==='r'){acc=0;run=0;laps=[];draw()}
+  else if(a==='ts'){if(tr2){tl-=Date.now()-tt;tr2=0}else{if(!tl){tl=(parseInt(Q('#tmin',o.body).value)||0)*60000+(parseInt(Q('#tsec',o.body).value)||0)*1000}if(tl>0){tt=Date.now();tr2=1}}draw()}else if(a==='tr'){tl=0;tr2=0;draw()}});
+ const iv=setInterval(()=>{if(tab==='sw'&&run){const e=Q('#sw',o.body);if(e)e.textContent=f(acc+Date.now()-t0)}if(tab==='tm'&&tr2){const left=tl-(Date.now()-tt),e=Q('#tm',o.body);if(left<=0){tr2=0;tl=0;beep();say('⏰ Timer finished');draw()}else if(e)e.textContent=f(left)}},100);o.onclose=()=>{clearInterval(iv);return true}}};
+// ================= Sticky Notes =================
+APPS.sticky={n:'Sticky Notes',i:'🗒️',w:460,h:380,open(o){let N=[];try{N=JSON.parse(localStorage.getItem('sl-winsticky')||'[]')}catch(e){}if(!Array.isArray(N))N=[];const sv=()=>{try{localStorage.setItem('sl-winsticky',JSON.stringify(N))}catch(e){}};
+ o.body.innerHTML='<div style="display:flex;flex-direction:column;height:100%"><div style="padding:4px;background:#f6e46b"><button class="b" data-a="add" style="color:#111;padding:3px 12px">＋ New note</button></div><div class="sn"></div></div>';const box=Q('.sn',o.body);
+ const draw=()=>{box.innerHTML=N.map((t,i)=>'<div><button data-d="'+i+'" aria-label="Delete">✕</button><textarea data-i="'+i+'" placeholder="Type a note…">'+X(t)+'</textarea></div>').join('')||'<div style="background:transparent;box-shadow:none;color:#666;grid-column:1/-1;padding:16px">No notes yet.</div>'};draw();
+ o.body.addEventListener('click',e=>{if(e.target.dataset.a==='add'){N.unshift('');sv();draw()}else if(e.target.dataset.d!==undefined){N.splice(+e.target.dataset.d,1);sv();draw()}});
+ o.body.addEventListener('input',e=>{if(e.target.dataset.i!==undefined){N[+e.target.dataset.i]=e.target.value;sv()}})}};
 // ================= Task Manager =================
 APPS.tasks={n:'Task Manager',i:'📊',w:420,h:380,open(o){o.body.innerHTML='<div class="tk" style="padding:10px"><div>CPU <b class="cp">0%</b></div><div class="meter"><i class="cb"></i></div><div>Memory <b class="mp">0%</b></div><div class="meter"><i class="mb"></i></div><table><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>';
  const tbd=Q('tbody',o.body),upd=()=>{const c=8+Math.random()*30|0,m=34+wins.length*4+(Math.random()*5|0);Q('.cp',o.body).textContent=c+'%';Q('.cb',o.body).style.width=c+'%';Q('.mp',o.body).textContent=m+'%';Q('.mb',o.body).style.width=m+'%'};
@@ -3288,13 +3416,14 @@ APPS.mines={n:'Minesweeper',i:'💣',w:300,h:390,open(o){const R=9,C=9,M=10;let 
  grid.addEventListener('contextmenu',e=>{e.preventDefault();e.__h=1;e.stopPropagation();const d=e.target.closest('[data-r]');if(d)click(+d.dataset.r,+d.dataset.c,true)});
  face.onclick=reset;Q('.fm',o.body).onchange=e=>{flagMode=e.target.checked?1:0};o.onclose=()=>{clearInterval(tm);return true};reset()}};
 // ================= Browser =================
-APPS.browser={n:'Browser',i:'🌐',w:640,h:420,hide:0,open(o){const base=(typeof gameBase==='function')?gameBase():'';
+APPS.browser={n:'Browser',i:'🌐',w:640,h:420,hide:0,open(o,arg){const base=(typeof gameBase==='function')?gameBase():'';
  o.body.innerHTML='<div class="br"><div class="brb"><button data-b="back">←</button><button data-b="home">⌂</button><button data-b="go">⟳</button><input type="text" placeholder="Search or enter address" autocapitalize="off"></div><iframe sandbox="allow-scripts allow-same-origin allow-forms allow-popups" title="browser"></iframe></div>';
  const fr=Q('iframe',o.body),ad=Q('input',o.body);
  const home=()=>{ad.value='';fr.removeAttribute('src');fr.srcdoc='<base href="'+X(base)+'" target="_self"><body style="font-family:sans-serif;background:#f3f6fb;color:#111;margin:0;padding:18px"><h2>🌐 Start page</h2><p style="color:#555;font-size:14px">Open the S loop games, or type an address above. Some websites do not allow being shown inside a frame.</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">'+((typeof GM!=='undefined')?GM.map(g=>'<a href="'+X(g.u)+'" style="display:block;padding:10px;border-radius:10px;background:#fff;color:#111;text-decoration:none;box-shadow:0 1px 4px #0002;font-size:13px">🎮 '+X(g.n)+'</a>').join(''):'')+'</div></body>'};
  const go=()=>{let v=ad.value.trim();if(!v)return home();if(!/^[a-z]+:\/\//i.test(v))v=/\s/.test(v)||!/\./.test(v)?'https://duckduckgo.com/?q='+encodeURIComponent(v):'https://'+v;fr.removeAttribute('srcdoc');fr.src=v;ad.value=v};
  Q('.brb',o.body).addEventListener('click',e=>{const b=e.target.closest('[data-b]');if(!b)return;if(b.dataset.b==='home')home();else if(b.dataset.b==='go')go();else try{fr.contentWindow.history.back()}catch(x){}});
- ad.addEventListener('keydown',e=>{if(e.key==='Enter')go()});home()}};
+ ad.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+ if(arg&&arg.path){nodeBlob(arg.path).then(b=>{if(!b)return home();const nm=split(arg.path).name,pdf=ext(nm)==='pdf',u=URL.createObjectURL(new Blob([b],{type:pdf?'application/pdf':'text/html'}));fr.removeAttribute('srcdoc');if(pdf)fr.removeAttribute('sandbox');else fr.setAttribute('sandbox','allow-scripts allow-forms allow-popups');fr.src=u;ad.value=nm;o.setTitle(nm+' - Browser');o.onclose=()=>{URL.revokeObjectURL(u);return true}})}else home()}};
 // ================= موس مجازی (برای صفحه‌ی لمسی) =================
 let mouse=false,cx=160,cy=140;
 const placeCur=()=>{CUR.style.left=cx+'px';CUR.style.top=cy+'px'};
@@ -3321,16 +3450,37 @@ PAD.addEventListener('pointerup',pend);PAD.addEventListener('pointercancel',pend
 let lp2=0,sup=0;root.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||mouse)return;clearTimeout(lp2);const x=e.clientX,y=e.clientY,t=e.target;lp2=setTimeout(()=>{sup=Date.now()+700;t.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:x,clientY:y}))},550)},true);
 ['pointerup','pointercancel','pointermove'].forEach(n=>root.addEventListener(n,e=>{if(e.pointerType==='touch'&&(n!=='pointermove'||Math.abs(e.movementX||0)+Math.abs(e.movementY||0)>2))clearTimeout(lp2)},true));
 root.addEventListener('click',e=>{if(Date.now()<sup){e.stopPropagation();e.preventDefault()}},true);
-// ================= شروع/خروج =================
+// ================= قفل، بوت، تنظیمات سریع، بازگشت به S loop =================
+let booted=false,locked=false;
+function applyBr(){D.style.filter=ST.br<1?'brightness('+ST.br+')':''}
+async function sha(v){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('winsim|'+v));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return btoa(unescape(encodeURIComponent('winsim|'+v)))}}
+function lock(){locked=true;const L=Q('#wlock'),d=new Date(),nm=String((typeof P!=='undefined'&&P&&P.name)||'User');SM.hidden=true;CX.hidden=true;Q('#wqp').hidden=true;
+ L.innerHTML='<div class="lt">'+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'</div><div class="ld">'+d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'</div><div class="lu"><div class="av">'+X(nm[0]||'U').toUpperCase()+'</div><b>'+X(nm)+'</b>'+(ST.pin?'<input type="password" inputmode="numeric" maxlength="12" placeholder="PIN" autocomplete="off"><button>Sign in</button><div class="le"></div>':'<div style="font-size:13px;opacity:.85">Click or press a key to sign in</div>')+'</div>';L.hidden=false;
+ const un=()=>{locked=false;L.hidden=true;L.onclick=null;L.onkeydown=null};
+ if(ST.pin){const i=Q('input',L),b=Q('button',L),go2=async()=>{if(await sha(i.value)===ST.pin)un();else{Q('.le',L).textContent='Incorrect PIN';i.value=''}};b.onclick=go2;i.onkeydown=e=>{if(e.key==='Enter')go2()};setTimeout(()=>i.focus(),60)}
+ else{L.onclick=un;L.tabIndex=0;L.onkeydown=un;setTimeout(()=>L.focus(),60)}}
+function boot(){const B=Q('#wboot');B.innerHTML='<span class="logo"><i></i><i></i><i></i><i></i></span><div class="spin"></div>';B.hidden=false;setTimeout(()=>{B.hidden=true;booted=true;lock()},1400)}
+const QP=Q('#wqp');
+function qs(){QP.innerHTML='<div class="qg"><button data-q="dark" class="'+(ST.dark?'on':'')+'">🌙<br>Dark</button><button data-q="mouse" class="'+(mouse?'on':'')+'">🖱️<br>Mouse</button><button data-q="full" class="'+(document.fullscreenElement?'on':'')+'">⛶<br>Fullscreen</button><button data-q="lock">🔒<br>Lock</button></div><div class="qs">☀ <button data-q="b-">−</button><input type="range" min="30" max="100" value="'+Math.round(ST.br*100)+'" data-qr="b"><button data-q="b+">＋</button></div><div class="qs">🔊 <button data-q="v-">−</button><input type="range" min="0" max="100" value="'+Math.round(ST.vol*100)+'" data-qr="v"><button data-q="v+">＋</button></div><div class="qg"><button data-q="sl" style="grid-column:1/-1">↩ Back to S loop</button></div>'}
+Q('#wqs').addEventListener('click',()=>{QP.hidden=!QP.hidden;SM.hidden=true;if(!QP.hidden)qs()});
+QP.addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;const q=b.dataset.q;
+ if(q==='dark'){ST.dark=ST.dark?0:1;saveST();theme()}else if(q==='mouse')setMouse(!mouse);else if(q==='full'){try{document.fullscreenElement?document.exitFullscreen():root.requestFullscreen()}catch(x){}setTimeout(qs,300);return}
+ else if(q==='lock'){lock();return}else if(q==='sl'){hideSim();return}
+ else if(q[0]==='b'){ST.br=Math.max(.3,Math.min(1,ST.br+(q[1]==='+'?.1:-.1)));applyBr();saveST()}else if(q[0]==='v'){ST.vol=Math.max(0,Math.min(1,ST.vol+(q[1]==='+'?.1:-.1)));saveST()}qs()});
+QP.addEventListener('input',e=>{const r=e.target.dataset.qr;if(!r)return;const v=e.target.value/100;if(r==='b'){ST.br=Math.max(.3,v);applyBr()}else ST.vol=v;saveST()});
+root.addEventListener('pointerdown',e=>{if(!e.target.closest('#wqp')&&!e.target.closest('#wqs'))QP.hidden=true},true);
 function clock(){const d=new Date();Q('#wclk').innerHTML=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+'<br>'+d.toLocaleDateString()}
 setInterval(clock,20000);
-function openSim(){root.hidden=false;document.body.style.overflow='hidden';theme();icons();clock();tb();Q('#wsu').textContent='👤 '+(((typeof P!=='undefined'&&P&&P.name)||'User'));
+document.addEventListener('keydown',e=>{if(root.hidden||locked)return;if(e.key==='Escape'){SM.hidden=true;CX.hidden=true;QP.hidden=true}else if(e.key==='Meta'&&!e.repeat){SM.hidden=!SM.hidden;if(!SM.hidden){}else{Q('#wsq').value='';startMenu()}}});
+function openSim(){root.hidden=false;document.body.style.overflow='hidden';theme();applyBr();icons();clock();tb();Q('#wsu').textContent='👤 '+(((typeof P!=='undefined'&&P&&P.name)||'User'));
  setMouse(ST.mouse===null?(window.matchMedia&&matchMedia('(pointer:coarse)').matches):ST.mouse);try{if(root.requestFullscreen&&!document.fullscreenElement)root.requestFullscreen().catch(()=>{})}catch(e){}
- if(!wins.length&&!localStorage.getItem('sl-win-seen')){localStorage.setItem('sl-win-seen','1');setTimeout(()=>openApp('notepad',{path:'/Desktop/Welcome.txt'}),400)}}
-function closeSim(){wins.slice().forEach(w=>{w.onclose=null;closeW(w)});root.hidden=true;document.body.style.overflow='';try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}}
-Q('#wsx').addEventListener('click',()=>{SM.hidden=true;modal('Shut down','<div>Exit Windows Sim?</div>',[['Exit',()=>closeSim(),'p'],['Restart',()=>{closeSim();setTimeout(openSim,150)}],['Cancel']])});
+ if(!booted){boot();if(!localStorage.getItem('sl-win-seen')){localStorage.setItem('sl-win-seen','1');setTimeout(()=>openApp('notepad',{path:'/Desktop/Welcome.txt'}),1700)}}}
+function hideSim(){SM.hidden=true;CX.hidden=true;QP.hidden=true;root.hidden=true;document.body.style.overflow='';try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}}
+function closeSim(){wins.slice().forEach(w=>{w.onclose=null;closeW(w)});booted=false;locked=false;Q('#wlock').hidden=true;hideSim()}
+Q('#wsx').addEventListener('click',()=>{SM.hidden=true;modal('Shut down','<div>What would you like to do?</div>',[['Shut down',()=>closeSim(),'p'],['Restart',()=>{closeSim();setTimeout(openSim,150)}],['Cancel']])});
+Q('#wsl').addEventListener('click',()=>hideSim());Q('#wlk').addEventListener('click',()=>lock());
 root.addEventListener('pointerdown',hideMenus,true);
-window.WinSim={open:openSim,close:closeSim};
+window.WinSim={open:openSim,hide:hideSim,close:closeSim};
 })();
 
 document.getElementById('app-win').onclick=()=>WinSim.open();

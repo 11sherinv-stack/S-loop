@@ -1,0 +1,79 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Sweet Bakery</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;min-height:100%;background:linear-gradient(#ffe4ec,#ffd1dc);color:#4a2b2b;font-family:Tahoma,system-ui,sans-serif}
+a.back{position:absolute;top:8px;right:12px;color:#c2185b;text-decoration:none;font-size:14px}
+#wrap{max-width:460px;margin:0 auto;padding:34px 12px 24px}
+#hud{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px}
+.card{background:#fff;border-radius:16px;padding:12px;margin-bottom:10px;box-shadow:0 3px 10px #c2185b22}
+h2{margin:0 0 6px;font-size:1.05rem}
+.shelf{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.it{font-size:2rem;text-align:center;padding:8px 0;border-radius:12px;background:#fff3e0;border:2px solid transparent}.it.ok{opacity:.35;border-color:#66bb6a}.it.bad{animation:sh .3s;border-color:#e53935}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.need{display:flex;gap:6px;flex-wrap:wrap;font-size:1.4rem}.need span{padding:2px 6px;border-radius:8px;background:#fff3e0}.need span.got{background:#c8e6c9}
+button.b{border:0;border-radius:14px;padding:12px 18px;font:inherit;font-weight:700;background:#ec407a;color:#fff;box-shadow:0 3px 0 #ad1457}button.b:active{transform:translateY(2px);box-shadow:none}button.b.g{background:#8bc34a;box-shadow:0 3px 0 #558b2f}button.b.o{background:#ff9800;box-shadow:0 3px 0 #e65100}
+.bar{height:26px;border-radius:13px;background:#ddd;position:relative;overflow:hidden}.bar .z{position:absolute;top:0;bottom:0;background:#66bb6a88}.bar .p{position:absolute;top:0;bottom:0;width:6px;background:#d32f2f}
+.sw{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.sw i{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #bbb;display:block}.sw i.on{box-shadow:0 0 0 3px #ec407a}.sw span{font-size:1.6rem;padding:2px 6px;border-radius:10px;background:#fff3e0;border:2px solid transparent}.sw span.on{border-color:#ec407a}
+canvas{width:100%;max-width:340px;display:block;margin:6px auto;background:#fff8f0;border-radius:14px;touch-action:none}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:8px}.star{font-size:2rem;text-align:center}
+</style></head><body>
+<a class="back" href="index.html">← S loop</a>
+<div id="wrap"><div id="hud"></div><div id="st"></div></div>
+<script>
+function lb(g,sc){try{sc=+sc;if(!(sc>0))return;const k='sl-lb-mine',o=JSON.parse(localStorage.getItem(k)||'{}');if(!o[g]||o[g].s<sc){o[g]={s:sc,t:Date.now()};localStorage.setItem(k,JSON.stringify(o))}}catch(e){}}
+if(self!==top){const b=document.querySelector('.back');if(b)b.style.display='none'}
+const $=i=>document.getElementById(i),R=n=>Math.floor(Math.random()*n),pick=a=>a[R(a.length)];
+let S={};try{S=JSON.parse(localStorage.getItem('bakeSave')||'{}')}catch(e){}S.coins=S.coins||0;S.score=S.score||0;S.lvl=S.lvl||1;S.done=S.done||0;S.un=S.un||[];
+const save=()=>{try{localStorage.setItem('bakeSave',JSON.stringify(S))}catch(e){}};
+const FL={van:{n:'وانیل',c:'#f3dca0',need:['🌾','🍬','🥚','🥛','🧈']},cho:{n:'شکلاتی',c:'#7b4a2a',need:['🌾','🍬','🥚','🥛','🍫']},str:{n:'توت‌فرنگی',c:'#f4a6b8',need:['🌾','🍬','🥚','🥛','🍓']}};
+const SHELF=['🌾','🍬','🥚','🥛','🧈','🍫','🍓','🧂'],ICE=['#ffffff','#f48fb1','#8d6e63','#81d4fa','#fff176'],ICEN={'#ffffff':'سفید','#f48fb1':'صورتی','#8d6e63':'شکلاتی','#81d4fa':'آبی','#fff176':'زرد'};
+const TOPS=()=>['🍓','🍒','🍬','🍫','🕯️'].concat(S.un);
+let O,ST;
+function hud(){$('hud').innerHTML='<span>🪙 '+S.coins+'</span><span>مرحله '+S.lvl+'</span><span>⭐ امتیاز '+S.score+'</span>'}
+function newOrder(){const kind=Math.random()<.55?'cake':'cookie',fl=pick(Object.keys(FL)),ice=pick(ICE),n=Math.min(4,1+Math.floor(S.lvl/2)),pool=TOPS(),tops=Array.from({length:n},()=>pick(pool));
+ O={kind,fl,ice,tops,shape:pick(['⭐','❤️','⚪'])};ST={have:[],wrong:0,stir:0,q:0,tops:[],cookies:[],ic:ICE[0],tp:null,spr:0}}
+const orderCard=()=>'<div class="card"><h2>🧾 سفارش مشتری</h2><div>'+(O.kind==='cake'?'🎂 کیک '+FL[O.fl].n:'🍪 شیرینی '+FL[O.fl].n+' ('+O.shape+')')+' با روکش <b style="background:'+O.ice+';padding:0 8px;border-radius:8px;border:1px solid #999">'+ICEN[O.ice]+'</b>'+(O.tops.length?' و تزئین: <span style="font-size:1.4rem">'+O.tops.join(' ')+'</span>':'')+'</div></div>';
+function menu(){hud();$('st').innerHTML='<div class="card" style="text-align:center"><div style="font-size:3rem">🧁🎂🍪</div><h2>شیرینی‌پزی «Sweet Bakery»</h2><p>سفارش مشتری را بخوان، مواد را بریز، هم بزن، درست بپز، تزئین کن و تحویل بده!</p><div class="row"><button class="b" id="go">▶ شروع پخت</button><button class="b o" id="shop">🛍 فروشگاه</button></div></div>';
+ $('go').onclick=()=>{newOrder();stepMix()};$('shop').onclick=shop}
+function shop(){hud();const items=[['🌈',30],['🍦',50],['🎂',80]];$('st').innerHTML='<div class="card"><h2>🛍 فروشگاه تزئینات</h2><div class="row">'+items.map(i=>'<button class="b '+(S.un.includes(i[0])?'g':'')+'" data-i="'+i[0]+'" data-p="'+i[1]+'">'+i[0]+' '+(S.un.includes(i[0])?'دارم ✓':i[1]+' 🪙')+'</button>').join('')+'</div></div><div class="row"><button class="b o" id="bk">‹ بازگشت</button></div>';
+ $('bk').onclick=menu;$('st').onclick=e=>{const b=e.target.closest('[data-i]');if(!b||S.un.includes(b.dataset.i))return;if(S.coins<+b.dataset.p){b.textContent='سکه کم است';return}S.coins-=+b.dataset.p;S.un.push(b.dataset.i);save();shop()}}
+function stepMix(){hud();const need=FL[O.fl].need;$('st').innerHTML=orderCard()+'<div class="card"><h2>1️⃣ مواد را بریز</h2><div class="need">'+need.map(n=>'<span id="n'+n+'">'+n+'</span>').join('')+'</div><div class="shelf" style="margin-top:8px">'+SHELF.map(i=>'<div class="it" data-i="'+i+'">'+i+'</div>').join('')+'</div></div>';
+ $('st').onclick=e=>{const it=e.target.closest('.it');if(!it||it.classList.contains('ok'))return;const i=it.dataset.i;if(need.includes(i)&&!ST.have.includes(i)){ST.have.push(i);it.classList.add('ok');$('n'+i).classList.add('got');beep(600)}else{ST.wrong++;it.classList.add('bad');setTimeout(()=>it.classList.remove('bad'),300);beep(150)}
+  if(ST.have.length===need.length)setTimeout(stepStir,400)}}
+function stepStir(){hud();$('st').innerHTML=orderCard()+'<div class="card"><h2>2️⃣ خمیر را هم بزن</h2><p>انگشتت را روی کاسه دایره‌وار بچرخان (یا چند بار بزن)</p><canvas id="cv" width="340" height="220"></canvas><div class="bar"><div class="p" id="sp" style="left:0;width:0;background:#ec407a"></div></div></div>';
+ const cv=$('cv'),c=cv.getContext('2d');let ang=0,last=null;const draw=()=>{c.clearRect(0,0,340,220);c.fillStyle='#fff';c.beginPath();c.ellipse(170,120,130,80,0,0,7);c.fill();c.strokeStyle='#bbb';c.lineWidth=4;c.stroke();c.fillStyle=FL[O.fl].c;c.beginPath();c.ellipse(170,115,112,62,0,0,7);c.fill();c.strokeStyle='#fff8';c.lineWidth=5;c.beginPath();c.arc(170,115,30+20*Math.sin(ang),ang,ang+3);c.stroke();c.font='54px serif';c.textAlign='center';c.fillText('🥄',170+Math.cos(ang)*50,125+Math.sin(ang)*28)};draw();
+ const add=v=>{ST.stir=Math.min(1,ST.stir+v);ang+=v*14;$('sp').style.width=ST.stir*100+'%';draw();if(ST.stir>=1){cv.onpointermove=null;beep(800);setTimeout(O.kind==='cake'?stepBake:stepCut,400)}};
+ cv.onpointerdown=e=>{last=[e.clientX,e.clientY];add(.04)};cv.onpointermove=e=>{if(!last||!e.buttons&&e.pointerType==='mouse')return;const d=Math.hypot(e.clientX-last[0],e.clientY-last[1]);last=[e.clientX,e.clientY];add(d/900)};cv.onpointerup=()=>last=null}
+function stepCut(){hud();ST.cookies=[];$('st').innerHTML=orderCard()+'<div class="card"><h2>3️⃣ شکل بده</h2><p>روی سینی بزن تا شیرینی‌ها را با قالب '+O.shape+' ببُری (۶ عدد)</p><canvas id="cv" width="340" height="230"></canvas></div>';
+ const cv=$('cv'),c=cv.getContext('2d'),draw=()=>{c.clearRect(0,0,340,230);c.fillStyle='#d7ccc8';c.fillRect(0,0,340,230);c.fillStyle='#f3dca0';c.fillRect(14,14,312,202);ST.cookies.forEach(k=>cookie(c,k.x,k.y,O.shape,null,0,'#e0b66c'))};draw();
+ cv.onpointerdown=e=>{if(ST.cookies.length>=6)return;const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*340/r.width,y=(e.clientY-r.top)*230/r.height;if(x<40||x>300||y<40||y>190)return;if(ST.cookies.some(k=>Math.hypot(k.x-x,k.y-y)<44))return;ST.cookies.push({x,y,ic:null,sp:0});draw();beep(500);if(ST.cookies.length>=6)setTimeout(stepBake,500)}}
+function cookie(c,x,y,sh,ic,sp,col){c.save();c.translate(x,y);c.fillStyle=col;c.strokeStyle='#8d5a2b';c.lineWidth=2;c.beginPath();if(sh==='⚪')c.arc(0,0,22,0,7);else if(sh==='❤️'){c.moveTo(0,18);c.bezierCurveTo(-34,-4,-18,-26,0,-10);c.bezierCurveTo(18,-26,34,-4,0,18)}else{for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?10:24;c[i?'lineTo':'moveTo'](Math.cos(a)*r,Math.sin(a)*r)}c.closePath()}c.fill();c.stroke();
+ if(ic){c.fillStyle=ic;c.globalAlpha=.9;c.beginPath();if(sh==='⚪')c.arc(0,0,16,0,7);else if(sh==='❤️')c.arc(0,-3,13,0,7);else c.arc(0,0,11,0,7);c.fill();c.globalAlpha=1}
+ if(sp){for(let i=0;i<7;i++){c.fillStyle=['#e53935','#1e88e5','#43a047','#fdd835'][i%4];c.fillRect(Math.cos(i*2.1)*(8+i)*.8-1,Math.sin(i*2.1)*(6+i)*.8-1,3,3)}}c.restore()}
+function stepBake(){hud();const sp=.0075+S.lvl*.0006;$('st').innerHTML=orderCard()+'<div class="card"><h2>🔥 پخت در فر</h2><p>وقتی نشانگر قرمز داخل ناحیه‌ی سبز بود، «بیرون بیار» را بزن!</p><div style="text-align:center;font-size:3.4rem">'+(O.kind==='cake'?'🎂':'🍪')+'♨️</div><div class="bar"><div class="z" style="left:52%;width:20%"></div><div class="p" id="pp" style="left:0"></div></div><div class="row"><button class="b g" id="out">🧤 بیرون بیار!</button></div></div>';
+ let p=0,run=1;const tick=()=>{if(!run)return;p+=sp;$('pp').style.left=Math.min(98,p*100)+'%';if(p>=1){run=0;ST.q=0;done('سوخت! 🔥')}else requestAnimationFrame(tick)};requestAnimationFrame(tick);
+ function done(msg){beep(run?300:200);const q=ST.q;$('st').insertAdjacentHTML('afterbegin','<div class="card star">'+(msg||'')+'</div>');setTimeout(stepDeco,900)}
+ $('out').onclick=()=>{if(!run)return;run=0;ST.q=p>=.52&&p<=.72?3:p>=.4&&p<=.84?2:p<.4?1:1;done(ST.q===3?'عالی! ✨':ST.q===2?'خوب 👍':'نیم‌پز 😬')}}
+function bakedColor(){const b=FL[O.fl].c;return ST.q===0?'#3e2723':b}
+function stepDeco(){hud();const cake=O.kind==='cake';$('st').innerHTML=orderCard()+'<div class="card"><h2>🎨 تزئین کن</h2><div>روکش:</div><div class="sw" id="ice">'+ICE.map(c=>'<i data-c="'+c+'" style="background:'+c+'" class="'+(c===ST.ic?'on':'')+'"></i>').join('')+'</div><div>'+(cake?'تزئین (روی کیک بزن):':'روی هر شیرینی بزن:')+'</div><div class="sw" id="tp">'+TOPS().concat(cake?[]:['✨']).map(t=>'<span data-t="'+t+'">'+t+'</span>').join('')+'</div><canvas id="cv" width="340" height="260"></canvas><div class="row"><button class="b g" id="serve">🛎 تحویل بده</button></div></div>';
+ const cv=$('cv'),c=cv.getContext('2d');ST.tp=null;
+ if(!cake&&!ST.cookies.length)for(let i=0;i<6;i++)ST.cookies.push({x:70+(i%3)*100,y:80+Math.floor(i/3)*100,ic:null,sp:0});
+ if(!cake){const xs=[[70,80],[170,80],[270,80],[70,180],[170,180],[270,180]];ST.cookies.forEach((k,i)=>{k.x=xs[i][0];k.y=xs[i][1]})}
+ const draw=()=>{c.clearRect(0,0,340,260);if(cake){const col=bakedColor();c.fillStyle='#d7ccc8';c.beginPath();c.ellipse(170,222,120,20,0,0,7);c.fill();[[150,60],[190,50]].forEach(()=>0);c.fillStyle=col;c.fillRect(60,120,220,90);c.fillRect(80,70,180,55);c.fillStyle='#0002';c.fillRect(60,165,220,4);c.fillStyle=ST.ic;c.beginPath();c.ellipse(170,72,90,20,0,0,7);c.fill();c.fillRect(80,72,180,16);for(let i=0;i<6;i++){c.beginPath();c.arc(92+i*31,90,11,0,7);c.fill()}c.strokeStyle='#0003';c.lineWidth=1.5;c.beginPath();c.ellipse(170,72,90,20,0,0,7);c.stroke();c.font='28px serif';c.textAlign='center';ST.tops.forEach(t=>c.fillText(t.e,t.x,t.y))}
+  else{c.fillStyle='#d7ccc8';c.fillRect(0,0,340,260);ST.cookies.forEach(k=>cookie(c,k.x,k.y,O.shape,k.ic,k.sp,ST.q===0?'#3e2723':ST.q===1?'#f1d9a8':'#e0b66c'))}};draw();
+ $('ice').onclick=e=>{const i=e.target.closest('i');if(!i)return;ST.ic=i.dataset.c;$('ice').querySelectorAll('i').forEach(x=>x.classList.toggle('on',x===i));if(!cake&&ST.tp===null){}draw()};
+ $('tp').onclick=e=>{const s=e.target.closest('span');if(!s)return;ST.tp=s.dataset.t;$('tp').querySelectorAll('span').forEach(x=>x.classList.toggle('on',x===s))};
+ cv.onpointerdown=e=>{const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*340/r.width,y=(e.clientY-r.top)*260/r.height;
+  if(cake){if(!ST.tp||ST.tp==='✨'||y<45||y>200||ST.tops.length>=10)return;ST.tops.push({e:ST.tp,x,y});beep(700)}
+  else{let b=null,d=1e9;ST.cookies.forEach(k=>{const dd=Math.hypot(k.x-x,k.y-y);if(dd<d){d=dd;b=k}});if(!b||d>50)return;if(ST.tp==='✨')b.sp=1;else if(ST.tp)b.ic=ST.ic;else b.ic=ST.ic;beep(700)}draw()};
+ $('serve').onclick=serve}
+function serve(){let sc=ST.q*20,notes=[];const cake=O.kind==='cake';
+ if(cake){if(ST.ic===O.ice)sc+=25;else notes.push('رنگ روکش فرق داشت');const need=O.tops.slice(),got=ST.tops.map(t=>t.e);let m=0;need.forEach(t=>{const i=got.indexOf(t);if(i>=0){got.splice(i,1);m++}});sc+=m*15;if(m<need.length)notes.push('تزئین ناقص بود')}
+ else{const dec=ST.cookies.filter(k=>k.ic===O.ice).length;sc+=Math.round(dec/6*25);if(dec<6)notes.push('روکش همه‌ی شیرینی‌ها درست نبود');sc+=ST.cookies.some(k=>k.sp)?15:0}
+ sc-=ST.wrong*5;sc=Math.max(0,sc);const maxS=(cake?20*3+25+O.tops.length*15:60+25+15),stars=sc>=maxS*.85?3:sc>=maxS*.55?2:1,coins=Math.round(sc/4)+stars*3;
+ S.score+=sc;S.coins+=coins;S.done++;if(S.done%3===0)S.lvl++;save();lb('bakery',S.score);hud();
+ $('st').innerHTML='<div class="card" style="text-align:center"><div class="star">'+'⭐'.repeat(stars)+'☆'.repeat(3-stars)+'</div><h2>مشتری '+(stars===3?'عاشقش شد! 😍':stars===2?'راضی بود 🙂':'کمی ناراضی 😕')+'</h2><p>+'+sc+' امتیاز · +'+coins+' 🪙</p>'+(notes.length?'<p style="color:#c62828;font-size:.85rem">'+notes.join(' · ')+'</p>':'')+'<div class="row"><button class="b" id="nx">▶ سفارش بعدی</button><button class="b o" id="hm">منو</button></div></div>';
+ $('nx').onclick=()=>{newOrder();stepMix()};$('hm').onclick=menu}
+let ac;function beep(f){try{ac=ac||new AudioContext();const o=ac.createOscillator(),k=ac.createGain();o.type='triangle';o.frequency.value=f;k.gain.value=.05;o.connect(k);k.connect(ac.destination);o.start();k.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.15);o.stop(ac.currentTime+.15)}catch(e){}}
+menu();
+</script></body></html>

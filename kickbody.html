@@ -1,0 +1,23 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Kick the Body</title>
+<style>body{margin:0;background:#233;color:#fff;font:15px system-ui;text-align:center;touch-action:none}canvas{display:block;margin:auto;max-width:100%;background:linear-gradient(#7ec8e3,#e3f3f8)}button,a{background:#c0562f;color:#fff;border:0;border-radius:10px;padding:9px 14px;margin:3px;text-decoration:none;display:inline-block;font:inherit}</style>
+<p><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a> <b>Kick the Body</b> · Score <span id=sc>0</span></p>
+<canvas id=c width=360 height=480></canvas>
+<p><button id=t1>👟 Kick</button><button id=t2>💥 Boom</button><button id=rs>Reset</button></p>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),W=360,G=455;
+let P,S,tool=1,score=0,fx=[];
+function init(){const q=[[180,190],[180,218],[180,285],[150,245],[135,290],[210,245],[225,290],[170,365],[168,445],[190,365],[192,445]];
+P=q.map(([a,b])=>({x:a,y:b,ox:a,oy:b}));S=[[0,1],[1,2],[1,3],[3,4],[1,5],[5,6],[2,7],[7,8],[2,9],[9,10],[0,2],[3,5],[1,7],[1,9],[7,9]].map(([a,b])=>[a,b,Math.hypot(q[a][0]-q[b][0],q[a][1]-q[b][1])])}
+t1.onclick=()=>tool=1;t2.onclick=()=>tool=2;rs.onclick=()=>{init();score=0};
+c.onpointerdown=e=>{const b=c.getBoundingClientRect(),X=(e.clientX-b.left)*W/b.width,Y=(e.clientY-b.top)*480/b.height,R=tool==1?65:150,F=tool==1?13:24;
+for(const p of P){const dx=p.x-X,dy=p.y-Y,d=Math.hypot(dx,dy)||1;if(d<R){const f=(1-d/R)*F;p.ox-=dx/d*f;p.oy-=dy/d*f+f*.4;score+=f}}fx.push({x:X,y:Y,r:R,t:12})};
+function step(){for(const p of P){const vx=(p.x-p.ox)*.995,vy=(p.y-p.oy)*.995;p.ox=p.x;p.oy=p.y;p.x+=vx;p.y+=vy+.55}
+for(let k=0;k<8;k++){for(const[a,b,l]of S){const A=P[a],B=P[b],dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||1,f=(d-l)/d/2;A.x+=dx*f;A.y+=dy*f;B.x-=dx*f;B.y-=dy*f}
+for(const p of P){if(p.y>G){p.y=G;p.ox=p.x-(p.x-p.ox)*.6}if(p.x<8)p.x=8;if(p.x>W-8)p.x=W-8;if(p.y<8)p.y=8}}}
+function ln(a,b,w,col){x.strokeStyle=col;x.lineWidth=w;x.lineCap='round';x.beginPath();x.moveTo(P[a].x,P[a].y);x.lineTo(P[b].x,P[b].y);x.stroke()}
+init();(function d(){step();x.clearRect(0,0,W,480);x.fillStyle='#5aa65a';x.fillRect(0,G+8,W,40);
+[[1,2,18,'#e0a030'],[1,3,9,'#e0a030'],[3,4,8,'#f2c9a0'],[1,5,9,'#e0a030'],[5,6,8,'#f2c9a0'],[2,7,10,'#2d5fa0'],[7,8,9,'#2d5fa0'],[2,9,10,'#2d5fa0'],[9,10,9,'#2d5fa0'],[0,1,6,'#f2c9a0']].forEach(a=>ln(...a));
+x.fillStyle='#f2c9a0';x.beginPath();x.arc(P[0].x,P[0].y,19,0,7);x.fill();x.fillStyle='#000';x.fillRect(P[0].x-8,P[0].y-4,4,4);x.fillRect(P[0].x+4,P[0].y-4,4,4);x.fillRect(P[0].x-5,P[0].y+6,10,2);
+fx=fx.filter(f=>f.t-->0);fx.forEach(f=>{x.strokeStyle='rgba(255,255,255,'+f.t/12+')';x.lineWidth=3;x.beginPath();x.arc(f.x,f.y,f.r*(1-f.t/12),0,7);x.stroke()});
+sc.textContent=score|0;requestAnimationFrame(d)})();
+</script>

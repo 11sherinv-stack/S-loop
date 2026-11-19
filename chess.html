@@ -34,7 +34,7 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--ink);outline-o
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>♟️ شطرنج</h1>
 <div class="row">
-  <select id="mode" aria-label="حالت"><option value="ai">مقابل کامپیوتر</option><option value="2p">دو نفره</option></select>
+  <select id="mode" aria-label="حالت"><option value="ai">مقابل کامپیوتر</option><option value="2p">دو نفره</option><option value="on">🌐 آنلاین</option></select>
   <select id="lvl" aria-label="سطح"><option value="1">آسان</option><option value="2" selected>متوسط</option><option value="3">سخت</option></select>
   <select id="col" aria-label="رنگ تو"><option value="w">تو سفید</option><option value="b">تو سیاه</option></select>
 </div>
@@ -42,8 +42,11 @@ button:focus-visible,select:focus-visible{outline:3px solid var(--ink);outline-o
 <div id="stt"></div>
 <div id="bd"></div>
 <div class="hint">روی مهره بزن تا حرکت‌های مجاز نشان داده شود · قانون‌ها: قلعه‌شدن، آنپاسان، ارتقای پیاده (به وزیر)</div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),bd=$('bd');
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
+
 const GL={K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟\uFE0E'};
 const KN=[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]],DIR=[[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
 const V={P:100,N:320,B:330,R:500,Q:900,K:0};
@@ -155,7 +158,8 @@ function ai(){
     busy=false;if(best)doMove(best);
   },60);
 }
-function doMove(m){
+function doMove(m,remote){
+  if(mode==='on'&&!remote)SLNet.send({k:'mv',f:m.f,to:m.t});
   const cap=b[m.t]||m.ep;
   hist.push(make(m));last={f:m.f,t:m.t};turn=turn==='w'?'b':'w';sel=-1;moves=[];
   beep(cap?220:360);
@@ -180,7 +184,7 @@ function render(){
 }
 bd.addEventListener('click',e=>{
   const el=e.target.closest('.sq');if(!el||over||busy)return;
-  if(mode==='ai'&&turn!==human)return;
+  if((mode==='ai'||mode==='on')&&turn!==human)return;
   const i=+el.dataset.i,mv=moves.find(m=>m.t===i);
   if(sel>=0&&mv)return doMove(mv);
   if(b[i]&&side(b[i])===turn){sel=i;moves=legal(turn).filter(m=>m.f===i)}else{sel=-1;moves=[]}
@@ -188,18 +192,30 @@ bd.addEventListener('click',e=>{
 });
 function newG(){
   mode=$('mode').value;level=+$('lvl').value;human=$('col').value;
-  init();flip=mode==='ai'&&human==='b';render();
+  if(mode==='on')human=HOST?'w':'b';
+  $('lvl').style.display=$('col').style.display=mode==='on'?'none':'';
+  init();flip=(mode==='ai'||mode==='on')&&human==='b';render();
   if(mode==='ai'&&turn!==human)ai();
 }
 function undo(){
-  if(busy||!hist.length)return;
+  if(mode==='on'||busy||!hist.length)return;
   let n=mode==='ai'?(turn===human?2:1):1;
   while(n--&&hist.length){unmake(hist.pop());turn=turn==='w'?'b':'w'}
   const l=hist[hist.length-1];last=l?{f:l.m.f,t:l.m.t}:null;sel=-1;moves=[];over=false;render();
   if(mode==='ai'&&turn!==human&&!over)ai();
 }
-$('nw').onclick=newG;$('un').onclick=undo;$('fl').onclick=()=>{flip=!flip;render()};
-['mode','lvl','col'].forEach(i=>$(i).onchange=newG);
+const FILE='chess.html',TITLE='شطرنج';let prevMd='ai';
+$('nw').onclick=()=>{if(mode==='on')SLNet.send({k:'new'});newG()};$('un').onclick=undo;$('fl').onclick=()=>{flip=!flip;render()};
+['lvl','col'].forEach(i=>$(i).onchange=newG);
+$('mode').onchange=()=>{const v=$('mode').value;
+  if(v==='on'&&!ROOM){$('mode').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='on'){location.href=location.pathname;return}
+  prevMd=v;newG()};
+if(ROOM&&HASNET){$('mode').value='on';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();newG()},
+   msg:o=>{if(o.k==='mv'&&mode==='on'&&turn!==human){const mv=legal(turn).find(q=>q.f===o.f&&q.t===o.to);if(mv)doMove(mv,true)}else if(o.k==='new')newG()}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000&&!over){over=true;$('stt').textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 newG();
 </script>
 </body>

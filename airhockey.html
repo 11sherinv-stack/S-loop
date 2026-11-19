@@ -26,15 +26,19 @@ canvas{display:block;height:min(calc(100svh - 150px),560px);aspect-ratio:360/560
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🏒 Air Hockey</h1>
 <div class="row">
-  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره (هر کس یک نیمه)</option></select>
+  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره (هر کس یک نیمه)</option><option value="3">🌐 آنلاین (دو گوشی)</option></select>
   <select id="lv" aria-label="سطح"><option value="0">آسان</option><option value="1" selected>متوسط</option><option value="2">سخت</option></select>
 </div>
 <div class="wrap"><canvas id="c" width="360" height="560"></canvas>
 <div class="ov" id="ov"><h2 id="ot">Air Hockey</h2><p id="om">اولین نفری که به ۷ گل برسد برنده است.<br>راکت را با انگشت بکش و توپ را به دروازه بزن.</p><button class="b pr" id="go">شروع</button></div></div>
 <div class="hint">موس یا انگشت: حرکت راکت · در حالت دو نفره هر بازیکن نیمه‌ی خودش را کنترل می‌کند · کلیدهای جهت‌نما هم کار می‌کنند</div>
+<script src="slnet.js"></script>
 <script>
 const W=360,H=560,PR=30,KR=15,GW=130,WIN=7,AIV=[380,650,950],ERR=[46,20,6];
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
+const GUEST=()=>mode===3&&!HOST;let sendT=0,over=false;
+
 let st='idle',pad,puck,score=[0,0],ptr={},last=0,au,mode=1,lv=1,noise=0,nt=0,pauseT=0,keys={},flash=0;
 function beep(f,d=.05){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 function mkPads(){pad=[{x:W/2,y:H-90,vx:0,vy:0,tx:W/2,ty:H-90},{x:W/2,y:90,vx:0,vy:0,tx:W/2,ty:90}]}
@@ -107,13 +111,42 @@ function draw(){
 }
 function loop(t){
   const dt=Math.min(.033,(t-last)/1000||0);last=t;flash=Math.max(0,flash-dt);
-  if(st==='play')update(dt);
+  if(mode===3&&!HOST){guestStep(dt)}
+  else if(st==='play')update(dt);
   else if(st==='goal'){pauseT-=dt;pad.forEach(p=>{p.x+=(p.tx-p.x)*.2;p.y+=(p.ty-p.y)*.2});if(pauseT<=0){serve(score[0]>score[1]?-1:1);st='play'}}
+  if(mode===3&&ROOM&&window.SLNet&&SLNet.peer){sendT+=dt;if(sendT>.04){sendT=0;HOST?sendState():sendPad()}}
   draw();requestAnimationFrame(loop);
 }
-$('go').onclick=start;$('md').onchange=()=>{if(st!=='play')return;start()};
+const FILE='airhockey.html',TITLE='Air Hockey';let prevMd='1';
+$('go').onclick=()=>{if(GUEST())return;start()};
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='3'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='3'){location.href=location.pathname;return}
+  prevMd=v;if(st!=='play')return;start()};
+function sendState(){SLNet.send({k:'s',p:[puck.x,puck.y,puck.vx,puck.vy],a:[pad[0].x,pad[0].y],sc:score,st})}
+function sendPad(){SLNet.send({k:'p',x:pad[0].tx,y:pad[0].ty})}
+let gst='idle';
+function guestStep(dt){
+  pad[0].x=pad[0].tx;pad[0].y=pad[0].ty;
+  if(st==='play'){puck.x+=puck.vx*dt;puck.y+=puck.vy*dt}
+}
+function guestState(o){
+  const ns=[o.sc[1],o.sc[0]];
+  if(ns[0]!==score[0]||ns[1]!==score[1]){flash=.5;beep(ns[0]>score[0]?880:220,.3)}
+  score=ns;puck.x=W-o.p[0];puck.y=H-o.p[1];puck.vx=-o.p[2];puck.vy=-o.p[3];
+  pad[1].x=W-o.a[0];pad[1].y=H-o.a[1];pad[1].tx=pad[1].x;pad[1].ty=pad[1].y;
+  if(o.st==='goal'&&st!=='goal'){pad[0].tx=W/2;pad[0].ty=H-90}
+  st=o.st;
+  if(st==='over'){if(gst!=='over'){$('ot').textContent=score[0]>score[1]?'🏆 تو بردی!':'😅 حریف برد';$('om').textContent=score[0]+' - '+score[1];$('go').style.display='none';$('ov').style.display='flex'}}
+  else if(gst==='over'){$('ov').style.display='none'}
+  gst=st}
+if(ROOM&&HASNET){$('md').value='3';mode=3;
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();mode=3;if(HOST){$('go').style.display='';start()}else{mkPads();puck={x:W/2,y:H/2,vx:0,vy:0};$('ov').style.display='none';st='goal'}},
+   msg:o=>{if(o.k==='s'&&!HOST)guestState(o);else if(o.k==='p'&&HOST&&pad)setT(1,{x:W-o.x,y:H-o.y})}});
+  SLNet.wait(FILE,TITLE)}
+
 mkPads();puck={x:W/2,y:H/2,vx:0,vy:0};
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&st==='play'){st='over';$('ot').textContent='متوقف شد';$('om').textContent=score[0]+' - '+score[1];$('go').textContent='بازی دوباره';$('ov').style.display='flex'}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st==='play'&&mode!==3){st='over';$('ot').textContent='متوقف شد';$('om').textContent=score[0]+' - '+score[1];$('go').textContent='بازی دوباره';$('ov').style.display='flex'}});
 requestAnimationFrame(loop);
 </script>
 </body>

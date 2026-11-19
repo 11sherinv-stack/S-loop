@@ -28,7 +28,7 @@ canvas{display:block;width:min(96vw,420px);aspect-ratio:350/350;border-radius:14
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🔴🟡 Connect 4</h1>
 <div class="row">
-  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option></select>
+  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option><option value="3">🌐 آنلاین</option></select>
   <select id="lv" aria-label="سطح"><option value="1">آسان</option><option value="2" selected>متوسط</option><option value="3">سخت</option></select>
   <select id="st" aria-label="شروع‌کننده"><option value="0">من شروع می‌کنم</option><option value="1">کامپیوتر شروع کند</option></select>
   <button class="b pr" id="nw">دور جدید</button>
@@ -37,8 +37,10 @@ canvas{display:block;width:min(96vw,420px);aspect-ratio:350/350;border-radius:14
 <div id="stt"></div>
 <canvas id="c" width="350" height="350"></canvas>
 <div class="hint">ستونی را بزن تا مهره بیفتد. چهار مهره‌ی هم‌رنگ در یک ردیف (افقی، عمودی یا مورب) برنده است.</div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d'),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
 const COLS=7,ROWS=6,CS=50,OY=50;
 let bd,turn,mode=1,lvl=2,over=false,drop=null,win=null,sc=[0,0,0],hover=3,busy=false,au,aiSide=1;
 try{sc=JSON.parse(localStorage.getItem('c4-score'))||sc}catch(e){}
@@ -94,11 +96,13 @@ function newRound(){
   mode=+$('md').value;lvl=+$('lv').value;bd=newBoard();over=false;drop=null;win=null;busy=false;
   aiSide=+$('st').value===1?1:2;turn=1;
   $('lv').style.display=$('st').style.display=mode===1?'':'none';
+  if(mode===3)turn=first;
   status();
   if(mode===1&&+$('st').value===1){turn=2;aiSide=2;busy=true;status();setTimeout(aiTurn,500)}
 }
 function status(){
   if(over)return;
+  if(mode===3){$('stt').textContent=turn===me?'نوبت توست '+(me===1?'🔴':'🟡'):'نوبت حریف…';return}
   $('stt').textContent=mode===1?(turn===1?'نوبت توست 🔴':'کامپیوتر فکر می‌کند… 🟡'):'نوبت بازیکن '+fa(turn)+(turn===1?' 🔴':' 🟡');
 }
 function play(c){
@@ -108,7 +112,7 @@ function play(c){
 function land(){
   const{c,r,p}=drop;bd[r][c]=p;drop=null;beep(240,.08);
   const w=lineAt(bd,r,c,p);
-  if(w){over=true;win=w;sc[p===1?0:1]++;save();$('stt').textContent=mode===1?(p===1?'🎉 تو بردی!':'😅 کامپیوتر برد'):'🏆 بازیکن '+fa(p)+' برنده شد';beep(p===1?900:200,.35);busy=false;return}
+  if(w){over=true;win=w;sc[p===1?0:1]++;save();$('stt').textContent=mode===3?(p===me?'🎉 تو بردی!':'😅 حریف برد'):mode===1?(p===1?'🎉 تو بردی!':'😅 کامپیوتر برد'):'🏆 بازیکن '+fa(p)+' برنده شد';beep(p===1?900:200,.35);busy=false;return}
   if(bd[0].every(Boolean)){over=true;sc[2]++;save();$('stt').textContent='🤝 مساوی شد';busy=false;return}
   turn=3-turn;status();
   if(mode===1&&turn!==1)setTimeout(aiTurn,450);else busy=false;
@@ -139,9 +143,21 @@ function loop(t){
 }
 const colOf=e=>{const r=cv.getBoundingClientRect();return Math.max(0,Math.min(COLS-1,Math.floor((e.clientX-r.left)/r.width*COLS)))};
 cv.addEventListener('pointermove',e=>{hover=colOf(e)});
-cv.addEventListener('pointerdown',e=>{hover=colOf(e);if(busy||over||(mode===1&&turn!==1))return;play(hover)});
-addEventListener('keydown',e=>{if(e.key>='1'&&e.key<='7'&&!busy&&!over&&!(mode===1&&turn!==1))play(+e.key-1)});
-$('nw').onclick=newRound;['md','lv','st'].forEach(i=>$(i).onchange=newRound);
+cv.addEventListener('pointerdown',e=>{hover=colOf(e);if(busy||over||(mode===1&&turn!==1))return;userPlay(hover)});
+addEventListener('keydown',e=>{if(e.key>='1'&&e.key<='7'&&!busy&&!over&&!(mode===1&&turn!==1))userPlay(+e.key-1)});
+const FILE='connect4.html',TITLE='Connect 4';let first=1,me=HOST?1:2,prevMd='1';
+function userPlay(c){if(mode===3){if(turn!==me||over||drop||busy||bd[0][c])return;SLNet.send({k:'mv',c})}play(c)}
+$('nw').onclick=()=>{if(mode===3){first=first===1?2:1;SLNet.send({k:'new',f:first})}newRound()};
+['lv','st'].forEach(i=>$(i).onchange=newRound);
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='3'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='3'){location.href=location.pathname;return}
+  prevMd=v;newRound()};
+if(ROOM&&HASNET){$('md').value='3';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();first=1;newRound()},
+   msg:o=>{if(o.k==='mv'&&mode===3&&turn!==me&&!drop&&!over)play(o.c);else if(o.k==='new'){first=o.f;newRound()}}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000&&!over){over=true;$('stt').textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 hud();newRound();requestAnimationFrame(loop);
 </script>
 </body>

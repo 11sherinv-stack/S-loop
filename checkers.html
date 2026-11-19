@@ -33,7 +33,7 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🔴⚫ Checkers</h1>
 <div class="row">
-  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option></select>
+  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option><option value="3">🌐 آنلاین</option></select>
   <select id="lv" aria-label="سطح"><option value="1">آسان</option><option value="2" selected>متوسط</option><option value="3">سخت</option></select>
   <select id="sd" aria-label="رنگ تو"><option value="1">تو قرمز (شروع)</option><option value="-1">تو سیاه</option></select>
 </div>
@@ -42,8 +42,10 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <div id="bd"></div>
 <div class="cap"><span>قرمز: <b id="cr">۱۲</b> مهره</span><span>سیاه: <b id="cb">۱۲</b> مهره</span></div>
 <div class="hint">مهره را انتخاب کن و روی مقصد بزن. گرفتن مهره‌ی حریف اجباری است و زنجیره‌ای می‌شود. مهره‌ای که به آخر زمین برسد شاه (👑) می‌شود و هر دو جهت حرکت می‌کند.</div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),bd=$('bd'),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
 let b,turn,mode=1,lvl=2,human=1,sel=null,hist=[],over=false,busy=false,flip=false,lastMv=null,noProg=0,au;
 function beep(f,d=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 function init(){
@@ -127,12 +129,13 @@ function render(){
 function status(){
   if(over)return;
   const ms=moves(b,turn);
-  if(!ms.length){over=true;const w=-turn;$('stt').textContent=mode===1?(w===human?'🎉 تو بردی!':'😅 کامپیوتر برد'):'🏆 '+(w===1?'قرمز':'سیاه')+' برنده شد';beep(w===human||mode===2?900:150,.4);return}
+  if(!ms.length){over=true;const w=-turn;$('stt').textContent=mode!==2?(w===human?'🎉 تو بردی!':(mode===3?'😅 حریف برد':'😅 کامپیوتر برد')):'🏆 '+(w===1?'قرمز':'سیاه')+' برنده شد';beep(w===human||mode===2?900:150,.4);return}
   if(noProg>=80){over=true;$('stt').textContent='🤝 مساوی شد';return}
   const must=ms[0].caps.length>0;
-  $('stt').textContent=mode===1?(turn===human?'نوبت توست'+(must?' — گرفتن اجباری است!':''):'کامپیوتر فکر می‌کند…'):'نوبت '+(turn===1?'قرمز 🔴':'سیاه ⚫')+(must?' — گرفتن اجباری است!':'');
+  $('stt').textContent=mode!==2?(turn===human?'نوبت توست'+(must?' — گرفتن اجباری است!':''):(mode===3?'نوبت حریف…':'کامپیوتر فکر می‌کند…')):'نوبت '+(turn===1?'قرمز 🔴':'سیاه ⚫')+(must?' — گرفتن اجباری است!':'');
 }
-function doMove(m){
+function doMove(m,remote){
+  if(mode===3&&!remote)SLNet.send({k:'mv',m});
   hist.push({b:b.map(r=>r.slice()),turn,lastMv,noProg});
   const p=b[m.from[0]][m.from[1]];
   b=apply(b,m);const to=m.path[m.path.length-1];lastMv={from:m.from,to};
@@ -142,7 +145,7 @@ function doMove(m){
 }
 bd.addEventListener('click',e=>{
   const el=e.target.closest('.sq');if(!el||over||busy)return;
-  if(mode===1&&turn!==human)return;
+  if(mode!==2&&turn!==human)return;
   const r=+el.dataset.r,c=+el.dataset.c,ms=moves(b,turn);
   if(sel){
     const m=ms.find(q=>q.from[0]===sel[0]&&q.from[1]===sel[1]&&q.path[q.path.length-1][0]===r&&q.path[q.path.length-1][1]===c);
@@ -152,19 +155,30 @@ bd.addEventListener('click',e=>{
   render();
 });
 function newGame(){
-  mode=+$('md').value;lvl=+$('lv').value;human=+$('sd').value;init();
-  flip=mode===1&&human===-1;$('lv').style.display=$('sd').style.display=mode===1?'':'none';
+  mode=+$('md').value;lvl=+$('lv').value;human=+$('sd').value;if(mode===3)human=HOST?1:-1;init();
+  flip=mode!==2&&human===-1;$('lv').style.display=$('sd').style.display=mode===1?'':'none';
   render();status();
   if(mode===1&&turn!==human){busy=true;setTimeout(()=>{const am=aiPick(turn);busy=false;if(am)doMove(am)},500)}
 }
 $('un').onclick=()=>{
-  if(busy||!hist.length)return;
+  if(mode===3||busy||!hist.length)return;
   let n=mode===1?(turn===human?2:1):1;
   while(n--&&hist.length){const h=hist.pop();b=h.b;turn=h.turn;lastMv=h.lastMv;noProg=h.noProg}
   over=false;sel=null;render();status();
   if(mode===1&&turn!==human&&!over){busy=true;setTimeout(()=>{const am=aiPick(turn);busy=false;if(am)doMove(am)},500)}
 };
-$('nw').onclick=newGame;['md','lv','sd'].forEach(i=>$(i).onchange=newGame);
+const FILE='checkers.html',TITLE='Checkers';let prevMd='1';
+$('nw').onclick=()=>{if(mode===3)SLNet.send({k:'new'});newGame()};
+['lv','sd'].forEach(i=>$(i).onchange=newGame);
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='3'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='3'){location.href=location.pathname;return}
+  prevMd=v;newGame()};
+if(ROOM&&HASNET){$('md').value='3';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();newGame()},
+   msg:o=>{if(o.k==='mv'&&mode===3&&turn!==human&&!over)doMove(o.m,true);else if(o.k==='new')newGame()}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000&&!over){over=true;$('stt').textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 newGame();
 </script>
 </body>

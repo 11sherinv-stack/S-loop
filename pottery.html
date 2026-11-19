@@ -1,0 +1,19 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Pottery</title>
+<style>body{margin:0;background:#2a211b;color:#fff;font:15px system-ui;text-align:center;touch-action:none;overscroll-behavior:none}canvas{display:block;margin:auto;max-width:100%}button,a{background:#6b4a2f;color:#fff;border:0;border-radius:10px;padding:9px 14px;margin:3px;text-decoration:none;display:inline-block;font:inherit} i{display:inline-block;width:26px;height:26px;border-radius:50%;margin:4px;border:2px solid #fff}</style>
+<p><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a> <b>Pottery</b></p><p>با انگشت دیواره کوزه را بکش و شکل بده</p>
+<canvas id=c width=360 height=400></canvas>
+<div id=cs></div><button id=pt>Pattern</button><button id=rs>Reset</button><button id=sv>Save</button>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),N=50,T=60,H=290,cx=180,h=H/N;
+let r=Array(N).fill(45),col='#c4753f',sp=0,pat=1,dn=0;
+['#c4753f','#3f7fc4','#4aa564','#b34a8a','#e0c46a','#eeeeee'].forEach(k=>{const e=document.createElement('i');e.style.background=k;e.onclick=()=>col=k;cs.append(e)});
+pt.onclick=()=>pat=(pat+1)%3;rs.onclick=()=>r.fill(45);
+sv.onclick=()=>{const a=document.createElement('a');a.href=c.toDataURL();a.download='pot.png';a.click()};
+function m(e){if(!dn)return;const b=c.getBoundingClientRect(),X=(e.clientX-b.left)*360/b.width,Y=(e.clientY-b.top)*400/b.height,i=Math.round((Y-T)/h),v=Math.min(140,Math.max(14,Math.abs(X-cx)));if(i<0||i>=N)return;for(let d=-4;d<=4;d++){const j=i+d;if(j>=0&&j<N)r[j]+=(v-r[j])*(d?.35/Math.abs(d):1)}}
+c.onpointerdown=e=>{dn=1;m(e)};c.onpointermove=m;addEventListener('pointerup',()=>dn=0);
+function path(){x.beginPath();for(let i=0;i<N;i++)x.lineTo(cx-r[i],T+i*h);for(let i=N-1;i>=0;i--)x.lineTo(cx+r[i],T+i*h);x.closePath()}
+(function d(){sp+=.03;x.clearRect(0,0,360,400);x.fillStyle='#4a3a2e';x.beginPath();x.ellipse(cx,T+H+12,125,16,0,0,7);x.fill();
+path();x.fillStyle=col;x.fill();const g=x.createLinearGradient(cx-140,0,cx+140,0);g.addColorStop(0,'rgba(0,0,0,.5)');g.addColorStop(.35,'rgba(255,255,255,.22)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fill();
+if(pat){x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=2;for(let k=0;k<7;k++){const a=sp+k*.9;if(Math.cos(a)<0)continue;x.beginPath();for(let i=0;i<N;i++){const X=cx+r[i]*Math.sin(a);if(pat==1){i?x.lineTo(X,T+i*h):x.moveTo(X,T)}else if(i%8<3){x.moveTo(X-3,T+i*h);x.lineTo(X+3,T+i*h)}}x.stroke()}}
+x.fillStyle='rgba(0,0,0,.45)';x.beginPath();x.ellipse(cx,T,r[0],7,0,0,7);x.fill();requestAnimationFrame(d)})();
+</script>

@@ -31,9 +31,11 @@ button:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
 <div class="msg" id="msg" role="status"></div>
 <div class="wrap"><canvas id="c" width="360" height="470"></canvas>
 <div class="end" id="end"><h2 id="eh"></h2><p id="ep"></p><button id="eb">بازی جدید</button></div></div>
-<div class="bar"><button class="al" id="ori">دیوار: افقی ▬</button><button class="al" id="skip" disabled>رد کردن دیوار</button><button class="al" id="nw">⟲ بازی جدید</button><button class="al" id="mode">👤 با کامپیوتر</button></div>
+<div class="bar"><button class="al" id="ori">دیوار: افقی ▬</button><button class="al" id="skip" disabled>رد کردن دیوار</button><button class="al" id="nw">⟲ بازی جدید</button><button class="al" id="mode">👤 با کامپیوتر</button><button class="al" id="onl">🌐 آنلاین</button></div>
 <div class="hint">اول یک مهره‌ی نارنجی را انتخاب کن و تا ۲ خانه حرکتش بده، بعد (اگر خواستی) یک دیوار سبز بگذار. هر مهره‌ات که به یکی از دو خانه‌ی شروع حریف برسد، بازی را می‌بری. با دکمه‌ی «دو نفره» می‌توانید دو نفری روی همین دستگاه بازی کنید (نارنجی پایین، قرمز بالا). راه همه را نمی‌شود کامل بست.</div>
+<script src="slnet.js"></script>
 <script>
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const R=11,C=9,CS=36,MX=18,MY=50,WALLS=9;
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
@@ -42,10 +44,10 @@ let au;function beep(f,d=.06,ty='triangle',v=.1){try{au=au||new(window.AudioCont
 /* بازیکن 0 = تو (نارنجی، پایین)، بازیکن 1 = کامپیوتر (قرمز، بالا) */
 const START=[[[9,2],[9,6]],[[1,2],[1,6]]];
 const GOAL=[START[1],START[0]];
-let pawns,hw,vw,left,phase,turn,sel,reach,ori='H',prev=null,over=false,wallsList,anim=null,wins=[0,0],two=false;
-const isH=()=>turn===0||two;
-const nm=p=>two?(p===0?'نارنجی':'قرمز'):(p===0?'تو':'کامپیوتر');
-const turnMsg=()=>two?('نوبت '+nm(turn)+': یک مهره‌ی خودت را انتخاب کن'):'نوبت توست: یک مهره‌ی نارنجی را انتخاب کن';
+let pawns,hw,vw,left,phase,turn,sel,reach,ori='H',prev=null,over=false,wallsList,anim=null,wins=[0,0],two=false,ONL=false,me=0;
+const isH=()=>ONL?turn===me:(turn===0||two);
+const nm=p=>ONL?(p===me?'تو':'حریف'):two?(p===0?'نارنجی':'قرمز'):(p===0?'تو':'کامپیوتر');
+const turnMsg=()=>ONL?(turn===me?'نوبت توست: یک مهره‌ی خودت را انتخاب کن':'نوبت حریف…'):two?('نوبت '+nm(turn)+': یک مهره‌ی خودت را انتخاب کن'):'نوبت توست: یک مهره‌ی نارنجی را انتخاب کن';
 const key=(r,c)=>r*C+c;
 function newGame(){
   pawns=[START[0].map(p=>[...p]),START[1].map(p=>[...p])];
@@ -95,7 +97,7 @@ cv.addEventListener('pointerdown',e=>{
     const c=cellAt(px,py);if(!c)return;
     const k=pawns[turn].findIndex(p=>p[0]===c[0]&&p[1]===c[1]);
     if(k>=0){sel=k;reach=reachable(pawns[turn][k]);beep(500,.04);say(reach.length?'یک خانه‌ی روشن را بزن':'این مهره گیر کرده؛ مهره‌ی دیگر را انتخاب کن');return}
-    if(sel>=0&&reach.some(r=>r[0]===c[0]&&r[1]===c[1]))doMove(turn,sel,c);
+    if(sel>=0&&reach.some(r=>r[0]===c[0]&&r[1]===c[1])){if(ONL)SLNet.send({k:'mv',s:sel,to:c});doMove(turn,sel,c)}
   }else if(phase==='wall'){
     const[i,j]=ixAt(px,py,t);prev={o:ori,i,j};try{cv.setPointerCapture(e.pointerId)}catch(_){}
   }
@@ -104,20 +106,23 @@ cv.addEventListener('pointermove',e=>{if(phase==='wall'&&isH()&&prev&&!over){con
 cv.addEventListener('pointerup',e=>{
   if(phase!=='wall'||!isH()||!prev||over)return;
   const p=prev;prev=null;
-  if(left[turn]>0&&wallOK(p.o,p.i,p.j)){addWall(p.o,p.i,p.j,turn);beep(260,.08,'square',.06);endTurn()}
+  if(left[turn]>0&&wallOK(p.o,p.i,p.j)){addWall(p.o,p.i,p.j,turn);if(ONL)SLNet.send({k:'wl',o:p.o,i:p.i,j:p.j});beep(260,.08,'square',.06);endTurn()}
   else{beep(120,.08,'sawtooth',.05);say('اینجا نمی‌شود دیوار گذاشت (یا راه کسی را کامل می‌بندد)')}
 });
 cv.addEventListener('pointercancel',()=>{prev=null});
 $('ori').onclick=()=>{ori=ori==='H'?'V':'H';ui()};
-$('skip').onclick=()=>{if(phase==='wall'&&isH())endTurn()};
+$('skip').onclick=()=>{if(phase==='wall'&&isH()){if(ONL)SLNet.send({k:'sk'});endTurn()}};
 $('mode').onclick=()=>{two=!two;wins=[0,0];$('mode').textContent=two?'👥 دو نفره':'👤 با کامپیوتر';newGame()};
-$('nw').onclick=newGame;$('eb').onclick=newGame;
+const FILE='blockade2.html',TITLE='Blockade 2';
+const reset=()=>{if(ONL)SLNet.send({k:'new'});newGame()};
+$('nw').onclick=reset;$('eb').onclick=reset;
+$('onl').onclick=()=>{if(ROOM)location.href=location.pathname;else if(HASNET)SLNet.menu(FILE,TITLE)};
 function doMove(pl,k,dest){
   const p=pawns[pl][k],from=[p[0],p[1]];
   anim={pl,k,from,to:dest,t:0};sel=-1;reach=[];
   const fin=()=>{p[0]=dest[0];p[1]=dest[1];anim=null;beep(380,.07);
     if(won(pl))return finish(pl);
-    if(isH()){phase='wall';if(left[pl]>0){say('حالا یک دیوار بگذار (بکش و رها کن) یا رد کن')}else{say('دیوارت تمام شده');setTimeout(endTurn,500)}ui()}
+    if(isH()||ONL){phase='wall';if(left[pl]>0){say(ONL&&pl!==me?'حریف دارد دیوار می‌گذارد…':'حالا یک دیوار بگذار (بکش و رها کن) یا رد کن')}else{say(ONL&&pl!==me?'حریف دیوار ندارد':'دیوارت تمام شده');setTimeout(endTurn,500)}ui()}
   };
   anim.fin=fin;
 }
@@ -212,6 +217,14 @@ function loop(t){
 }
 if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
 if(!x.setLineDash)x.setLineDash=()=>{};
+function rx(o){if(anim){setTimeout(()=>rx(o),60);return}
+  if(o.k==='mv'&&turn!==me)doMove(turn,o.s,o.to);
+  else if(o.k==='wl'&&turn!==me){addWall(o.o,o.i,o.j,turn);endTurn()}
+  else if(o.k==='sk'&&turn!==me)endTurn();
+  else if(o.k==='new')newGame()}
+if(ROOM&&HASNET){ONL=true;two=true;me=HOST?0:1;$('mode').style.display='none';$('onl').textContent='🚪 خروج از آنلاین';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();wins=[0,0];newGame()},msg:rx});SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000){const e=document.getElementById('msg');if(e)e.textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 newGame();requestAnimationFrame(loop);
 window.__b2={get pawns(){return pawns},reachable,wallOK,best,addWall,won,aiMove,aiWall,doMove,get anim(){return anim},get over(){return over},get left(){return left}};
 </script>

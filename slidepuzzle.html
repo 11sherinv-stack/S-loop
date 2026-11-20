@@ -1,0 +1,59 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Sliding Puzzle</title>
+<style>
+body{margin:0;background:linear-gradient(#1b2a49,#0f1a30);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+a,button,.btn,select{background:#3b82f6;color:#fff;border:0;border-radius:10px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,.btn.g{background:#334766}
+#board{position:relative;margin:10px auto;border-radius:14px;background:#0b1424;box-shadow:0 8px 24px rgba(0,0,0,.5);overflow:hidden}
+.tile{position:absolute;box-sizing:border-box;border:2px solid rgba(0,0,0,.35);border-radius:8px;display:flex;align-items:flex-start;justify-content:flex-start;font-weight:700;text-shadow:0 1px 3px #000;transition:transform .14s ease-out;cursor:pointer;background-repeat:no-repeat}
+.tile span{background:rgba(0,0,0,.45);padding:1px 6px;border-radius:6px;margin:3px;font-size:14px}
+#win{position:absolute;inset:0;background:rgba(5,10,25,.82);display:none;flex-direction:column;align-items:center;justify-content:center;font-size:20px}
+</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a><b>Sliding Puzzle</b>
+<div>Moves <b id=mv>0</b> · Time <b id=tm>0:00</b> · Best <b id=bs>-</b></div>
+<div id=board><div id=win></div></div>
+<div>
+<select id=sz><option value=3>3×3</option><option value=4 selected>4×4</option><option value=5>5×5</option><option value=6>6×6</option></select>
+<button id=nw>🔀 New game</button><button class=g id=nb>🔢 Numbers: on</button><br>
+<label class="btn g">🖼 Your photo<input type=file id=ph accept="image/*" hidden></label><button class=g id=rs>↺ Default picture</button><button class=g id=pv>👁 Hold: preview</button>
+</div>
+<script>
+const $=i=>document.getElementById(i),B=$('board');
+let n=4,cell=[],e=0,moves=0,secs=0,iv=0,started=false,img=null,nums=true,BS=320,TS=80,won=false;
+function mkDefault(){const c=document.createElement('canvas');c.width=c.height=600;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,600,600);g.addColorStop(0,'#ff6a88');g.addColorStop(.5,'#6a5cff');g.addColorStop(1,'#00d4aa');x.fillStyle=g;x.fillRect(0,0,600,600);
+  x.fillStyle='rgba(255,255,255,.18)';for(let i=0;i<14;i++){x.beginPath();x.arc((i*97)%600,(i*181)%600,40+((i*23)%70),0,7);x.fill()}
+  x.fillStyle='#fff';x.font='bold 150px system-ui';x.textAlign='center';x.fillText('S',300,300);x.font='bold 90px system-ui';x.fillText('LOOP',300,410);
+  x.strokeStyle='#fff';x.lineWidth=14;x.strokeRect(20,20,560,560);return c.toDataURL('image/jpeg',.9)}
+const DEF=mkDefault();img=DEF;
+function size(){BS=Math.min(innerWidth-24,440,innerHeight-260);BS=Math.max(220,BS);TS=BS/n;B.style.width=B.style.height=BS+'px'}
+function fmt(s){return(s/60|0)+':'+String(s%60).padStart(2,'0')}
+function best(){const b=localStorage.getItem('sp-best-'+n);$('bs').textContent=b?b+' mv':'-'}
+function build(){size();[...B.querySelectorAll('.tile')].forEach(t=>t.remove());
+  for(let id=0;id<n*n-1;id++){const t=document.createElement('div');t.className='tile';t.id='t'+id;t.style.width=t.style.height=TS+'px';
+    t.style.backgroundImage='url('+img+')';t.style.backgroundSize=BS+'px '+BS+'px';t.style.backgroundPosition='-'+(id%n)*TS+'px -'+(id/n|0)*TS+'px';
+    t.innerHTML=nums?'<span>'+(id+1)+'</span>':'';t.onpointerdown=ev=>{ev.preventDefault();tap(id)};B.append(t)}
+  place()}
+function place(){for(let i=0;i<n*n;i++){const id=cell[i];if(id<0)continue;const t=$('t'+id);t.style.transform='translate('+(i%n)*TS+'px,'+(i/n|0)*TS+'px)'}}
+function slide(i){const r=i/n|0,c=i%n,er=e/n|0,ec=e%n;if(i===e||(r!==er&&c!==ec))return false;
+  const d=r===er?(ec>c?-1:1):(er>r?-n:n);while(e!==i){const f=e+d;cell[e]=cell[f];e=f}cell[e]=-1;return true}
+function tap(id){if(won)return;const i=cell.indexOf(id);if(!slide(i))return;moves++;$('mv').textContent=moves;beep(300+id*8);
+  if(!started){started=true;iv=setInterval(()=>{secs++;$('tm').textContent=fmt(secs)},1000)}
+  place();if(solved())win()}
+function solved(){for(let i=0;i<n*n-1;i++)if(cell[i]!==i)return false;return true}
+function win(){won=true;clearInterval(iv);const k='sp-best-'+n,b=+localStorage.getItem(k)||1e9;if(moves<b)localStorage.setItem(k,moves);best();
+  const w=$('win');w.style.display='flex';w.innerHTML='🎉<b>Solved!</b><div style="font-size:15px;margin:8px">'+moves+' moves · '+fmt(secs)+'</div><button id=again>Play again</button>';$('again').onclick=newGame}
+function newGame(){n=+$('sz').value;clearInterval(iv);started=false;won=false;moves=secs=0;$('mv').textContent=0;$('tm').textContent='0:00';$('win').style.display='none';
+  cell=[...Array(n*n).keys()];cell[n*n-1]=-1;e=n*n-1;let prev=-1;
+  for(let k=0;k<n*n*25;k++){const nbs=[];if(e%n>0)nbs.push(e-1);if(e%n<n-1)nbs.push(e+1);if(e>=n)nbs.push(e-n);if(e<n*n-n)nbs.push(e+n);const f=nbs.filter(v=>v!==prev),p=f[Math.random()*f.length|0];prev=e;slide(p)}
+  if(solved())return newGame();build();best()}
+$('nw').onclick=newGame;$('sz').onchange=newGame;
+$('nb').onclick=()=>{nums=!nums;$('nb').textContent='🔢 Numbers: '+(nums?'on':'off');build()};
+$('ph').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const i=new Image();i.onload=()=>{const c=document.createElement('canvas'),s=Math.min(i.width,i.height);c.width=c.height=700;c.getContext('2d').drawImage(i,(i.width-s)/2,(i.height-s)/2,s,s,0,0,700,700);img=c.toDataURL('image/jpeg',.88);newGame()};i.src=URL.createObjectURL(f)};
+$('rs').onclick=()=>{img=DEF;newGame()};
+const pvShow=on=>{[...B.querySelectorAll('.tile')].forEach(t=>t.style.opacity=on?0:1);B.style.backgroundImage=on?'url('+img+')':'';B.style.backgroundSize='100% 100%'};
+$('pv').onpointerdown=()=>pvShow(1);['pointerup','pointerleave','pointercancel'].forEach(k=>$('pv').addEventListener(k,()=>pvShow(0)));
+let au;function beep(f){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+.07);o.stop(au.currentTime+.07)}catch(x){}}
+addEventListener('keydown',ev=>{const d={ArrowLeft:1,ArrowRight:-1,ArrowUp:n,ArrowDown:-n}[ev.key];if(d===undefined)return;ev.preventDefault();const i=e+d;if(i>=0&&i<n*n&&(Math.abs(d)===n||(i/n|0)===(e/n|0)))tap(cell[i])});
+addEventListener('resize',()=>{if(cell.length){size();build()}});
+newGame();
+</script>

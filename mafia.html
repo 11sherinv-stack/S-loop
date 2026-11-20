@@ -1,0 +1,138 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Mafia</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 0,#2a1620,#0b0b10 70%);color:#f2e9e4;font:16px system-ui;text-align:center;overscroll-behavior:none;min-height:100vh}
+.top{padding:6px}a,button,.chip{background:#8b1e2d;color:#fff;border:0;border-radius:12px;padding:11px 16px;margin:4px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g{background:#3a3340}button.p{background:#2f6b4f}button:disabled{opacity:.35}
+#m{max-width:440px;margin:auto;padding:8px 14px 40px}h2,h3{margin:8px 0}.card{background:rgba(255,255,255,.07);border-radius:16px;padding:14px;margin:10px 0}
+.big{font-size:64px;margin:6px}.pl{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.pl button{min-width:44%;margin:2px}
+#log{max-height:240px;overflow:auto;text-align:right;font-size:14px;line-height:1.9}#log div{padding:3px 8px;border-radius:8px;margin:3px 0;background:rgba(255,255,255,.06)}
+.dead{opacity:.45;text-decoration:line-through}input,textarea,select{background:#221d27;color:#fff;border:1px solid #5a4d62;border-radius:10px;padding:8px;font:inherit;width:90%;box-sizing:border-box;margin:4px}
+.sub{opacity:.7;font-size:13px}
+</style>
+<div class=top><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>🕴️ Mafia</b></div>
+<div id=m></div>
+<script>
+const R={mafia:['🕴️','مافیا'],doctor:['🩺','دکتر'],detective:['🕵️','کارآگاه'],citizen:['👤','شهروند']};
+const BN=['آرین','مینا','سام','لیلا','کامران','نورا','رضا','سارا','بهرام','ترانه','پویا','هانا'];
+const M=document.getElementById('m'),acts={};
+let mode='bot',N=7,pl=[],day=0,sus=[],log=[],picks={},dk={},queue=[],busy=0;
+M.onclick=e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled&&acts[b.dataset.act])acts[b.dataset.act](b.dataset.i)};
+const $=i=>document.getElementById(i),rnd=n=>Math.random()*n|0,sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const alive=()=>pl.map((p,i)=>i).filter(i=>pl[i].alive),nm=i=>esc(pl[i].name);
+const aliveRole=r=>alive().filter(i=>pl[i].role===r);
+const scr=h=>{M.innerHTML=h;scrollTo(0,0)};
+function tone(f,d=.15){try{const a=window._a=window._a||new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+/* ---------- setup ---------- */
+function setup(){
+  scr(`<h2>🕴️ Mafia</h2><div class=card><div class=sub>شهر در خطر است! مافیاها شب‌ها یک نفر را می‌کشند؛ شهروندان روزها رأی می‌دهند تا مافیا را پیدا کنند. دکتر می‌تواند یک نفر را نجات دهد و کارآگاه هر شب یک نفر را بررسی می‌کند.</div></div>
+  <div class=card><b>حالت بازی</b><br><button class="${mode=='bot'?'':'g'}" data-act=mb>🤖 با ربات‌ها</button><button class="${mode=='pass'?'':'g'}" data-act=mp>📱 چند نفره (دست‌به‌دست)</button></div>
+  <div class=card id=opt>${mode=='bot'?`تعداد بازیکنان: <b id=nv>${N}</b><br><input type=range id=nr min=5 max=12 value=${N} style="width:70%">`:
+  `اسم بازیکنان را بنویس (هر خط یک نفر، حداقل ۵ نفر):<br><textarea id=names rows=7 placeholder="علی&#10;سارا&#10;..."></textarea>`}</div>
+  <button class=p data-act=go style="font-size:20px;padding:13px 40px">شروع بازی</button>`);
+  const r=$('nr');if(r)r.oninput=()=>{N=+r.value;$('nv').textContent=N}}
+acts.mb=()=>{mode='bot';setup()};acts.mp=()=>{mode='pass';setup()};
+acts.go=()=>{
+  let names;
+  if(mode=='bot'){names=['تو',...sh(BN).slice(0,N-1)]}
+  else{names=($('names').value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(names.length<5){alert('حداقل ۵ بازیکن لازم است');return}names=names.slice(0,16)}
+  const n=names.length,maf=Math.max(1,Math.floor(n/3.5)),roles=['doctor',...(n>=6?['detective']:[]),...Array(maf).fill('mafia')];while(roles.length<n)roles.push('citizen');
+  const rr=sh(roles);pl=names.map((s,i)=>({name:s,role:rr[i],alive:true,human:mode=='pass'||i==0}));
+  sus=Array(n).fill(0);day=0;log=[];dk={};reveal(0)}
+/* ---------- reveal ---------- */
+function roleCard(i){const r=pl[i].role,mates=r=='mafia'?pl.map((p,k)=>k).filter(k=>k!=i&&pl[k].role=='mafia'):[];
+  return `<div class=big>${R[r][0]}</div><h2>نقش تو: ${R[r][1]}</h2>`+(mates.length?`<div class=card>هم‌تیمی‌ها: ${mates.map(nm).join('، ')}</div>`:'')+
+  `<div class=sub>${{mafia:'شب‌ها با هم‌تیمی‌هایت یک نفر را حذف کن و روز خودت را بی‌گناه نشان بده.',doctor:'هر شب یک نفر را از مرگ نجات بده (می‌توانی خودت را هم).',detective:'هر شب یک نفر را بررسی کن و بفهم مافیاست یا نه.',citizen:'با دقت گوش کن و مافیا را پیدا کن.'}[r]}</div>`}
+function reveal(i){
+  if(mode=='bot'){scr(roleCard(0)+`<button class=p data-act=nx>فهمیدم، شروع کن</button>`);acts.nx=nightStart;return}
+  if(i>=pl.length){nightStart();return}
+  scr(`<h3>گوشی را بده به</h3><h2>${nm(i)}</h2><button data-act=sh>نقشم را نشان بده</button>`);
+  acts.sh=()=>{scr(roleCard(i)+`<button class=p data-act=hd>پنهان کن و ادامه</button>`);acts.hd=()=>reveal(i+1)}}
+/* ---------- night ---------- */
+function nightStart(){day++;picks={mafia:[],doc:null,det:null};
+  queue=mode=='bot'?(pl[0].alive?[0]:[]):alive();
+  if(mode=='bot'&&!queue.length){botNight();return}
+  nextNight()}
+function nextNight(){
+  if(!queue.length){botNight();return}
+  const i=queue.shift(),r=pl[i].role;
+  const act=()=>{
+    if(r=='citizen'){scr(`<div class=big>🌙</div><h2>شب ${day}</h2><div class=card>شهر خوابیده است… چشم‌هایت را ببند و دکمه را بزن.</div><button data-act=ok>باشه</button>`);acts.ok=nextNight;return}
+    const list=alive().filter(k=>r=='doctor'?true:k!=i&&!(r=='mafia'&&pl[k].role=='mafia'));
+    const t={mafia:'🕴️ چه کسی را بکشیم؟',doctor:'🩺 چه کسی را نجات می‌دهی؟',detective:'🕵️ چه کسی را بررسی می‌کنی؟'}[r];
+    scr(`<h2>شب ${day}</h2><div class=card><h3>${t}</h3><div class=pl>${list.map(k=>`<button class=g data-act=pk data-i=${k}>${nm(k)}</button>`).join('')}</div></div>`);
+    acts.pk=k=>{k=+k;if(r=='mafia')picks.mafia.push(k);else if(r=='doctor')picks.doc=k;else{picks.det=k;dk[k]=pl[k].role=='mafia';
+      scr(`<div class=big>${dk[k]?'🚨':'✅'}</div><h2>${nm(k)} ${dk[k]?'مافیا است!':'مافیا نیست.'}</h2><button class=p data-act=ok>ادامه</button>`);acts.ok=nextNight;return}nextNight()}};
+  if(mode=='pass'){scr(`<h3>گوشی را بده به</h3><h2>${nm(i)}</h2><button data-act=ok>آماده‌ام</button>`);acts.ok=act}else act()}
+function botNight(){
+  const al=alive(),town=al.filter(k=>pl[k].role!='mafia');
+  const botMaf=aliveRole('mafia').filter(k=>!pl[k].human);
+  if(!picks.mafia.length&&botMaf.length){const w=town.map(k=>({k,w:1+(pl[k].role=='detective'?.5:0)+Math.random()*2}));w.sort((a,b)=>b.w-a.w);picks.mafia.push(w[0].k)}
+  if(picks.doc==null&&aliveRole('doctor').some(k=>!pl[k].human))picks.doc=Math.random()<.2?aliveRole('doctor')[0]:al[rnd(al.length)];
+  const bd=aliveRole('detective').find(k=>!pl[k].human);if(bd!=null){const c=al.filter(k=>k!=bd&&!(k in dk));if(c.length){const k=c[rnd(c.length)];dk[k]=pl[k].role=='mafia'}}
+  resolve()}
+function resolve(){
+  let v=null;if(picks.mafia.length){const cnt={};picks.mafia.forEach(k=>cnt[k]=(cnt[k]||0)+1);const mx=Math.max(...Object.values(cnt)),top=Object.keys(cnt).filter(k=>cnt[k]==mx);v=+top[rnd(top.length)]}
+  const saved=v!=null&&picks.doc===v;let msg;
+  if(v==null||saved){msg=saved?'🩺 مافیا حمله کرد اما دکتر به‌موقع رسید؛ کسی نمُرد!':'☀️ شبی آرام بود؛ کسی نمُرد.'}
+  else{pl[v].alive=false;msg=`💀 ${nm(v)} شب گذشته کشته شد. او ${R[pl[v].role][1]} بود.`}
+  log=[];tone(v==null||saved?600:150,.3);
+  scr(`<div class=big>☀️</div><h2>روز ${day}</h2><div class=card>${msg}</div>${winCheck()?'':'<button class=p data-act=nx>ادامه</button>'}`);
+  if(!winCheck())acts.nx=discuss;else endGame()}
+function winCheck(){const m=aliveRole('mafia').length,t=alive().length-m;return m==0?'town':(m>=t?'mafia':null)}
+/* ---------- day ---------- */
+const accLines=['به {x} خیلی مشکوکم.','{x} دیشب رفتار عجیبی داشت.','فکر می‌کنم {x} مافیاست.','{x} زیادی ساکت بود…','بیایید {x} را زیر نظر بگیریم.'];
+function addLog(h){log.push(h);const l=$('log');if(l){l.innerHTML=log.map(x=>`<div>${x}</div>`).join('');l.scrollTop=1e9}}
+function discuss(){
+  scr(`<h2>روز ${day} — بحث</h2><div class=card><div class=pl>${pl.map((p,i)=>`<span class="chip g ${p.alive?'':'dead'}">${esc(p.name)}</span>`).join('')}</div></div><div class=card id=log></div><div id=ctl></div>`);
+  log=[];
+  if(mode=='pass'){let s=180;const tick=()=>{const e=$('tm');if(!e)return;e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');if(s-->0)setTimeout(tick,1000)};
+    $('ctl').innerHTML=`<div class=card>همه با هم صحبت کنید و مشکوک‌ها را پیدا کنید.<br><b id=tm style="font-size:28px"></b></div><button class=p data-act=vt>شروع رأی‌گیری</button>`;tick();acts.vt=vote;return}
+  const bots=sh(alive().filter(i=>!pl[i].human));let k=0;
+  const talk=()=>{if(k>=bots.length){ctl();return}const b=bots[k++];if(!pl[b].alive){talk();return}botSay(b);setTimeout(talk,750)};
+  $('ctl').innerHTML='<div class=sub>بازیکن‌ها صحبت می‌کنند…</div>';setTimeout(talk,400);
+  function ctl(){const meAlive=pl[0].alive;
+    $('ctl').innerHTML=(meAlive?`<div class=card><b>به چه کسی مشکوکی؟</b><div class=pl>${alive().filter(i=>i!=0).map(i=>`<button class=g data-act=ac data-i=${i}>${nm(i)}</button>`).join('')}</div></div>`:'<div class=card>تو مرده‌ای و فقط تماشا می‌کنی 👻</div>')+`<button class=p data-act=vt>برو به رأی‌گیری</button>`;
+    acts.ac=i=>{i=+i;sus[i]+=2.2;addLog(`<b>تو:</b> به ${nm(i)} مشکوکم.`);tone(500,.08)};acts.vt=vote}}
+function botSay(b){
+  const al=alive().filter(k=>k!=b),p=pl[b],town=al.filter(k=>pl[k].role!='mafia');
+  const knownMaf=Object.keys(dk).map(Number).filter(k=>dk[k]&&pl[k].alive);
+  let line;
+  if(p.role=='detective'&&knownMaf.length&&Math.random()<.7){const k=knownMaf[0];sus[k]+=4;line=`من کارآگاهم! دیشب ${nm(k)} را بررسی کردم؛ مافیاست!`}
+  else if(p.role=='mafia'){
+    const r=Math.random();
+    if(r<.22){const k=town[rnd(town.length)];sus[k]+=2.5;line=`من کارآگاهم! ${nm(k)} را بررسی کردم، مافیاست!`}
+    else if(r<.6){const k=town[rnd(town.length)];sus[k]+=1.3;line=accLines[rnd(5)].replace('{x}',nm(k))}
+    else{const m=al.filter(k=>pl[k].role=='mafia'&&sus[k]>1);if(m.length){sus[m[0]]-=1;line=`${nm(m[0])} بی‌گناهه، دارید اشتباه می‌کنید.`}else{const k=town[rnd(town.length)];sus[k]+=1;line=accLines[rnd(5)].replace('{x}',nm(k))}}}
+  else{const w=al.map(k=>({k,w:sus[k]+Math.random()*2.5}));w.sort((a,b2)=>b2.w-a.w);const k=w[0].k;sus[k]+=1;line=accLines[rnd(5)].replace('{x}',nm(k))}
+  addLog(`<b>${nm(b)}:</b> ${line}`)}
+/* ---------- vote ---------- */
+function vote(){
+  const votes={},cast=(v,t)=>{(votes[t]=votes[t]||[]).push(v)};
+  const humans=alive().filter(i=>pl[i].human);
+  const doBots=()=>{
+    alive().filter(i=>!pl[i].human).forEach(b=>{const al=alive().filter(k=>k!=b&&!(pl[b].role=='mafia'&&pl[k].role=='mafia'));
+      const w=al.map(k=>({k,w:sus[k]+(pl[b].role=='mafia'&&pl[k].role!='mafia'?.8:0)+Math.random()*2.2+(pl[b].role=='detective'&&dk[k]?9:0)}));w.sort((a,c)=>c.w-a.w);cast(b,w[0].k)});
+    tally(votes)};
+  if(mode=='bot'){if(!pl[0].alive){doBots();return}
+    scr(`<h2>🗳 رأی‌گیری</h2><div class=card><b>چه کسی باید حذف شود؟</b><div class=pl>${alive().filter(i=>i!=0).map(i=>`<button class=g data-act=vv data-i=${i}>${nm(i)}</button>`).join('')}</div></div>`);
+    acts.vv=i=>{cast(0,+i);doBots()};return}
+  let q=humans.slice();
+  const nxt=()=>{if(!q.length){tally(votes);return}const v=q.shift();
+    scr(`<h3>گوشی را بده به</h3><h2>${nm(v)}</h2><button data-act=ok>آماده‌ام</button>`);
+    acts.ok=()=>{scr(`<h2>${nm(v)}، به چه کسی رأی می‌دهی؟</h2><div class=pl>${alive().filter(i=>i!=v).map(i=>`<button class=g data-act=vv data-i=${i}>${nm(i)}</button>`).join('')}</div>`);acts.vv=i=>{cast(v,+i);nxt()}}};
+  nxt()}
+function tally(votes){
+  const ent=Object.keys(votes).map(k=>[+k,votes[k].length]).sort((a,b)=>b[1]-a[1]);let out=null;
+  if(ent.length&&(ent.length==1||ent[0][1]>ent[1][1]))out=ent[0][0];
+  ent.forEach(([k,n])=>{if(k!==out)sus[k]=Math.max(0,sus[k]-.5)});
+  let h=`<h2>نتیجه‌ی رأی‌گیری</h2><div class=card style="text-align:right">${ent.map(([k,n])=>`${nm(k)}: <b>${n}</b> رأی <span class=sub>(${votes[k].map(nm).join('، ')})</span>`).join('<br>')||'کسی رأی نداد'}</div>`;
+  if(out!=null){pl[out].alive=false;h+=`<div class=card>⚖️ ${nm(out)} حذف شد. او ${R[pl[out].role][1]} بود.</div>`;tone(200,.3)}else h+='<div class=card>رأی‌ها مساوی شد؛ کسی حذف نشد.</div>';
+  const w=winCheck();scr(h+(w?'':'<button class=p data-act=nx>شب می‌شود…</button>'));if(w)endGame();else acts.nx=nightStart}
+function endGame(){
+  const w=winCheck(),human=pl[0];
+  const youWin=mode=='bot'?((w=='mafia')==(human.role=='mafia')):null;
+  setTimeout(()=>{scr(`<div class=big>${w=='town'?'🏙️':'🕴️'}</div><h2>${w=='town'?'شهروندان برنده شدند!':'مافیا شهر را گرفت!'}</h2>${youWin==null?'':`<div class=card>${youWin?'🎉 تو برنده شدی!':'😅 تو باختی.'}</div>`}
+    <div class=card style="text-align:right">${pl.map(p=>`${R[p.role][0]} ${esc(p.name)} — ${R[p.role][1]} ${p.alive?'':'💀'}`).join('<br>')}</div><button class=p data-act=again>بازی دوباره</button>`);acts.again=setup;tone(w=='town'?800:120,.4)},w?900:0)}
+setup();
+</script>

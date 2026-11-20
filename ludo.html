@@ -29,7 +29,7 @@ canvas{display:block;width:100%;aspect-ratio:1;border-radius:10px;touch-action:n
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🎲 منچ (Ludo)</h1>
 <div class="row">
-  <select id="md" aria-label="تعداد بازیکن"><option value="1">۱ نفره (با کامپیوتر)</option><option value="2">۲ نفره</option><option value="4">۴ نفره</option></select>
+  <select id="md" aria-label="تعداد بازیکن"><option value="1">۱ نفره (با کامپیوتر)</option><option value="2">۲ نفره</option><option value="4">۴ نفره</option><option value="5">🌐 آنلاین (۲ نفره)</option></select>
   <select id="cp" aria-label="تعداد کامپیوتر"><option value="1">۱ کامپیوتر</option><option value="2">۲ کامپیوتر</option><option value="3" selected>۳ کامپیوتر</option></select>
   <button class="b pr" id="nw">بازی جدید</button>
 </div>
@@ -37,7 +37,9 @@ canvas{display:block;width:100%;aspect-ratio:1;border-radius:10px;touch-action:n
 <div class="wrap"><canvas id="c"></canvas><div class="ov" id="ov"><h2 id="ot"></h2><button class="b pr" id="ob">دوباره</button></div></div>
 <button id="dice" aria-label="انداختن تاس">🎲</button>
 <div class="hint">برای بیرون آوردن مهره، ۶ بیاور. اگر روی مهره‌ی حریف بنشینی، به خانه برمی‌گردد (جز خانه‌های ستاره‌دار و شروع). ۶، گرفتن مهره و رسیدن به مقصد، یک نوبت اضافه می‌دهد. برای رسیدن به مقصد عدد دقیق لازم است.</div>
+<script src="slnet.js"></script>
 <script>
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
 const $=i=>document.getElementById(i),S=28,W=15*S,cv=$('c'),x=cv.getContext('2d');cv.width=cv.height=W;
 const TRACK=[[1,6],[2,6],[3,6],[4,6],[5,6],[6,5],[6,4],[6,3],[6,2],[6,1],[6,0],[7,0],[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[9,6],[10,6],[11,6],[12,6],[13,6],[14,6],[14,7],[14,8],[13,8],[12,8],[11,8],[10,8],[9,8],[8,9],[8,10],[8,11],[8,12],[8,13],[8,14],[7,14],[6,14],[6,13],[6,12],[6,11],[6,10],[6,9],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8],[0,7],[0,6]];
 const COL=[
@@ -52,6 +54,7 @@ function xy(ci,p,j){const C=COL[ci];if(p<0)return C.b[j];if(p<=50)return TRACK[(
 function setup(){
   const m=+$('md').value;
   if(m===1)seats=[{ci:0,human:true}].concat([2,1,3].slice(0,+$('cp').value).map(ci=>({ci,human:false})));
+  else if(m===5)seats=[{ci:0,human:HOST},{ci:2,human:!HOST}];
   else if(m===2)seats=[{ci:0,human:true},{ci:2,human:true}];
   else seats=[0,1,2,3].map(ci=>({ci,human:true}));
   seats.sort((a,b)=>a.ci-b.ci);seats.forEach(s=>s.t=[0,1,2,3].map(()=>({p:-1})));
@@ -60,14 +63,14 @@ function setup(){
 function msg(t,ci){$('stt').innerHTML=(ci!=null?'<span style="color:'+COL[ci].c+'">●</span> ':'')+t}
 function startTurn(){
   cur=seats[ti];ph='roll';mv=[];dice=0;
-  msg('نوبت '+COL[cur.ci].n+(cur.human?' — تاس را بینداز':' (کامپیوتر)'),cur.ci);
+  msg('نوبت '+COL[cur.ci].n+(cur.human?' — تاس را بینداز':(+$('md').value===5?' (حریف)':' (کامپیوتر)')),cur.ci);
   $('dice').disabled=!cur.human;
-  if(!cur.human)setTimeout(roll,800);
+  if(!cur.human&&+$('md').value!==5)setTimeout(roll,800);
 }
-function roll(){
+function roll(fd){
   if(ph!=='roll')return;ph='anim';$('dice').disabled=true;let n=0;
   const iv=setInterval(()=>{$('dice').textContent=FACES[Math.floor(Math.random()*6)];beep(300+n*20,.03);
-    if(++n>7){clearInterval(iv);dice=1+Math.floor(Math.random()*6);$('dice').textContent=FACES[dice-1];afterRoll()}},70);
+    if(++n>7){clearInterval(iv);dice=fd||(1+Math.floor(Math.random()*6));if(!fd&&+$('md').value===5)SLNet.send({k:'roll',d:dice});$('dice').textContent=FACES[dice-1];afterRoll()}},70);
 }
 function moves(s,d){
   const r=[];
@@ -82,6 +85,7 @@ function afterRoll(){
   mv=moves(cur,dice);
   if(!mv.length){msg('حرکتی نداری — نوبت بعدی',cur.ci);setTimeout(()=>next(dice===6),1000);return}
   if(!cur.human){
+    if(+$('md').value===5){ph='wait';return}
     let best=mv[0],bs=-1;
     mv.forEach(m=>{const t=cur.t[m.j];let sc=m.to*.5+Math.random()*3;if(m.to===56)sc+=100;if(capturable(cur,m.to))sc+=80;if(t.p<0)sc+=50;if(m.to>=51)sc+=30;if(sc>bs){bs=sc;best=m}});
     setTimeout(()=>doMove(best),600);return;
@@ -89,7 +93,8 @@ function afterRoll(){
   if(mv.length===1){setTimeout(()=>doMove(mv[0]),400);return}
   ph='pick';msg('یک مهره را انتخاب کن',cur.ci);
 }
-function doMove(m){
+function doMove(m,rm){
+  if(+$('md').value===5&&!rm)SLNet.send({k:'mv',j:m.j});
   ph='anim';mv=[];const t=cur.t[m.j];
   if(t.p<0){t.p=0;beep(500);setTimeout(()=>post(t,m.j),300);return}
   const step=()=>{t.p++;beep(380+t.p*4,.04);if(t.p<m.to)setTimeout(step,130);else post(t,m.j)};
@@ -141,7 +146,21 @@ cv.addEventListener('pointerdown',e=>{
   if(h)doMove(mv.find(m=>m.j===h.j));
 });
 $('dice').onclick=()=>{if(cur&&cur.human)roll()};
-$('nw').onclick=setup;$('ob').onclick=setup;$('md').onchange=setup;$('cp').onchange=setup;
+const FILE='ludo.html',TITLE='Ludo';let prevMd='1';
+const reset=()=>{if(+$('md').value===5)SLNet.send({k:'new'});setup()};
+$('nw').onclick=reset;$('ob').onclick=reset;$('cp').onchange=setup;
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='5'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='5'){location.href=location.pathname;return}
+  prevMd=v;setup()};
+if(ROOM&&HASNET){$('md').value='5';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();setup()},
+   msg:o=>{const on=+$('md').value===5;
+    if(o.k==='roll'&&on&&cur&&!cur.human&&ph==='roll')roll(o.d);
+    else if(o.k==='mv'&&on&&cur&&!cur.human&&ph==='wait'){const m=mv.find(q=>q.j===o.j);if(m)doMove(m,true)}
+    else if(o.k==='new')setup()}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000){const e=document.getElementById('stt');if(e)e.textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 setup();requestAnimationFrame(loop);
 </script>
 </body>

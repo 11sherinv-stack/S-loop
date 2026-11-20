@@ -29,7 +29,7 @@ canvas{display:block;width:100%;border-radius:10px;box-shadow:0 4px 14px rgba(0,
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>🐍 مارپله (Snakes &amp; Ladders)</h1>
 <div class="row">
-  <select id="md" aria-label="تعداد بازیکن"><option value="1">۱ نفره (با کامپیوتر)</option><option value="2">۲ نفره</option><option value="4">۴ نفره</option></select>
+  <select id="md" aria-label="تعداد بازیکن"><option value="1">۱ نفره (با کامپیوتر)</option><option value="2">۲ نفره</option><option value="4">۴ نفره</option><option value="5">🌐 آنلاین (۲ نفره)</option></select>
   <select id="cp" aria-label="تعداد کامپیوتر"><option value="1" selected>۱ کامپیوتر</option><option value="2">۲ کامپیوتر</option><option value="3">۳ کامپیوتر</option></select>
   <button class="b pr" id="nw">بازی جدید</button>
 </div>
@@ -37,7 +37,9 @@ canvas{display:block;width:100%;border-radius:10px;box-shadow:0 4px 14px rgba(0,
 <div class="wrap"><canvas id="c"></canvas><div class="ov" id="ov"><h2 id="ot"></h2><button class="b pr" id="ob">دوباره</button></div></div>
 <button id="dice" aria-label="انداختن تاس">🎲</button>
 <div class="hint">نردبان تو را بالا می‌برد و مار پایین می‌آورد. برای رسیدن به ۱۰۰ باید عدد دقیق بیاوری. آوردن ۶ یک نوبت اضافه می‌دهد.</div>
+<script src="slnet.js"></script>
 <script>
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
 const $=i=>document.getElementById(i),S=40,W=400,H=432,cv=$('c'),x=cv.getContext('2d');cv.width=W;cv.height=H;
 const SN={16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78},LD={1:38,4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
 const PC=[{n:'قرمز',c:'#e53935'},{n:'آبی',c:'#1e88e5'},{n:'سبز',c:'#43a047'},{n:'زرد',c:'#f9a825'}],FACES='⚀⚁⚂⚃⚄⚅',OFF=[[-8,-8],[8,-8],[-8,8],[8,8]];
@@ -46,21 +48,21 @@ function beep(f,d=.06){try{au=au||new(window.AudioContext||window.webkitAudioCon
 function sq(n){const i=n-1,row=i/10|0,col=row%2?9-i%10:i%10;return[col*S+S/2,(9-row)*S+S/2]}
 function target(p){return p.pos===0?[50+p.ci*95,10*S+16]:(()=>{const[a,b]=sq(p.pos);return[a+OFF[p.ci][0],b+OFF[p.ci][1]]})()}
 function setup(){
-  const m=+$('md').value,n=m===1?1+ +$('cp').value:m;
-  const order=m===2?[0,1]:[0,1,2,3];
-  pl=order.slice(0,n).map((ci,k)=>({ci,human:m===1?k===0:true,pos:0,dx:0,dy:0}));
+  const m=+$('md').value,n=m===1?1+ +$('cp').value:(m===5?2:m);
+  const order=(m===2||m===5)?[0,1]:[0,1,2,3];
+  pl=order.slice(0,n).map((ci,k)=>({ci,human:m===1?k===0:(m===5?k===(HOST?0:1):true),pos:0,dx:0,dy:0}));
   pl.forEach(p=>{[p.dx,p.dy]=target(p)});
   ti=0;$('ov').style.display='none';$('cp').style.display=m===1?'':'none';start();
 }
 function msg(t,ci){$('stt').innerHTML=(ci!=null?'<span style="color:'+PC[ci].c+'">●</span> ':'')+t}
 function start(){
-  cur=pl[ti];ph='roll';msg('نوبت '+PC[cur.ci].n+(cur.human?' — تاس را بینداز':' (کامپیوتر)'),cur.ci);
-  $('dice').disabled=!cur.human;if(!cur.human)setTimeout(roll,800);
+  cur=pl[ti];ph='roll';msg('نوبت '+PC[cur.ci].n+(cur.human?' — تاس را بینداز':(+$('md').value===5?' (حریف)':' (کامپیوتر)')),cur.ci);
+  $('dice').disabled=!cur.human;if(!cur.human&&+$('md').value!==5)setTimeout(roll,800);
 }
-function roll(){
+function roll(fd){
   if(ph!=='roll')return;ph='anim';$('dice').disabled=true;let n=0;
   const iv=setInterval(()=>{$('dice').textContent=FACES[Math.floor(Math.random()*6)];beep(300+n*20,.03);
-    if(++n>7){clearInterval(iv);const d=1+Math.floor(Math.random()*6);$('dice').textContent=FACES[d-1];go(d)}},70);
+    if(++n>7){clearInterval(iv);const d=fd||(1+Math.floor(Math.random()*6));if(!fd&&+$('md').value===5)SLNet.send({k:'roll',d});$('dice').textContent=FACES[d-1];go(d)}},70);
 }
 function next(extra){if(!extra)ti=(ti+1)%pl.length;start()}
 function go(d){
@@ -118,7 +120,18 @@ function loop(){
   requestAnimationFrame(loop);
 }
 $('dice').onclick=()=>{if(cur&&cur.human)roll()};
-$('nw').onclick=setup;$('ob').onclick=setup;$('md').onchange=setup;$('cp').onchange=setup;
+const FILE='snakeladder.html',TITLE='Snakes & Ladders';let prevMd='1';
+const reset=()=>{if(+$('md').value===5)SLNet.send({k:'new'});setup()};
+$('nw').onclick=reset;$('ob').onclick=reset;$('cp').onchange=setup;
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='5'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='5'){location.href=location.pathname;return}
+  prevMd=v;setup()};
+if(ROOM&&HASNET){$('md').value='5';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();setup()},
+   msg:o=>{if(o.k==='roll'&&+$('md').value===5&&cur&&!cur.human&&ph==='roll')roll(o.d);else if(o.k==='new')setup()}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000){const e=document.getElementById('stt');if(e)e.textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 setup();requestAnimationFrame(loop);
 </script>
 </body>

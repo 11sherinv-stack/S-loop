@@ -31,7 +31,7 @@ canvas{display:block;height:min(calc(100svh - 210px),560px);aspect-ratio:360/560
 <body><a href="index.html" style="position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:8px;z-index:999;background:#586a2bd9;color:#f1f8d0;padding:4px 10px;border-radius:14px;font:12px sans-serif;text-decoration:none">&larr; S loop</a>
 <h1>⚽ Soccer Pool</h1>
 <div class="row">
-  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option></select>
+  <select id="md" aria-label="حالت"><option value="1">مقابل کامپیوتر</option><option value="2">دو نفره</option><option value="3">🌐 آنلاین</option></select>
   <select id="lv" aria-label="سطح"><option value="0">آسان</option><option value="1" selected>متوسط</option><option value="2">سخت</option></select>
   <button class="b pr" id="nw">بازی جدید</button>
 </div>
@@ -39,7 +39,10 @@ canvas{display:block;height:min(calc(100svh - 210px),560px);aspect-ratio:360/560
 <div id="stt"></div>
 <div class="wrap"><canvas id="c" width="360" height="560"></canvas><div class="ov" id="ov"><h2 id="ot"></h2><button class="b pr" id="ob">بازی جدید</button></div></div>
 <div class="hint">روی مهره‌ی خودت انگشت بگذار، به عقب بکش و رها کن تا توپ را به سمت دروازه‌ی حریف بزنی. هر نوبت فقط یک مهره.</div>
+<script src="slnet.js"></script>
 <script>
+const Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
+const ME=HOST?0:1;let ONL=false;
 const W=360,H=560,FX=20,FY=34,FW=320,FH=492,GW=120,DR=17,BR=11,$=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d'),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 let objs=[],ball,turn=0,score=[0,0],st='idle',sel=null,aim=null,mode=1,lvl=1,au,last=0,still=0,pauseT=0,flash=0,msg='',msgT=0;
 function beep(f,d=.04,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.04*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
@@ -49,19 +52,20 @@ function formation(){
   ball={x:180,y:280,vx:0,vy:0,r:BR,m:1,ball:true};
 }
 function newGame(){
-  mode=+$('md').value;lvl=+$('lv').value;score=[0,0];turn=0;sel=null;aim=null;formation();st='aim';$('ov').style.display='none';
-  $('lv').style.display=mode===1?'':'none';$('nu').firstChild.textContent=mode===1?'تو (آبی)':'آبی';$('nc').firstChild.textContent=mode===1?'کامپیوتر (قرمز)':'قرمز';hud();turnStart();
+  mode=+$('md').value;ONL=mode===3;lvl=+$('lv').value;score=[0,0];turn=0;sel=null;aim=null;formation();st='aim';$('ov').style.display='none';
+  $('lv').style.display=mode===1?'':'none';$('nu').firstChild.textContent=mode===1?'تو (آبی)':(ONL&&ME===0?'تو (آبی)':'آبی');$('nc').firstChild.textContent=mode===1?'کامپیوتر (قرمز)':(ONL&&ME===1?'تو (قرمز)':'قرمز');hud();turnStart();
 }
 function hud(){$('su').textContent=fa(score[0]);$('sc').textContent=fa(score[1])}
 function turnStart(){
-  st='aim';const mine=mode===2||turn===0;
-  $('stt').textContent=mode===1?(turn===0?'نوبت توست 🔵':'نوبت کامپیوتر 🔴'):'نوبت '+(turn===0?'آبی 🔵 (پایین)':'قرمز 🔴 (بالا)');
-  if(!mine)setTimeout(aiPlay,750);
+  st='aim';const mine=ONL?turn===ME:(mode===2||turn===0);
+  $('stt').textContent=ONL?(turn===ME?'نوبت توست '+(ME===0?'🔵':'🔴'):'نوبت حریف…'):mode===1?(turn===0?'نوبت توست 🔵':'نوبت کامپیوتر 🔴'):'نوبت '+(turn===0?'آبی 🔵 (پایین)':'قرمز 🔴 (بالا)');
+  if(!mine&&!ONL)setTimeout(aiPlay,750);
 }
 function goal(t){
+  if(ONL&&turn!==ME){st='wait';return}
   score[t]++;hud();flash=.6;msg='GOAL! ⚽';msgT=1.2;beep(880,.3);
-  if(score[t]>=3){st='over';const win=t===0;$('ot').textContent=mode===1?(win?'🏆 تو بردی!':'😅 کامپیوتر برد'):'🏆 '+(t===0?'آبی':'قرمز')+' برنده شد';$('ov').style.display='flex';return}
-  st='pause';pauseT=1.2;turn=1-t;formation();
+  if(score[t]>=3){st='over';const win=t===0;$('ot').textContent=ONL?(t===ME?'🏆 تو بردی!':'😅 حریف برد'):mode===1?(win?'🏆 تو بردی!':'😅 کامپیوتر برد'):'🏆 '+(t===0?'آبی':'قرمز')+' برنده شد';$('ov').style.display='flex';if(ONL)sendSync();return}
+  st='pause';pauseT=1.2;turn=1-t;formation();if(ONL)sendSync();
 }
 function hitCircle(o,px,py,pr){
   const dx=o.x-px,dy=o.y-py,d=Math.hypot(dx,dy),mn=o.r+pr;
@@ -90,7 +94,7 @@ function step(dt){
     if(ball.y>FY+FH+ball.r)return goal(1);
   }
 }
-function flick(o,vx,vy){const sp=Math.hypot(vx,vy),k=sp>950?950/sp:1;o.vx=vx*k;o.vy=vy*k;st='move';still=0;beep(300,.05)}
+function flick(o,vx,vy,rm){if(ONL&&!rm&&turn===ME)SLNet.send({k:'flick',i:objs.indexOf(o),vx,vy});const sp=Math.hypot(vx,vy),k=sp>950?950/sp:1;o.vx=vx*k;o.vy=vy*k;st='move';still=0;beep(300,.05)}
 function aiPlay(){
   if(st!=='aim'||(mode===1&&turn!==1)&&false)return;
   const team=turn,mine=objs.filter(o=>o.t===team),gy=team===0?FY-12:FY+FH+12;
@@ -106,7 +110,7 @@ function aiPlay(){
 }
 function loop(t){
   const dt=Math.min(.033,(t-last)/1000||0);last=t;msgT=Math.max(0,msgT-dt);flash=Math.max(0,flash-dt);
-  if(st==='move'){step(dt);if(st==='move'){const mv=objs.concat([ball]).some(o=>o.vx||o.vy);still=mv?0:still+dt;if(still>.25){turn=1-turn;turnStart()}}}
+  if(st==='move'){step(dt);if(st==='move'){const mv=objs.concat([ball]).some(o=>o.vx||o.vy);still=mv?0:still+dt;if(still>.25){if(ONL&&turn!==ME){st='wait'}else{turn=1-turn;if(ONL)sendSync();turnStart()}}}}
   else if(st==='pause'){pauseT-=dt;if(pauseT<=0)turnStart()}
   draw(t);requestAnimationFrame(loop);
 }
@@ -139,7 +143,7 @@ function draw(t){
 }
 const pos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
 cv.addEventListener('pointerdown',e=>{
-  e.preventDefault();if(st!=='aim'||(mode===1&&turn!==0))return;
+  e.preventDefault();if(st!=='aim'||(mode===1&&turn!==0)||(ONL&&turn!==ME))return;
   const p=pos(e);let best=null,bd=1e9;objs.forEach(o=>{if(o.t!==turn)return;const d=Math.hypot(o.x-p.x,o.y-p.y);if(d<o.r+16&&d<bd){bd=d;best=o}});
   if(best){sel=best;aim=p;cv.setPointerCapture(e.pointerId)}
 });
@@ -150,7 +154,22 @@ function release(){
   if(Math.hypot(vx,vy)<90||st!=='aim')return;flick(o,vx,vy);
 }
 ['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,release));
-$('nw').onclick=newGame;$('ob').onclick=newGame;['md','lv'].forEach(i=>$(i).onchange=newGame);
+const FILE='soccerpool.html',TITLE='Soccer Pool';let prevMd='1';
+function sendSync(){SLNet.send({k:'sync',o:objs.map(o=>[o.x,o.y]),b:[ball.x,ball.y],sc:score,turn,st})}
+function rxSync(m){objs.forEach((o,i)=>{o.x=m.o[i][0];o.y=m.o[i][1];o.vx=o.vy=0});ball.x=m.b[0];ball.y=m.b[1];ball.vx=ball.vy=0;
+  const g=m.sc[0]!==score[0]||m.sc[1]!==score[1];score=m.sc;hud();if(g){flash=.6;msg='GOAL! ⚽';msgT=1.2;beep(880,.3)}
+  turn=m.turn;if(m.st==='over'){st='over';$('ot').textContent=score[ME]>=3?'🏆 تو بردی!':'😅 حریف برد';$('ov').style.display='flex'}else turnStart()}
+const reset=()=>{if(ONL)SLNet.send({k:'new'});newGame()};
+$('nw').onclick=reset;$('ob').onclick=reset;$('lv').onchange=newGame;
+$('md').onchange=()=>{const v=$('md').value;
+  if(v==='3'&&!ROOM){$('md').value=prevMd;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='3'){location.href=location.pathname;return}
+  prevMd=v;newGame()};
+if(ROOM&&HASNET){$('md').value='3';
+  SLNet.open(ROOM,{host:HOST,peer:()=>{SLNet.hide();newGame()},
+   msg:o=>{if(!ONL)return;if(o.k==='flick'&&turn!==ME&&st==='aim')flick(objs[o.i],o.vx,o.vy,true);else if(o.k==='sync')rxSync(o);else if(o.k==='new')newGame()}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(()=>{if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000){const e=document.getElementById('stt');if(e)e.textContent='⚠️ ارتباط حریف قطع شد'}},3000);
 newGame();requestAnimationFrame(loop);
 </script>
 </body>

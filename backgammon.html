@@ -39,21 +39,24 @@ select option{color:#111}button:disabled{opacity:.4}
 <body>
 <h1>🎲 Backgammon — تخته نرد</h1>
 <div class="bar">
-  <select id="mode" aria-label="حالت"><option value="cpu">با کامپیوتر</option><option value="two">دو نفره (یک گوشی)</option><option value="watch">تماشای کامپیوتر</option></select>
+  <select id="mode" aria-label="حالت"><option value="cpu">با کامپیوتر</option><option value="two">دو نفره (یک گوشی)</option><option value="watch">تماشای کامپیوتر</option><option value="on">🌐 آنلاین</option></select>
   <button id="new">بازی تازه</button>
 </div>
 <div id="info"></div>
 <div id="board"></div>
 <button id="roll">🎲 تاس بنداز</button>
 <div class="cnt"><span id="c0"></span><span id="c1"></span></div>
+<script src="slnet.js"></script>
 <script>
 (function(){
 'use strict';
+var Q=new URLSearchParams(location.search),ROOM=Q.get('room'),HOST=Q.get('host')==='1',HASNET=!!window.SLNet;
+var me=HOST?0:1;
 var $=function(i){return document.getElementById(i)};
 var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
 var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'triangle';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.15),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
 var S,mode,turn,dice,usedAll,sel,phase,winner,token=0,dests=[],firsts=[];
-var NAME=function(p){return mode==='cpu'?(p===0?'تو (سفید)':'کامپیوتر (سیاه)'):mode==='watch'?(p===0?'سفید':'سیاه'):(p===0?'سفید':'سیاه')};
+var NAME=function(p){if(mode==='on')return p===me?'تو ('+(p===0?'سفید':'سیاه')+')':'حریف ('+(p===0?'سفید':'سیاه')+')';return mode==='cpu'?(p===0?'تو (سفید)':'کامپیوتر (سیاه)'):mode==='watch'?(p===0?'سفید':'سیاه'):(p===0?'سفید':'سیاه')};
 var sgn=function(p){return p===0?1:-1};
 function initState(){var pts=Array(24).fill(0);
   pts[23]=2;pts[12]=5;pts[7]=3;pts[5]=5; pts[0]=-2;pts[11]=-5;pts[16]=-3;pts[18]=-5;
@@ -145,10 +148,10 @@ function render(){
   if(dice&&dice.all){dice.all.forEach(function(d,i){var e=document.createElement('div');e.className='die'+(dice.used[i]?' u':'')+(dice.fresh?' r':'');e.textContent=d;dc.appendChild(e)});dice.fresh=false}
   $('c0').textContent='سفید: '+S.off[0]+'/15 بیرون · pip '+pip(S,0);$('c1').textContent='سیاه: '+S.off[1]+'/15 بیرون · pip '+pip(S,1);
 }
-function isHuman(p){return mode==='two'||(mode==='cpu'&&p===0)}
+function isHuman(p){return mode==='two'||(mode==='cpu'&&p===0)||(mode==='on'&&p===me)}
 function rem(){return dice.all.filter(function(_,i){return !dice.used[i]})}
-function newGame(){
-  token++;mode=$('mode').value;S=initState();winner=-1;dice=null;sel=null;dests=[];firsts=[];turn=Math.random()<.5?0:1;phase='roll';
+function newGame(ft){
+  token++;mode=$('mode').value;S=initState();winner=-1;dice=null;sel=null;dests=[];firsts=[];turn=(ft===0||ft===1)?ft:(Math.random()<.5?0:1);phase='roll';
   build();render();info('قرعه: '+NAME(turn)+' اول بازی می‌کند.');next();
 }
 function info(t){$('info').textContent=t}
@@ -156,14 +159,17 @@ function next(){
   var my=token;render();$('roll').style.display='none';
   if(winner>-1)return;
   if(isHuman(turn)){phase='roll';$('roll').style.display='';info(NAME(turn)+': تاس بنداز!');}
+  else if(mode==='on'){phase='wait';info('منتظر حریف…')}
   else{phase='cpu';info(NAME(turn)+' در حال بازی…');setTimeout(function(){if(my===token)doRoll()},800)}
 }
-function doRoll(){
-  var my=token,a=1+Math.floor(Math.random()*6),b=1+Math.floor(Math.random()*6),all=a===b?[a,a,a,a]:[a,b];
+function doRoll(fa){
+  var my=token,a=fa?fa[0]:1+Math.floor(Math.random()*6),b=fa?fa[1]:1+Math.floor(Math.random()*6),all=a===b?[a,a,a,a]:[a,b];
+  if(mode==='on'&&!fa)SLNet.send({k:'dice',a:a,b:b});
   dice={all:all,used:all.map(function(){return false}),fresh:true};snd(300,.1,'square',.1);render();$('roll').style.display='none';
   var r=search(S,turn,all.slice());
-  if(r.len===0){info(NAME(turn)+' حرکتی ندارد و رد می‌شود. (تاس '+all.join('-')+')');setTimeout(function(){if(my===token)endTurn()},1500);return}
+  if(r.len===0){info(NAME(turn)+' حرکتی ندارد و رد می‌شود. (تاس '+all.join('-')+')');if(mode==='on'&&!isHuman(turn))return;setTimeout(function(){if(my===token)endTurn()},1500);return}
   if(isHuman(turn)){phase='move';info(NAME(turn)+': مهره‌ای را انتخاب کن.');updFirsts()}
+  else if(mode==='on'){phase='wait';info(NAME(turn)+' در حال بازی…')}
   else{
     var best=null,bv=-1e9;r.leaves.forEach(function(l){var v=evalS(l.st,turn)+Math.random()*1.5;if(v>bv){bv=v;best=l}});
     phase='cpu';var i=0;(function step(){if(my!==token)return;if(i>=best.seq.length){setTimeout(function(){if(my===token)endTurn()},500);return}
@@ -186,7 +192,7 @@ function afterHumanMove(){
   if(rem().length===0||r.len===0){setTimeout(endTurn,500);return}
   updFirsts();
 }
-function endTurn(){if(winner>-1)return;turn=1-turn;dice=null;sel=null;dests=[];firsts=[];next()}
+function endTurn(){if(winner>-1)return;if(mode==='on'&&turn===me)SLNet.send({k:'end'});turn=1-turn;dice=null;sel=null;dests=[];firsts=[];next()}
 function pick(f){ // انتخاب مبدأ
   if(phase!=='move'||!isHuman(turn))return;
   var m=firsts.filter(function(x){return x.f===f});
@@ -202,10 +208,25 @@ function tapBar(){if(phase==='move'&&isHuman(turn)&&S.bar[turn]>0)pick(-1)}
 function tapOff(){if(phase==='move'&&isHuman(turn)&&sel!==null&&dests.indexOf(-2)>-1)go(-2)}
 function go(t){
   var c=firsts.filter(function(x){return x.f===sel&&x.t===t}).sort(function(a,b){return a.d-b.d});if(!c.length)return;
+  if(mode==='on')SLNet.send({k:'mv',m:c[0]});
   play(c[0]);if(winner>-1)return;afterHumanMove();
 }
 $('roll').onclick=function(){if(phase==='roll')doRoll()};
-$('new').onclick=newGame;$('mode').onchange=newGame;
+var FILE='backgammon.html',TITLE='Backgammon',prevM='cpu';
+$('new').onclick=function(){if(mode==='on'){var t=Math.random()<.5?0:1;SLNet.send({k:'new',t:t});newGame(t)}else newGame()};
+$('mode').onchange=function(){var v=$('mode').value;
+  if(v==='on'&&!ROOM){$('mode').value=prevM;if(HASNET)SLNet.menu(FILE,TITLE);return}
+  if(ROOM&&v!=='on'){location.href=location.pathname;return}
+  prevM=v;newGame()};
+if(ROOM&&HASNET){$('mode').value='on';
+  SLNet.open(ROOM,{host:HOST,peer:function(){SLNet.hide();if(HOST){var t=Math.random()<.5?0:1;SLNet.send({k:'new',t:t});newGame(t)}},
+   msg:function(o){if(mode!=='on')return;
+    if(o.k==='dice'&&!isHuman(turn))doRoll([o.a,o.b]);
+    else if(o.k==='mv'&&!isHuman(turn)&&dice)play(o.m);
+    else if(o.k==='end'&&!isHuman(turn))endTurn();
+    else if(o.k==='new')newGame(o.t)}});
+  SLNet.wait(FILE,TITLE)}
+setInterval(function(){if(ROOM&&window.SLNet&&SLNet.peer&&SLNet.alive()>15000)info('⚠️ ارتباط حریف قطع شد')},3000);
 window.__bg={state:function(){return S},winner:function(){return winner}};
 newGame();
 })();

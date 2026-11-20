@@ -1,0 +1,88 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Fidget Cube</title>
+<style>
+:root{--body:#1b1b1d;--acc:#e0262e;--hi:#ff5a60}
+body{margin:0;background:radial-gradient(circle at 50% 30%,#3a3a46,#14141a);color:#fff;font:15px system-ui;text-align:center;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+a,button.t{background:#33333d;color:#fff;border:0;border-radius:10px;padding:7px 12px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+#stage{perspective:850px;height:330px;display:flex;justify-content:center;align-items:center;touch-action:none}
+#cube{width:220px;height:220px;position:relative;transform-style:preserve-3d;transform:rotateX(-22deg) rotateY(-32deg)}
+#cube.snap{transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.face{position:absolute;width:220px;height:220px;border-radius:28px;background:linear-gradient(145deg,#2a2a2e,var(--body));box-shadow:inset 0 0 36px rgba(0,0,0,.65),inset 0 2px 3px rgba(255,255,255,.08);backface-visibility:hidden}
+.f1{transform:translateZ(110px)}.f2{transform:rotateY(90deg) translateZ(110px)}.f3{transform:rotateY(180deg) translateZ(110px)}.f4{transform:rotateY(-90deg) translateZ(110px)}.f5{transform:rotateX(90deg) translateZ(110px)}.f6{transform:rotateX(-90deg) translateZ(110px)}
+.ctl{position:absolute;touch-action:none;cursor:pointer}
+.btn{width:50px;height:50px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--hi),var(--acc));box-shadow:0 5px 0 #7a1015,0 8px 10px rgba(0,0,0,.5);transition:transform .06s,box-shadow .06s}
+.btn.dn{transform:translateY(5px);box-shadow:0 0 0 #7a1015,0 2px 4px rgba(0,0,0,.5)}
+.hole{position:absolute;border-radius:50%;background:#08080a;box-shadow:inset 0 4px 10px #000}
+.knob{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 38% 30%,var(--hi),var(--acc) 70%);box-shadow:0 6px 0 #7a1015,0 12px 18px rgba(0,0,0,.6)}
+.ball{width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff,#b9bec7 30%,#4a4f5a 70%,#20232b);box-shadow:0 4px 8px rgba(0,0,0,.7)}
+.slot{height:30px;width:100px;background:#08080a;border-radius:8px;box-shadow:inset 0 3px 8px #000}
+.thumb{position:absolute;top:3px;left:3px;width:34px;height:24px;border-radius:6px;background:linear-gradient(var(--hi),var(--acc));box-shadow:0 2px 0 #7a1015}
+.sw{width:34px;height:70px;background:#08080a;border-radius:10px;box-shadow:inset 0 3px 8px #000}
+.lever{position:absolute;left:4px;width:26px;height:34px;border-radius:8px;background:linear-gradient(var(--hi),var(--acc));box-shadow:0 3px 0 #7a1015;transition:top .08s}
+.dial{width:150px;height:150px;border-radius:50%;background:repeating-conic-gradient(var(--acc) 0 9deg,#17171a 9deg 18deg);box-shadow:0 6px 12px rgba(0,0,0,.7),inset 0 0 0 10px #101012}
+.dial::after{content:"";position:absolute;inset:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#555,#111)}
+.bub{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--hi),var(--acc));box-shadow:0 4px 0 #7a1015;transition:transform .08s}
+.bub.pop{transform:scale(.8,.55);filter:brightness(.55);box-shadow:none}
+#hud{font-size:14px;margin:4px}
+</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a><b>Fidget Cube</b> · <span id=cnt>0</span> clicks
+<div id=stage><div id=cube>
+ <div class="face f1" id=front></div><div class="face f2" id=right></div><div class="face f3" id=back></div>
+ <div class="face f4" id=left></div><div class="face f5" id=top></div><div class="face f6" id=bottom></div></div></div>
+<div id=hud>
+ <button class=t data-f="0,0">Front</button><button class=t data-f="0,-90">Right</button><button class=t data-f="0,90">Left</button><button class=t data-f="0,180">Back</button><button class=t data-f="-90,0">Top</button><button class=t data-f="90,0">Bottom</button><br>
+ <button class=t data-th="r">🔴 Red</button><button class=t data-th="b">🔵 Blue</button><button class=t data-th="g">🟢 Green</button><button class=t data-th="o">🟠 Orange</button><button class=t id=snd>🔊</button>
+ <div style="opacity:.6;margin-top:6px;font-size:12px">برای چرخاندن مکعب، روی زمینه یا سطح مشکی بکش</div></div>
+<script>
+const $=i=>document.getElementById(i),cube=$('cube');let n=0,au,sound=true,vib=true;
+function tick(f=900,d=.03,ty='square',v=.05){if(!sound)return;try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f*(1+Math.random()*.06);g.gain.value=v;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+function count(){$('cnt').textContent=++n;if(vib&&navigator.vibrate)navigator.vibrate(8)}
+const add=(p,cls,css,html)=>{const e=document.createElement('div');e.className=cls;Object.assign(e.style,css||{});if(html)e.innerHTML=html;p.append(e);return e};
+/* FRONT: 5 buttons */
+[[45,45],[125,45],[85,85],[45,125],[125,125]].forEach(([l,t])=>{add($('front'),'hole',{left:l-4+'px',top:t-4+'px',width:'58px',height:'58px'});
+  const b=add($('front'),'ctl btn',{left:l+'px',top:t+'px'});
+  b.onpointerdown=e=>{e.stopPropagation();b.classList.add('dn');tick(1300,.025);count()};
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{if(b.classList.contains('dn')){b.classList.remove('dn');tick(800,.02)}}))});
+/* TOP: joystick */
+add($('top'),'hole',{left:'45px',top:'45px',width:'130px',height:'130px'});
+const kn=add($('top'),'ctl knob',{left:'50px',top:'50px'});let kd=null,kc=0;
+kn.onpointerdown=e=>{e.stopPropagation();kn.setPointerCapture(e.pointerId);kn.style.transition='none';kd={x:e.clientX,y:e.clientY}};
+kn.onpointermove=e=>{if(!kd)return;let dx=e.clientX-kd.x,dy=e.clientY-kd.y;const L=Math.hypot(dx,dy),M=26;if(L>M){dx*=M/L;dy*=M/L}
+  kn.style.transform='translate('+dx+'px,'+dy+'px) rotateX('+(-dy*1.2)+'deg) rotateY('+(dx*1.2)+'deg)';if(L>M-2&&Date.now()-kc>150){kc=Date.now();tick(500,.04,'triangle');count()}};
+const kr=()=>{if(!kd)return;kd=null;kn.style.transition='transform .18s cubic-bezier(.3,1.8,.5,1)';kn.style.transform='none';tick(300,.06,'triangle')};
+kn.onpointerup=kr;kn.onpointercancel=kr;
+/* RIGHT: ball + 3 sliders */
+const bl=add($('right'),'ctl ball',{left:'20px',top:'72px'});let bd=null,bp=[0,0];
+bl.onpointerdown=e=>{e.stopPropagation();bl.setPointerCapture(e.pointerId);bd=[e.clientX,e.clientY]};
+bl.onpointermove=e=>{if(!bd)return;bp[0]+=e.clientX-bd[0];bp[1]+=e.clientY-bd[1];bd=[e.clientX,e.clientY];
+  bl.style.background='radial-gradient(circle at '+(35+Math.sin(bp[0]/20)*12)+'% '+(28+Math.sin(bp[1]/20)*12)+'%,#fff,#b9bec7 30%,#4a4f5a 70%,#20232b)';if(Math.abs(bp[0])+Math.abs(bp[1])>40){bp=[0,0];tick(2000,.012,'sine',.03)}};
+bl.onpointerup=bl.onpointercancel=()=>{bd=null};
+for(let i=0;i<3;i++){add($('right'),'ctl slot',{left:'105px',top:48+i*46+'px',width:'92px',transform:'scale(.85,1)',transformOrigin:'left'});
+  const th=add($('right'),'ctl thumb',{left:'108px',top:51+i*46+'px'});let dd=null,pos=0,last=-1;
+  th.onpointerdown=e=>{e.stopPropagation();th.setPointerCapture(e.pointerId);dd=e.clientX-pos};
+  th.onpointermove=e=>{if(!dd&&dd!==0)return;pos=Math.max(0,Math.min(46,e.clientX-dd));th.style.left=108+pos+'px';const st=Math.round(pos/11.5);if(st!==last){last=st;tick(1100+st*60,.02);count()}};
+  th.onpointerup=th.onpointercancel=()=>{dd=null;pos=Math.round(pos/11.5)*11.5;th.style.left=108+pos+'px'}}
+/* LEFT: 3 switches */
+for(let i=0;i<3;i++){const x0=30+i*58;add($('left'),'ctl sw',{left:x0+'px',top:'75px'});const lv=add($('left'),'ctl lever',{left:x0+4+'px',top:'79px'});let up=true;lv.style.top='79px';
+  const flip=e=>{e.stopPropagation();up=!up;lv.style.top=up?'79px':'111px';tick(up?1500:900,.03);count()};lv.onpointerdown=flip;$('left').querySelectorAll('.sw')[i].onpointerdown=flip}
+/* BACK: dial */
+const dl=add($('back'),'ctl dial',{left:'35px',top:'35px'});let da=0,dv=0,dp=null,lastTick=0,raf=0;
+const ang=e=>{const r=dl.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI};
+dl.onpointerdown=e=>{e.stopPropagation();dl.setPointerCapture(e.pointerId);dp=ang(e);dv=0;cancelAnimationFrame(raf)};
+dl.onpointermove=e=>{if(dp===null)return;const a=ang(e);let d=a-dp;if(d>180)d-=360;if(d<-180)d+=360;dp=a;da+=d;dv=d;dl.style.transform='rotate('+da+'deg)';spin()};
+function spin(){if(Math.floor(da/18)!==lastTick){lastTick=Math.floor(da/18);tick(1700,.015,'square',.04);if(lastTick%3==0)count()}}
+const dr=()=>{dp=null;(function f(){if(Math.abs(dv)<.15)return;dv*=.97;da+=dv;dl.style.transform='rotate('+da+'deg)';spin();raf=requestAnimationFrame(f)})()};
+dl.onpointerup=dr;dl.onpointercancel=dr;
+/* BOTTOM: bubble pop */
+let pops=0;for(let r=0;r<3;r++)for(let q=0;q<3;q++){const b=add($('bottom'),'ctl bub',{left:35+q*52+'px',top:35+r*52+'px'});
+  b.onpointerdown=e=>{e.stopPropagation();if(b.classList.contains('pop'))return;b.classList.add('pop');tick(700,.05,'triangle',.08);count();if(++pops>=9){setTimeout(()=>{document.querySelectorAll('.bub').forEach(x=>x.classList.remove('pop'));pops=0;tick(400,.2,'sine')},500)}}}
+/* rotate cube */
+let rx=-22,ry=-32,sd=null;
+const apply=()=>cube.style.transform='rotateX('+rx+'deg) rotateY('+ry+'deg)';
+document.body.addEventListener('pointerdown',e=>{if(e.target.closest('.ctl')||e.target.closest('#hud')||e.target.closest('a'))return;sd={x:e.clientX,y:e.clientY};cube.classList.remove('snap')});
+addEventListener('pointermove',e=>{if(!sd)return;ry+=(e.clientX-sd.x)*.6;rx-=(e.clientY-sd.y)*.6;sd={x:e.clientX,y:e.clientY};apply()});
+addEventListener('pointerup',()=>sd=null);
+document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{const[a,c]=b.dataset.f.split(',').map(Number);cube.classList.add('snap');rx=a;ry=c;apply()});
+const TH={r:['#e0262e','#ff5a60','#1b1b1d'],b:['#1f6fe5','#6aa5ff','#f4f4f6'],g:['#25b855','#6fe08f','#1b1b1d'],o:['#ff8a00','#ffc266','#2a2a30']};
+document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{const t=TH[b.dataset.th],s=document.documentElement.style;s.setProperty('--acc',t[0]);s.setProperty('--hi',t[1]);s.setProperty('--body',t[2]);tick(600,.08,'sine')});
+$('snd').onclick=()=>{sound=!sound;$('snd').textContent=sound?'🔊':'🔇'};
+</script>

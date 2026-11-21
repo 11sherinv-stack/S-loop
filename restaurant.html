@@ -1,0 +1,87 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Restaurant Manager</title>
+<style>body{margin:0;background:#2b1a12;color:#fff;font:15px system-ui;text-align:center;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+#wrap{position:relative;width:360px;max-width:100%;margin:auto}canvas{display:block;width:100%;touch-action:none}
+a,button{background:#d9822b;color:#fff;border:0;border-radius:12px;padding:9px 14px;margin:4px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g{background:#5b4234}button:disabled{opacity:.4}
+#ui{position:absolute;inset:0;background:rgba(30,16,10,.93);display:none;flex-direction:column;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;overflow:auto}
+.row{display:flex;justify-content:space-between;align-items:center;width:100%;background:rgba(255,255,255,.08);border-radius:12px;padding:8px 12px;margin:4px 0;text-align:left;font-size:14px}</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}" style="padding:6px 12px">← S loop</a><b>Restaurant Manager</b>
+<div id=wrap><canvas id=c width=360 height=560></canvas><div id=ui></div></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),ui=document.getElementById('ui'),W=360,H=560;
+const SLOT=[[60,128],[180,128],[300,128],[60,246],[180,246],[300,246]];
+const DISH={b:{e:'🍔',p:12,t:5},s:{e:'🍜',p:10,t:4},z:{e:'🍕',p:16,t:6}},KEYS=['b','s','z'],STX={b:60,s:180,z:300},STY=492,CY=372;
+const FACES=['🧑','👩','👨','🧓','👧','🧔','👱','👵'];
+let S=JSON.parse(localStorage.getItem('rm2')||'null')||{day:1,money:0,up:{tables:4,stove:0,decor:0,tips:0,cashier:0}};
+const save=()=>localStorage.setItem('rm2',JSON.stringify(S)),rnd=n=>Math.random()*n|0;
+const goal=()=>70+S.day*40,cookT=k=>DISH[k].t*Math.pow(.8,S.up.stove),patMax=()=>24*(1+.15*S.up.decor),tipM=()=>1+.25*S.up.tips;
+let st='menu',tables,tickets,counter,stn,held,tm,earned,rep,spawnT,msg='',msgT=0,au,fl=[];
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+function say(t){msg=t;msgT=1.4}
+function startDay(){tables=Array.from({length:6},(_,i)=>({i,c:null}));tickets=[];counter=Array(5).fill(null);stn={b:null,s:null,z:null};held=null;tm=75;earned=0;rep=3;spawnT=1;st='play';ui.style.display='none';fl=[]}
+function drop(i){tickets=tickets.filter(t=>t.table!==i);counter=counter.map(v=>v&&v.table===i?null:v);for(const k of KEYS)if(stn[k]&&stn[k].tk.table===i)stn[k]=null;if(held&&held.table===i)held=null}
+function collect(t){const c=t.c;if(!c||c.st!=='pay')return;const tip=Math.round(DISH[c.dish].p*.5*(c.pat/c.pm)*tipM()),g=DISH[c.dish].p+tip;S.money+=g;earned+=g;fl.push({x:SLOT[t.i][0],y:SLOT[t.i][1]-30,t:1,s:'+$'+g});beep(880,.1);t.c=null}
+function update(dt){
+  if(st!=='play')return;tm-=dt;msgT-=dt;fl=fl.filter(f=>(f.t-=dt)>0);
+  spawnT-=dt;if(spawnT<=0&&tm>8){spawnT=Math.max(3,8.5-S.day*.35)*(.7+Math.random()*.6);const fr=tables.filter(t=>t.i<S.up.tables&&!t.c);
+    if(fr.length){const t=fr[rnd(fr.length)];t.c={e:FACES[rnd(8)],st:'wait',pat:patMax(),pm:patMax(),dish:KEYS[rnd(3)],tm:0};beep(500,.05)}}
+  for(const t of tables){const cu=t.c;if(!cu)continue;
+    if(cu.st==='wait'||cu.st==='order'){cu.pat-=dt*(cu.st==='order'?.8:1);if(cu.pat<=0){drop(t.i);t.c=null;rep--;say('Angry customer! 😡');beep(120,.25,'sawtooth');if(rep<=0){st='over';showOver()}}}
+    else if(cu.st==='eat'){cu.tm-=dt;if(cu.tm<=0){cu.st='pay';cu.tm=7;if(S.up.cashier)collect(t)}}
+    else if(cu.st==='pay'){cu.tm-=dt;if(cu.tm<=0)t.c=null}}
+  for(const k of KEYS){const s=stn[k];if(!s)continue;s.t-=dt;if(s.t<=0){const sl=counter.findIndex(v=>!v);if(sl>=0){counter[sl]={dish:k,table:s.tk.table,tk:s.tk};s.tk.status='ready';stn[k]=null;beep(660,.08)}else s.t=0}}
+  if(tm<=0&&st==='play'){st='dayend';showDayEnd()}}
+function tap(px,py){
+  if(st!=='play')return;
+  for(const t of tables){const [sx,sy]=SLOT[t.i];if(t.i>=S.up.tables)continue;if(Math.abs(px-sx)<52&&Math.abs(py-sy)<52){const cu=t.c;if(!cu)return;
+    if(cu.st==='wait'){cu.st='order';tickets.push({table:t.i,dish:cu.dish,status:'queue'});beep(400,.05);return}
+    if(cu.st==='order'){if(held&&held.table===t.i){cu.st='eat';cu.tm=4;tickets=tickets.filter(k=>k!==held.tk);held=null;beep(520,.08)}else if(held)say('Wrong table!');return}
+    if(cu.st==='pay'){collect(t)}return}}
+  if(py>CY-34&&py<CY+34){const i=Math.floor((px-6)/70);if(i>=0&&i<5&&counter[i]){const it=counter[i];counter[i]=held;held=it;beep(600,.04)}return}
+  if(py>STY-44&&py<STY+44){const k=KEYS.find(k=>Math.abs(px-STX[k])<50);if(!k||stn[k])return;
+    const tk=tickets.find(t=>t.dish===k&&t.status==='queue');if(!tk){say('No '+DISH[k].e+' orders');return}tk.status='cooking';stn[k]={tk,t:cookT(k),max:cookT(k)};beep(300,.06,'square')}}
+c.onpointerdown=e=>{const b=c.getBoundingClientRect();tap((e.clientX-b.left)*W/b.width,(e.clientY-b.top)*H/b.height)};
+function draw(){
+  x.fillStyle='#c9a77c';x.fillRect(0,0,W,H);x.fillStyle='#b78f63';for(let i=0;i<W;i+=40)x.fillRect(i,56,20,300);
+  x.fillStyle='#3b2416';x.fillRect(0,0,W,50);x.fillStyle='#fff';x.font='bold 15px system-ui';x.textAlign='left';x.fillText('Day '+S.day,10,20);x.fillText('$'+S.money,10,40);
+  x.textAlign='center';x.fillText('Goal $'+earned+' / '+goal(),W/2,20);x.fillStyle='rgba(255,255,255,.2)';x.fillRect(100,28,160,8);x.fillStyle='#4ade80';x.fillRect(100,28,Math.min(160,160*earned/goal()),8);
+  x.textAlign='right';x.fillText('⏱ '+Math.max(0,Math.ceil(tm||0)),W-10,20);x.fillText('❤️'.repeat(Math.max(0,rep||0)),W-10,40);
+  if(st==='menu'&&!tables){return}
+  for(const t of tables){const [sx,sy]=SLOT[t.i];
+    if(t.i>=S.up.tables){x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.arc(sx,sy+10,34,0,7);x.fill();x.font='22px serif';x.fillStyle='#fff';x.textAlign='center';x.fillText('🔒',sx,sy+18);continue}
+    x.fillStyle='#6d4425';x.beginPath();x.arc(sx-34,sy+22,10,0,7);x.arc(sx+34,sy+22,10,0,7);x.fill();
+    x.fillStyle='#8a5a30';x.beginPath();x.ellipse(sx,sy+18,40,24,0,0,7);x.fill();x.fillStyle='#fff3e0';x.beginPath();x.ellipse(sx,sy+16,16,9,0,0,7);x.fill();
+    const cu=t.c;if(cu){x.font='34px serif';x.textAlign='center';x.fillText(cu.e,sx,sy-8);
+      if(cu.st==='wait'||cu.st==='order'){x.fillStyle='#fff';x.beginPath();x.arc(sx+30,sy-38,17,0,7);x.fill();x.font='20px serif';x.fillText(DISH[cu.dish].e,sx+30,sy-31);
+        x.fillStyle='rgba(0,0,0,.3)';x.fillRect(sx-30,sy+40,60,6);const f=cu.pat/cu.pm;x.fillStyle=f>.5?'#4ade80':f>.25?'#facc15':'#ef4444';x.fillRect(sx-30,sy+40,60*f,6);
+        if(cu.st==='wait'){x.font='bold 12px system-ui';x.fillStyle='#fff';x.fillText('Tap to take order',sx,sy-52+0)}}
+      else if(cu.st==='eat'){x.font='22px serif';x.fillText(DISH[cu.dish].e,sx,sy+22)}
+      else{x.font='28px serif';x.fillText('💰',sx+30,sy-30)}}}
+  x.fillStyle='#5b3a24';x.fillRect(0,CY-44,W,88);x.fillStyle='rgba(255,255,255,.08)';
+  for(let i=0;i<5;i++){x.fillRect(6+i*70,CY-30,64,60);const it=counter[i];if(it){x.font='34px serif';x.textAlign='center';x.fillStyle='#fff';x.fillText(DISH[it.dish].e,38+i*70,CY+8);x.font='11px system-ui';x.fillText('T'+(it.table+1),38+i*70,CY+26)}x.fillStyle='rgba(255,255,255,.08)'}
+  x.fillStyle='#fff';x.font='12px system-ui';x.textAlign='left';x.fillText('Counter (tap dish to carry)',8,CY-48);
+  if(held){x.textAlign='center';x.font='30px serif';x.fillText(DISH[held.dish].e,W/2,534-0);x.font='12px system-ui';x.fillText('Carrying → Table '+(held.table+1),W/2+0,552)}
+  x.fillStyle='#2b1a12';x.fillRect(0,STY-48,W,96);
+  for(const k of KEYS){const sx=STX[k],s=stn[k],q=tickets.filter(t=>t.dish===k&&t.status==='queue').length;
+    x.fillStyle=s?'#7a4a1c':'#a8651f';x.beginPath();x.roundRect?x.roundRect(sx-48,STY-40,96,80,14):x.rect(sx-48,STY-40,96,80);x.fill();
+    x.font='36px serif';x.textAlign='center';x.fillStyle='#fff';x.fillText(DISH[k].e,sx,STY+8);
+    if(s){x.fillStyle='rgba(0,0,0,.4)';x.fillRect(sx-38,STY+22,76,8);x.fillStyle='#4ade80';x.fillRect(sx-38,STY+22,76*(1-s.t/s.max),8)}
+    if(q){x.fillStyle='#ef4444';x.beginPath();x.arc(sx+38,STY-32,11,0,7);x.fill();x.fillStyle='#fff';x.font='bold 13px system-ui';x.fillText(q,sx+38,STY-27)}}
+  fl.forEach(f=>{x.globalAlpha=f.t;x.fillStyle='#fde047';x.font='bold 18px system-ui';x.textAlign='center';x.fillText(f.s,f.x,f.y-(1-f.t)*30);x.globalAlpha=1});
+  if(msgT>0){x.fillStyle='rgba(0,0,0,.65)';x.fillRect(60,300,240,34);x.fillStyle='#fff';x.font='bold 15px system-ui';x.textAlign='center';x.fillText(msg,W/2,322)}}
+function showMenu(){ui.style.display='flex';ui.innerHTML='<h2>🍽️ Restaurant Manager</h2><div style="font-size:14px;opacity:.9;margin-bottom:10px">1) Tap a customer to take the order.<br>2) Tap the matching stove to cook it.<br>3) Tap the finished dish on the counter, then tap the customer.<br>4) Collect the 💰 tip!</div><b>Day '+S.day+' · $'+S.money+'</b><button id=pl style="font-size:18px;padding:12px 34px;margin-top:8px">▶ Open restaurant</button><button class=g id=rs>Reset progress</button>';
+  document.getElementById('pl').onclick=startDay;document.getElementById('rs').onclick=()=>{if(confirm('Reset all progress?')){localStorage.removeItem('rm2');S={day:1,money:0,up:{tables:4,stove:0,decor:0,tips:0,cashier:0}};showMenu()}}}
+function showOver(){ui.style.display='flex';ui.innerHTML='<h2>😡 Too many unhappy customers!</h2><div>Earned today: $'+earned+'</div><button id=rt>↺ Retry Day '+S.day+'</button><button class=g id=sh>🛠 Upgrades</button>';document.getElementById('rt').onclick=startDay;document.getElementById('sh').onclick=showShop}
+function showDayEnd(){const ok=earned>=goal();ui.style.display='flex';
+  if(ok){S.day++;save()}
+  ui.innerHTML='<h2>'+(ok?'🎉 Day complete!':'⏰ Goal missed')+'</h2><div>Earned $'+earned+' / goal $'+(ok?goal()-0:goal())+'</div><div style="margin:8px">'+(ok?'Spend your money on upgrades!':'Try again — or buy upgrades first.')+'</div><button id=nx>'+(ok?'▶ Next day':'↺ Retry day')+'</button><button class=g id=sh>🛠 Upgrades</button>';
+  document.getElementById('nx').onclick=startDay;document.getElementById('sh').onclick=showShop}
+const UPG=[['tables','🪑 More tables',[150,250],'Tables'],['stove','🔥 Faster stoves',[120,200,320],'Cooking −20%'],['decor','🖼 Decor',[100,180],'Patience +15%'],['tips','📋 Menu design',[130,220],'Tips +25%'],['cashier','💁 Cashier',[300],'Auto-collect coins']];
+function showShop(){ui.style.display='flex';let h='<h2>🛠 Upgrades</h2><b>$'+S.money+'</b><div style="width:100%;margin-top:8px">';
+  UPG.forEach(([k,n,costs,d])=>{const lv=k==='tables'?S.up.tables-4:S.up[k],cost=costs[lv];h+='<div class=row><span>'+n+' <small>('+d+') Lv '+lv+'/'+costs.length+'</small></span>'+(cost===undefined?'<b>MAX</b>':'<button data-k='+k+' '+(S.money<cost?'disabled':'')+'>$'+cost+'</button>')+'</div>'});
+  h+='</div><button id=go>▶ Start Day '+S.day+'</button>';ui.innerHTML=h;
+  ui.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k,lv=k==='tables'?S.up.tables-4:S.up[k],cost=UPG.find(u=>u[0]===k)[2][lv];if(S.money<cost)return;S.money-=cost;if(k==='tables')S.up.tables++;else S.up[k]++;save();beep(700,.1);showShop()});
+  document.getElementById('go').onclick=startDay}
+let last=0;(function f(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;update(dt);draw();requestAnimationFrame(f)})(0);
+showMenu();
+</script>

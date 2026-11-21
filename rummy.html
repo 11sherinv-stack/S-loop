@@ -1,0 +1,88 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>ریم — Rummy</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>ریم — Rummy</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>ریم (Rummy)</b><br>• هر کس ۱۰ کارت دارد. نوبتت: ۱) یک کارت از دسته یا بالای کارت‌های دورریخته بردار. ۲) هر چقدر می‌خواهی دسته بچین. ۳) یک کارت دور بینداز.<br>• <b>دسته (Set)</b>: ۳ یا ۴ کارت هم‌عدد با خال‌های متفاوت. <b>ردیف (Run)</b>: ۳ کارت پشت‌سرهم هم‌خال (آس می‌تواند قبل از ۲ یا بعد از K باشد).<br>• کارت‌ها را انتخاب کن و «بچین» بزن. برای چسباندن یک کارت به دسته‌ی روی میز، کارت را انتخاب کن و روی آن دسته بزن.<br>• اولین کسی که دستش خالی شود برنده‌ی دست است و امتیاز کارت‌های باقی‌مانده‌ی حریف را می‌گیرد (آس=۱، J/Q/K=۱۰). اولین نفر به ۱۰۰ امتیاز برنده‌ی بازی است.</div>
+<div id=score class=who></div>
+<div id=oppw></div>
+<div class=row><span class=pile id=stk></span><span class=pile id=dsc></span></div>
+<div id=melds style="min-height:70px;direction:ltr"></div>
+<div id=info style="font-weight:bold;min-height:22px"></div><div id=log></div>
+<div class=hand id=hand></div>
+<div><button class=g id=sort>↕ مرتب</button><button class=p id=meld>🧩 بچین</button><button class=r id=disc>🗑 دور بینداز</button></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+let H=[[],[]],stock=[],dp=[],table=[],phase='draw',turn=0,sel=new Set(),busy=false,tot=[0,0],over=false,starter=0;
+const val=c=>c.r===0?1:Math.min(10,c.r+1);
+const isSet=a=>a.length>=3&&a.length<=4&&a.every(c=>c.r===a[0].r)&&new Set(a.map(c=>c.s)).size===a.length;
+function runOk(r){r=r.slice().sort((x,y)=>x-y);return r.every((v,i)=>!i||v===r[i-1]+1)}
+const isRun=a=>a.length>=3&&a.every(c=>c.s===a[0].s)&&(runOk(a.map(c=>c.r))||runOk(a.map(c=>c.r===0?13:c.r)));
+const mt=a=>isSet(a)?'set':isRun(a)?'run':null;
+const canLay=(m,c)=>m.t==='set'?(m.c.length<4&&c.r===m.c[0].r&&!m.c.some(x=>x.s===c.s)):(m.c[0].s===c.s&&isRun([...m.c,c]));
+function cand(h){const out=[],byR={};h.forEach(c=>(byR[c.r]=byR[c.r]||[]).push(c));
+  for(const r in byR){const g=byR[r];if(g.length>=3){if(g.length===3)out.push(g.slice());else{out.push(g.slice());g.forEach((_,i)=>out.push(g.filter((__,j)=>j!==i)))}}}
+  for(let s=0;s<4;s++){const cs=h.filter(c=>c.s===s),map={};cs.forEach(c=>{map[c.r]=c;if(c.r===0)map[13]=c});const seq=[];for(let r=0;r<=13;r++)if(map[r])seq.push([r,map[r]]);
+    for(let i=0;i<seq.length;i++){let j=i;while(j+1<seq.length&&seq[j+1][0]===seq[j][0]+1)j++;for(let a=i;a<=j;a++)for(let b=a+2;b<=j;b++){const m=seq.slice(a,b+1).map(x=>x[1]);if(new Set(m).size===m.length)out.push(m)}}}
+  return out}
+function bestM(h){const cd=cand(h),idx=new Map(h.map((c,i)=>[c,i])),ms=cd.map(m=>m.reduce((a,c)=>a|(1<<idx.get(c)),0)),n=h.length,memo=new Map();
+  function f(rem){if(!rem)return[0,[]];if(memo.has(rem))return memo.get(rem);const low=rem&-rem;let best=f(rem&~low);
+    for(let k=0;k<cd.length;k++){if((ms[k]&low)&&(ms[k]&rem)===ms[k]){const r=f(rem&~ms[k]);if(r[0]+cd[k].length>best[0])best=[r[0]+cd[k].length,[cd[k]].concat(r[1])]}}
+    memo.set(rem,best);return best}
+  const r=f(n>=31?0:(1<<n)-1);return{tot:r[0],list:r[1]}}
+function newRound(){stock=shuf(deck());H=[[],[]];for(let i=0;i<10;i++){H[0].push(stock.pop());H[1].push(stock.pop())}dp=[stock.pop()];table=[];sel.clear();over=false;busy=false;logs=[];turn=starter;phase='draw';hideOv();log('دست جدید!');render();if(turn===1)botTurn()}
+function drawStock(){if(!stock.length&&dp.length>1){const t=dp.pop();stock=shuf(dp);dp=[t]}return stock.pop()}
+function sortHand(){H[0].sort((a,b)=>a.s-b.s||a.r-b.r)}
+function render(){
+  $('score').textContent='امتیاز کل — تو: '+tot[0]+' | حریف: '+tot[1];
+  $('oppw').innerHTML='<span class="who '+(turn===1&&!over?'on':'')+'">حریف 🂠×'+H[1].length+'</span>';
+  const s=$('stk');s.innerHTML='';s.append(el(null));s.insertAdjacentHTML('beforeend','<small>دسته ('+stock.length+')</small>');s.onclick=()=>take(false);
+  const d=$('dsc');d.innerHTML='';if(dp.length)d.append(el(dp[dp.length-1]));d.insertAdjacentHTML('beforeend','<small>دورریخته</small>');d.onclick=()=>take(true);
+  const m=$('melds');m.innerHTML=table.map((mm,i)=>'<span class=who data-m='+i+' style="cursor:pointer;direction:ltr">'+disp(mm).map(c=>'<span class="card sm '+(isRed(c.s)?'red':'')+'" style="position:relative"><b>'+RK[c.r]+'</b><u>'+SU[c.s]+'</u></span>').join('')+'</span>').join('')||'<span style="opacity:.6;font-size:13px">هنوز دسته‌ای روی میز نیست</span>';
+  m.querySelectorAll('[data-m]').forEach(e=>e.onclick=()=>lay(+e.dataset.m));
+  $('info').textContent=over?'':turn===0?(phase==='draw'?'یک کارت بردار (دسته یا دورریخته)':'بچین / بچسبان / یک کارت دور بینداز'):'نوبت حریف…';
+  const h=$('hand');h.innerHTML='';H[0].forEach(c=>{const e=el(c,(sel.has(c)?'sel ':'')+(H[0].length>11?'tight':''));e.onclick=()=>{if(over||turn!==0||phase!=='play')return;sel.has(c)?sel.delete(c):sel.add(c);render()};h.append(e)});
+  $('meld').disabled=turn!==0||phase!=='play'||sel.size<3;$('disc').disabled=turn!==0||phase!=='play'||sel.size!==1}
+function disp(m){const c=m.c.slice();if(m.t==='run'){const hiA=c.some(x=>x.r===12)&&c.some(x=>x.r===0)&&!c.some(x=>x.r===1);return c.sort((a,b)=>(hiA&&a.r===0?13:a.r)-(hiA&&b.r===0?13:b.r))}return c.sort((a,b)=>a.s-b.s)}
+function take(fromDisc){if(over||turn!==0||phase!=='draw'||busy)return;let c;if(fromDisc){if(!dp.length)return;c=dp.pop();log('از دورریخته '+cs(c)+' برداشتی')}else{c=drawStock();if(!c){log('دسته تمام شد');endRound(-1);return}log('کارت '+cs(c)+' کشیدی')}
+  H[0].push(c);sel.clear();sel.add(c);phase='play';beep(500);render()}
+$('meld').onclick=()=>{const a=[...sel],t=mt(a);if(!t){log('این کارت‌ها دسته یا ردیف معتبر نیستند');beep(150,.1,'square');return}table.push({c:a,t});a.forEach(c=>H[0].splice(H[0].indexOf(c),1));sel.clear();beep(700);log('دسته چیدی: '+a.map(cs).join(' '));if(!H[0].length){endRound(0);return}render()};
+function lay(i){if(over||turn!==0||phase!=='play'||sel.size!==1)return;const c=[...sel][0],m=table[i];if(!canLay(m,c)){log('این کارت به آن دسته نمی‌چسبد');beep(150,.1,'square');return}m.c.push(c);H[0].splice(H[0].indexOf(c),1);sel.clear();beep(650);if(!H[0].length){endRound(0);return}render()}
+$('disc').onclick=()=>{if(sel.size!==1)return;const c=[...sel][0];H[0].splice(H[0].indexOf(c),1);dp.push(c);sel.clear();log('دور انداختی: '+cs(c));if(!H[0].length){endRound(0);return}turn=1;phase='draw';render();botTurn()};
+$('sort').onclick=()=>{sortHand();render()};
+async function botTurn(){busy=true;await sleep(750);if(over)return;const h=H[1];
+  const topc=dp[dp.length-1];let c;if(topc&&bestM([...h,topc]).tot>bestM(h).tot){c=dp.pop();log('حریف '+cs(c)+' را از دورریخته برداشت')}else{c=drawStock();if(!c){endRound(-1);return}log('حریف یک کارت کشید')}
+  h.push(c);render();await sleep(650);
+  const bm=bestM(h);bm.list.forEach(m=>{table.push({c:m,t:mt(m)});m.forEach(x=>h.splice(h.indexOf(x),1))});if(bm.list.length)log('حریف دسته چید');
+  let mv=true;while(mv&&h.length){mv=false;for(const x of h.slice()){const m=table.find(t=>canLay(t,x));if(m){m.c.push(x);h.splice(h.indexOf(x),1);mv=true}}}
+  render();if(!h.length){endRound(1);return}await sleep(500);
+  const w=worst(h);h.splice(h.indexOf(w),1);dp.push(w);log('حریف '+cs(w)+' را دور انداخت');
+  if(!h.length){endRound(1);return}turn=0;phase='draw';busy=false;render()}
+function worst(h){let b=null,bv=1e9;h.forEach(c=>{let k=0;h.forEach(o=>{if(o===c)return;if(o.r===c.r)k+=10;if(o.s===c.s&&Math.abs(o.r-c.r)<=2)k+=7});k-=val(c)*.6;if(k<bv){bv=k;b=c}});return b}
+function endRound(w){over=true;busy=false;let pts=0;if(w>=0){pts=H[1-w].reduce((a,c)=>a+val(c),0);tot[w]+=pts}starter=w<0?starter:1-w;render();
+  const fin=tot[0]>=100||tot[1]>=100;beep(w===0?900:200,.4);
+  overlay('<h2>'+(w<0?'مساوی (دسته تمام شد)':w===0?'🎉 این دست را بردی! +'+pts:'😅 حریف این دست را برد (+'+pts+')')+'</h2><div>تو '+tot[0]+' — حریف '+tot[1]+'</div>'+(fin?'<h1>'+(tot[0]>tot[1]?'🏆 برنده‌ی بازی شدی!':'حریف برنده‌ی بازی شد')+'</h1>':'')+'<button class=p id=nx>'+(fin?'بازی جدید':'دست بعدی')+'</button>');
+  $('nx').onclick=()=>{if(fin)tot=[0,0];newRound()}}
+newRound();sortHand();render();
+</script>

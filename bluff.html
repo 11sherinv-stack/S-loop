@@ -1,0 +1,77 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>بلوف — Bluff</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>بلوف — Bluff</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>بلوف (Bluff / Cheat)</b><br>• همه‌ی کارت‌ها پخش می‌شود. هر نوبت یک عدد «اعلام‌شده» وجود دارد (آس، ۲، ۳، … K و دوباره از اول).<br>• نوبتت ۱ تا ۴ کارت <b>رو به پایین</b> می‌گذاری و می‌گویی همه‌شان همان عدد هستند — راست یا دروغ!<br>• نفر بعدی می‌تواند «بلوف!» بزند. اگر دروغ گفته باشی، کل کارت‌های وسط را برمی‌داری؛ اگر راست گفته باشی، او برمی‌دارد.<br>• اولین نفری که دستش خالی شود (و کسی بلوفش را نگیرد) برنده است.</div>
+<div>بازیکنان: <select id=np><option value=2>۲ نفر</option><option value=3 selected>۳ نفر</option><option value=4>۴ نفر</option></select><button class=g id=nw>🔄 بازی جدید</button></div>
+<div id=opp></div>
+<div class=row><span class=pile id=pile></span></div>
+<div id=claim style="font-weight:bold;font-size:17px;min-height:26px"></div><div id=log></div>
+<div class=hand id=hand></div>
+<div><button class=p id=play>🃏 بگذار</button><button class=r id=call>🚨 بلوف!</button></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+const NM=['تو','سارا','کیان','نیلوفر'];let P=[],pile=[],cur=0,rank=0,last=null,over=false,N=3,sel=new Set(),busy=false;
+function newGame(){N=+$('np').value;const d=shuf(deck());P=NM.slice(0,N).map((n,i)=>({n,h:[],bot:i>0}));d.forEach((c,i)=>P[i%N].h.push(c));pile=[];cur=0;rank=0;last=null;over=false;sel.clear();busy=false;logs=[];hideOv();log('بازی شروع شد. اولین عدد: A');render()}
+const prev=()=>(cur+N-1)%N;
+function render(){
+  $('opp').innerHTML=P.slice(1).map((p,i)=>'<span class="who '+(cur===i+1&&!over?'on':'')+'">'+p.n+' 🂠×'+p.h.length+'</span>').join('');
+  const pl=$('pile');pl.innerHTML='';if(pile.length)pl.append(el(null));pl.insertAdjacentHTML('beforeend','<small>وسط: '+pile.length+' کارت</small>');
+  $('claim').textContent=over?'':(cur===0?'نوبت توست — عدد اعلام‌شده: ':'نوبت '+P[cur].n+' — عدد: ')+RK[rank]+(last&&cur===0?'   (قبلی: '+P[last.p].n+' '+last.n+'× '+RK[last.rank]+')':'');
+  const h=$('hand');h.innerHTML='';P[0].h.slice().sort((a,b)=>a.r-b.r||a.s-b.s).forEach(c=>{const e=el(c,(sel.has(c)?'sel ':'')+'tight');e.onclick=()=>{if(over||cur!==0||busy)return;if(sel.has(c))sel.delete(c);else if(sel.size<4)sel.add(c);render()};h.append(e)});
+  $('play').disabled=over||cur!==0||busy||sel.size<1;$('play').textContent='🃏 '+sel.size+' کارت به‌عنوان '+RK[rank]+' بگذار';$('call').disabled=over||cur!==0||busy||!last||last.p===0}
+function doPlay(p,cards){cards.forEach(c=>P[p].h.splice(P[p].h.indexOf(c),1));pile.push(...cards);last={p,n:cards.length,rank,cards};log(P[p].n+': '+cards.length+' کارت به‌عنوان '+RK[rank]);beep(400);}
+function afterPlay(){ // next player may call
+  cur=(cur+1)%N;render();if(over)return;
+  if(P[cur].bot){setTimeout(botDecide,900)}}
+function reveal(caller){const l=last,liar=l.cards.some(c=>c.r!==l.rank),loser=liar?l.p:caller;
+  log('🚨 '+P[caller].n+': بلوف! کارت‌ها: '+l.cards.map(cs).join(' ')+' — '+(liar?P[l.p].n+' دروغ گفته بود':P[l.p].n+' راست گفته بود'));beep(liar?800:150,.25);
+  P[loser].h.push(...pile);const n=pile.length;pile=[];log(P[loser].n+' '+n+' کارت برداشت');last=null;
+  if(!liar&&!P[l.p].h.length&&false){}
+  cur=loser===caller?caller:caller; sel.clear();
+  // winner check: previous player with empty hand and was truthful wins
+  if(!liar&&!P[l.p].h.length){win(l.p);return}
+  rank=(rank+1)%13;render();if(P[cur].bot)setTimeout(botPlay,900)}
+function win(p){over=true;render();overlay('<h1>'+(p===0?'🎉 بردی!':'😅 '+P[p].n+' برد')+'</h1><button class=p id=ag>بازی دوباره</button>');$('ag').onclick=newGame;beep(p===0?900:200,.4)}
+function proceed(){ // current player chooses not to call: check if previous emptied hand -> they win
+  if(last&&!P[last.p].h.length){win(last.p);return}
+  rank=(rank+1)%13;render();if(P[cur].bot)setTimeout(botPlay,700)}
+$('call').onclick=()=>{if(cur!==0||!last||last.p===0)return;reveal(0)};
+$('play').onclick=()=>{if(cur!==0||!sel.size)return;
+  // human plays: first resolve previous (implicitly not calling)
+  if(last&&!P[last.p].h.length){win(last.p);return}
+  const cards=[...sel];sel.clear();doPlay(0,cards);afterPlay()};
+// proceed without call when human plays: rank increments for next player
+const _ap=afterPlay;afterPlay=function(){rank=(rank+1)%13;_ap()};
+function botDecide(){if(over)return;const p=P[cur],l=last;if(!l){botPlay();return}
+  const mine=p.h.filter(c=>c.r===l.rank).length,left=P[l.p].h.length;let call=false;
+  if(mine+l.n>4)call=true;else{let pr=.1+.1*(l.n-1)+pile.length*.004;if(left===0)pr=.8;else if(left<=2)pr+=.15;if(l.p===0&&Math.random()<.1)pr+=.1;call=Math.random()<pr}
+  if(call){reveal(cur)}else{if(!P[l.p].h.length){win(l.p);return}botPlay()}}
+function botPlay(){if(over)return;const p=P[cur];if(!p.h.length){return}const want=p.h.filter(c=>c.r===rank);let cards;
+  if(want.length){cards=want.slice(0,4);if(cards.length<4&&Math.random()<.2){const o=p.h.filter(c=>!cards.includes(c));if(o.length)cards.push(o[Math.random()*o.length|0])}}
+  else{const k=Math.random()<.7?1:2;cards=shuf(p.h.slice().sort((a,b)=>(a.r>=10?1:0)-(b.r>=10?1:0))).slice(0,Math.min(k,p.h.length))}
+  doPlay(cur,cards);const me=cur;cur=(cur+1)%N;rank=(rank+1)%13;render();if(P[cur].bot)setTimeout(botDecide,900)}
+$('nw').onclick=newGame;$('np').onchange=newGame;newGame();
+</script>

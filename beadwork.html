@@ -1,0 +1,64 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Beadwork</title>
+<style>body{margin:0;background:#1a1420;color:#fff;font:14px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;margin:4px auto;max-width:100%;border-radius:14px;touch-action:none;box-shadow:0 6px 20px rgba(0,0,0,.6)}
+a,button,select{background:#7b3fe4;color:#fff;border:0;border-radius:10px;padding:7px 11px;margin:2px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#3a2d52}button.on{background:#7b3fe4;box-shadow:0 0 0 2px #fff}
+#pal{max-width:380px;margin:2px auto}#pal i{display:inline-block;width:28px;height:28px;border-radius:50%;margin:3px;border:2px solid #fff6;cursor:pointer}#pal i.on{border-color:#fff;transform:scale(1.18)}
+.row{max-width:400px;margin:2px auto}input[type=range]{width:130px;vertical-align:middle}</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a><b>Beadwork ✨ منجوق‌دوزی</b> · <span id=cnt>0</span> beads
+<canvas id=c width=360 height=420></canvas>
+<div id=pal></div>
+<div class=row><span id=shapes></span></div>
+<div class=row>Size <input type=range id=sz min=3 max=12 value=6> <select id=sym><option value=1>Symmetry: off</option><option value=2>2-fold</option><option value=3>3-fold</option><option value=4>4-fold</option><option value=6 selected>6-fold</option><option value=8>8-fold</option><option value=12>12-fold</option></select><button class=g id=mir>⇋ Mirror: on</button></div>
+<div class=row><select id=fab><option value="#0d0d12">Black velvet</option><option value="#0f1f4a">Navy</option><option value="#5a0f24">Burgundy</option><option value="#0b4a3a">Emerald</option><option value="#efe3c8">Cream</option></select>
+<select id=gd><option value=none>Guide: none</option><option value=ring>Ring</option><option value=heart>Heart</option><option value=flower>Flower</option><option value=star>Star</option></select></div>
+<div class=row><button class=g id=un>↶ Undo</button><button class=g id=cl>🗑 Clear</button><button id=sv>💾 Save PNG</button></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),$=i=>document.getElementById(i),W=360,H=420,CX=180,CY=210;
+const COLS=['#ffd24a','#d9dde3','#c9763a','#f6f1e6','#161616','#e3262e','#b0124a','#1fa65a','#1f6fe5','#7b3fe4','#ff6fb1','#17c8c0','#ff8a1f','#ffe94a','#9be23a','#7a3b1d'];
+const SH=[['round','⚫ Round'],['seed','• Seed'],['bugle','▬ Bugle'],['sequin','◎ Sequin'],['pearl','⚪ Pearl']];
+let col=COLS[0],shape='round',r=6,sym=6,mir=true,fab='#0d0d12',guide='none',beads=[],sid=0,drawing=false,last=null,cur=null,sprites={},au;
+$('pal').innerHTML=COLS.map((k,i)=>'<i data-c="'+k+'" style="background:'+k+'" class="'+(i?'':'on')+'"></i>').join('');
+$('shapes').innerHTML=SH.map((s,i)=>'<button data-s="'+s[0]+'" class="g '+(i?'':'on')+'">'+s[1]+'</button>').join('');
+$('pal').onclick=e=>{const k=e.target.dataset.c;if(!k)return;col=k;[...$('pal').children].forEach(i=>i.classList.toggle('on',i===e.target))};
+$('shapes').onclick=e=>{const s=e.target.dataset.s;if(!s)return;shape=s;[...$('shapes').children].forEach(b=>b.classList.toggle('on',b===e.target))};
+$('sz').oninput=()=>r=+$('sz').value;$('sym').onchange=()=>sym=+$('sym').value;$('mir').onclick=()=>{mir=!mir;$('mir').textContent='⇋ Mirror: '+(mir?'on':'off')};
+$('fab').onchange=()=>{fab=$('fab').value;redraw()};$('gd').onchange=()=>{guide=$('gd').value;redraw()};
+function shade(h,f){const n=parseInt(h.slice(1),16);const a=v=>Math.max(0,Math.min(255,v*f|0));return'rgb('+a(n>>16)+','+a(n>>8&255)+','+a(n&255)+')'}
+function sprite(t,k,rad){const key=t+k+rad;if(sprites[key])return sprites[key];
+  const L=t==='bugle'?rad*3:rad*2,Wd=rad*2,cv=document.createElement('canvas'),S=Math.ceil(Math.max(L,Wd))+6;cv.width=cv.height=S*2;const q=cv.getContext('2d');q.translate(S,S);
+  if(t==='bugle'){const g=q.createLinearGradient(0,-rad*.5,0,rad*.5);g.addColorStop(0,shade(k,1.5));g.addColorStop(.5,shade(k,1));g.addColorStop(1,shade(k,.55));q.fillStyle=g;q.beginPath();q.roundRect(-L/2,-rad*.5,L,rad,rad*.35);q.fill();q.fillStyle='rgba(255,255,255,.55)';q.fillRect(-L/2+rad*.4,-rad*.3,L-rad*.8,rad*.18);q.fillStyle='rgba(0,0,0,.45)';q.fillRect(-L/2,-rad*.12,rad*.25,rad*.24);q.fillRect(L/2-rad*.25,-rad*.12,rad*.25,rad*.24)}
+  else{const rr=t==='seed'?rad*.75:rad,g=q.createRadialGradient(-rr*.35,-rr*.4,rr*.1,0,0,rr);
+    if(t==='pearl'){g.addColorStop(0,'#fff');g.addColorStop(.5,shade(k,1.1));g.addColorStop(1,shade(k,.6))}else{g.addColorStop(0,shade(k,1.7));g.addColorStop(.45,shade(k,1));g.addColorStop(1,shade(k,.45))}
+    q.fillStyle=g;q.beginPath();q.arc(0,0,rr,0,7);q.fill();
+    if(t==='sequin'){q.strokeStyle='rgba(255,255,255,.35)';q.lineWidth=1;for(let i=1;i<3;i++){q.beginPath();q.arc(0,0,rr*i/3.2,0,7);q.stroke()}}
+    if(t!=='pearl'){q.fillStyle='rgba(0,0,0,.7)';q.beginPath();q.arc(0,0,rr*.2,0,7);q.fill()}
+    q.fillStyle='rgba(255,255,255,.7)';q.beginPath();q.ellipse(-rr*.35,-rr*.4,rr*.22,rr*.14,-.6,0,7);q.fill()}
+  return sprites[key]={cv,S}}
+function drawBead(b){const s=sprite(b.t,b.k,b.r);x.save();x.translate(b.x,b.y);x.rotate(b.a);x.drawImage(s.cv,-s.S,-s.S);x.restore()}
+function drawThread(arr){if(arr.length<2)return;x.strokeStyle=fab==='#efe3c8'?'#6b5a3a':'#c8c8c8';x.lineWidth=1;x.beginPath();arr.forEach((b,i)=>i?x.lineTo(b.x,b.y):x.moveTo(b.x,b.y));x.stroke()}
+function fabric(){x.fillStyle=fab;x.fillRect(0,0,W,H);x.globalAlpha=.07;x.strokeStyle='#fff';x.lineWidth=1;for(let i=0;i<W;i+=3){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke()}for(let j=0;j<H;j+=3){x.beginPath();x.moveTo(0,j);x.lineTo(W,j);x.stroke()}x.globalAlpha=1}
+function guideDraw(){if(guide==='none')return;x.save();x.strokeStyle='rgba(255,255,255,.3)';if(fab==='#efe3c8')x.strokeStyle='rgba(0,0,0,.3)';x.setLineDash([4,5]);x.lineWidth=1.5;x.beginPath();
+  if(guide==='ring'){x.arc(CX,CY,110,0,7);x.moveTo(CX+60,CY);x.arc(CX,CY,60,0,7)}
+  else if(guide==='heart'){for(let t=0;t<=6.29;t+=.05){const px=CX+10*16*Math.pow(Math.sin(t),3)*.9,py=CY-10*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*.9+10;t?x.lineTo(px,py):x.moveTo(px,py)}}
+  else if(guide==='flower'){for(let t=0;t<=6.29;t+=.03){const rr=40+85*Math.abs(Math.cos(3*t)),px=CX+rr*Math.cos(t),py=CY+rr*Math.sin(t);t?x.lineTo(px,py):x.moveTo(px,py)}}
+  else if(guide==='star'){for(let i=0;i<=10;i++){const a=i*Math.PI/5-Math.PI/2,rr=i%2?50:125;i?x.lineTo(CX+rr*Math.cos(a),CY+rr*Math.sin(a)):x.moveTo(CX+rr*Math.cos(a),CY+rr*Math.sin(a))}}
+  x.stroke();x.restore()}
+function redraw(){fabric();guideDraw();const g={};beads.forEach(b=>{(g[b.s+'_'+b.q]=g[b.s+'_'+b.q]||[]).push(b)});Object.values(g).forEach(drawThread);beads.forEach(drawBead);$('cnt').textContent=beads.length}
+function copies(px,py){const out=[],n=sym,dx=px-CX,dy=py-CY;for(let i=0;i<n;i++){const a=i*2*Math.PI/n,ca=Math.cos(a),sa=Math.sin(a);out.push([CX+dx*ca-dy*sa,CY+dx*sa+dy*ca,a,false]);if(mir)out.push([CX+dx*ca+dy*sa,CY-dx*sa+dy*ca,-a,true])}return out}
+function place(px,py,ang){const cs=copies(px,py);cs.forEach((p,q)=>{if(p[0]<-10||p[0]>W+10||p[1]<-10||p[1]>H+10)return;
+    const rot=shape==='bugle'?(p[3]?-ang+(-p[2]):ang+p[2]):0;const b={x:p[0],y:p[1],a:shape==='bugle'?(p[3]?-(ang)-p[2]+Math.PI*0:ang+p[2]):0,t:shape,k:col,r:r,s:sid,q};
+    if(shape==='bugle'&&p[3]){b.a=-ang+0-(-p[2])*0;b.a=-ang-p[2]*(-1)*0-p[2]*0;b.a=-(ang)+p[2]*0-p[2]}
+    beads.push(b);const prev=beads.slice(-cs.length-1,-cs.length).find(v=>v.s===sid&&v.q===q);if(prev){x.strokeStyle=fab==='#efe3c8'?'#6b5a3a':'#c8c8c8';x.lineWidth=1;x.beginPath();x.moveTo(prev.x,prev.y);x.lineTo(b.x,b.y);x.stroke()}drawBead(b)});$('cnt').textContent=beads.length;tick()}
+function tick(){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='sine';o.frequency.value=1800+Math.random()*500;g.gain.value=.025;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+.025);o.stop(au.currentTime+.025)}catch(e){}}
+const sp=()=>shape==='bugle'?r*3.1:(shape==='seed'?r*1.5:r*2.05);
+function pos(e){const b=c.getBoundingClientRect();return[(e.clientX-b.left)*W/b.width,(e.clientY-b.top)*H/b.height]}
+c.onpointerdown=e=>{e.preventDefault();c.setPointerCapture(e.pointerId);drawing=true;sid++;const p=pos(e);last={x:p[0],y:p[1],ang:0};place(p[0],p[1],0)};
+c.onpointermove=e=>{if(!drawing)return;const p=pos(e);let dx=p[0]-last.x,dy=p[1]-last.y,d=Math.hypot(dx,dy);const step=sp();
+  while(d>=step){const ang=Math.atan2(dy,dx);last={x:last.x+Math.cos(ang)*step,y:last.y+Math.sin(ang)*step,ang};place(last.x,last.y,ang);dx=p[0]-last.x;dy=p[1]-last.y;d=Math.hypot(dx,dy)}};
+c.onpointerup=c.onpointercancel=()=>drawing=false;
+$('un').onclick=()=>{if(!beads.length)return;const s=beads[beads.length-1].s;beads=beads.filter(b=>b.s!==s);redraw()};
+$('cl').onclick=()=>{if(beads.length&&!confirm('Clear everything?'))return;beads=[];redraw()};
+$('sv').onclick=()=>{c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='beadwork.png';a.click()})};
+redraw();
+</script>

@@ -1,0 +1,67 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>هفت خبیث — Crazy Sevens</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>هفت خبیث — Crazy Sevens</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>هفت خبیث (Crazy Sevens)</b><br>• هر کس باید کارتی هم‌خال یا هم‌عدد با کارت وسط بازی کند.<br>• <b>۷</b> همیشه بازی می‌شود و خال دلخواه انتخاب می‌کنی.<br>• <b>۲</b>: نفر بعدی ۲ کارت می‌کشد (اگر ۲ داشته باشد می‌تواند روی آن بگذارد و ۴ تا می‌شود…).<br>• <b>آس</b>: نفر بعدی نوبتش می‌سوزد.<br>• کارت بازی‌شدنی نداری؟ از دسته بکش. اولین نفری که دستش خالی شود برنده است.</div>
+<div>بازیکنان: <select id=np><option value=2>۲ نفر</option><option value=3 selected>۳ نفر</option><option value=4>۴ نفر</option></select><button class=g id=nw>🔄 بازی جدید</button></div>
+<div id=opp></div>
+<div class=row><span class=pile id=stk></span><span class=pile id=dsc></span></div>
+<div id=info style="min-height:24px;font-weight:bold"></div><div id=log></div>
+<div class=hand id=hand></div><div><button class=g id=pass style="display:none">⏭ رد کن</button></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+const NM=['تو','سارا','کیان','نیلوفر'];let P=[],stock=[],disc=[],suit=0,cur=0,dir=1,pend=0,over=false,N=3,afterDraw=false,busy=false;
+const tp=()=>disc[disc.length-1],ok=c=>pend>0?c.r===1:(c.r===6||c.s===suit||c.r===tp().r);
+function newGame(){N=+$('np').value;stock=shuf(deck());P=NM.slice(0,N).map((n,i)=>({n,h:[],bot:i>0}));const k=N===2?7:5;for(let r=0;r<k;r++)P.forEach(p=>p.h.push(stock.pop()));
+  let t;for(;;){t=stock.pop();if([6,1,0].includes(t.r))stock.unshift(t);else break}disc=[t];suit=t.s;cur=0;dir=1;pend=0;over=false;afterDraw=false;busy=false;logs=[];log('بازی شروع شد!');hideOv();render();}
+function draw1(p){if(!stock.length&&disc.length>1){const t=disc.pop();stock=shuf(disc);disc=[t]}if(!stock.length)return null;const c=stock.pop();p.h.push(c);return c}
+function next(skip){afterDraw=false;cur=(cur+dir*(skip?2:1)+N*4)%N;render();if(!over&&P[cur].bot)setTimeout(botTurn,850)}
+function play(p,c,s){p.h.splice(p.h.indexOf(c),1);disc.push(c);suit=c.r===6?s:c.s;let skip=false;if(c.r===1)pend+=2;if(c.r===0)skip=true;beep(500+c.r*30);
+  log(p.n+': '+cs(c)+(c.r===6?' ← خال '+SU[suit]:'')+(c.r===1?' (+۲)':'')+(skip?' (رد!)':''));
+  if(!p.h.length){over=true;render();const w=p===P[0];beep(w?900:200,.4);overlay('<h1>'+(w?'🎉 بردی!':'😅 '+p.n+' برد')+'</h1><button class=p id=ag>بازی دوباره</button>');$('ag').onclick=newGame;return}
+  if(p.h.length===1)log('☝️ '+p.n+' یک کارت دارد!');next(skip)}
+function takePend(p){const n=pend;for(let i=0;i<n;i++)draw1(p);pend=0;log(p.n+' '+n+' کارت کشید');beep(200,.15);next(false)}
+function botTurn(){if(over)return;const p=P[cur];
+  if(pend>0){const t=p.h.find(c=>c.r===1);if(t)return play(p,t);return takePend(p)}
+  let c=pick(p);if(!c){const d=draw1(p);if(d&&ok(d))c=d;else{log(p.n+' کارت کشید');next(false);return}}
+  play(p,c,bestSuit(p,c))}
+function pick(p){const pl=p.h.filter(ok);if(!pl.length)return null;const non=pl.filter(c=>c.r!==6),pool=non.length?non:pl,sp=pool.filter(c=>c.r<2);return (sp.length&&Math.random()<.6?sp:pool)[Math.random()*(sp.length&&Math.random()<.6?sp.length:pool.length)|0]}
+function bestSuit(p,c){const n=[0,0,0,0];p.h.forEach(x=>{if(x!==c)n[x.s]++});let b=0;n.forEach((v,i)=>{if(v>n[b])b=i});return n[b]?b:(Math.random()*4|0)}
+function render(){
+  $('opp').innerHTML=P.slice(1).map((p,i)=>'<span class="who '+(cur===i+1&&!over?'on':'')+'">'+p.n+' 🂠×'+p.h.length+'</span>').join('');
+  const s=$('stk');s.innerHTML='';s.append(el(null));s.insertAdjacentHTML('beforeend','<small>دسته ('+stock.length+')</small>');s.onclick=drawClick;
+  const d=$('dsc');d.innerHTML='';d.append(el(tp()));d.insertAdjacentHTML('beforeend','<small>خال: '+SU[suit]+(pend?' · کشیدن '+pend:'')+'</small>');
+  $('info').textContent=over?'':cur===0?(pend?'۲ بگذار یا '+pend+' کارت بکش!':'نوبت توست'):'نوبت '+P[cur].n+'…';
+  const h=$('hand');h.innerHTML='';const me=P[0];me.h.slice().sort((a,b)=>a.s-b.s||a.r-b.r).forEach(c=>{const e=el(c,(cur===0&&!over&&!ok(c)?'dim ':'')+(me.h.length>11?'tight':''));e.onclick=()=>click(c);h.append(e)});
+  $('pass').style.display=afterDraw&&cur===0?'inline-block':'none'}
+function click(c){if(cur!==0||over||busy)return;if(!ok(c)){log('این کارت بازی‌شدنی نیست');beep(150,.1,'square');return}
+  if(c.r===6){overlay('<h3>خال را انتخاب کن</h3><div>'+SU.map((s,i)=>'<button class="g" style="font-size:34px;color:'+(isRed(i)?'#ff8a80':'#fff')+'" data-s='+i+'>'+s+'</button>').join('')+'</div>');$('ov').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{hideOv();play(P[0],c,+b.dataset.s)});return}
+  play(P[0],c)}
+function drawClick(){if(cur!==0||over||afterDraw)return;const me=P[0];
+  if(pend>0){takePend(me);return}if(me.h.some(ok)){log('کارت بازی‌شدنی داری!');beep(150,.1,'square');return}
+  const d=draw1(me);log('تو کارت کشیدی');render();if(d&&ok(d)){afterDraw=true;render();log('می‌توانی همان را بازی کنی یا رد کنی')}else next(false)}
+$('pass').onclick=()=>{if(cur===0&&afterDraw)next(false)};
+$('nw').onclick=newGame;$('np').onchange=newGame;newGame();
+</script>

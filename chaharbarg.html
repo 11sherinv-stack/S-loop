@@ -1,0 +1,69 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>چهار برگ</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>چهار برگ</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>چهار برگ</b> (نسخه‌ی ۲ نفره، شبیه «پیشی/کاسینو»)<br>• به هر کس ۴ کارت می‌دهند و ۴ کارت رو روی میز می‌آید. نوبتت یک کارت از دستت بازی کن.<br>• اگر هم‌عدد کارتی روی میز باشد، همه‌ی کارت‌های هم‌عدد را با کارت خودت <b>می‌بری</b>. <b>سرباز (J)</b> کل میز را می‌برد. اگر کارتت نخورد، روی میز می‌ماند.<br>• وقتی دست‌ها تمام شد، ۴ کارت دیگر پخش می‌شود. آخرین برنده‌ی کارت، باقی میز را هم برمی‌دارد.<br>• امتیاز: بیشترین کارت ۳، هر آس ۱، دو خاج (2♣) ۲، ده خشت (10♦) ۳، هر سرباز ۱، و <b>«سور»</b> (بردن تک‌کارت میز با هم‌عدد) ۵ امتیاز. اولین نفر به ۲۱ امتیاز برنده است.</div>
+<div id=score class=who></div>
+<div id=oppw></div>
+<div style="font-size:13px;opacity:.8">میز</div>
+<div class=row id=tbl style="min-height:90px;direction:ltr"></div>
+<div id=info style="font-weight:bold;min-height:22px"></div><div id=log></div>
+<div class=hand id=hand></div>
+<div id=cap class=who></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+let stock=[],table=[],H=[[],[]],C=[[],[]],sur=[0,0],turn=0,lastCap=0,over=false,tot=[0,0],busy=false,starter=0;
+const pts=c=>(c.r===0?1:0)+(c.r===1&&c.s===3?2:0)+(c.r===9&&c.s===2?3:0)+(c.r===10?1:0);
+function newRound(){stock=shuf(deck());H=[[],[]];C=[[],[]];sur=[0,0];table=[];for(let i=0;i<4;i++)table.push(stock.pop());deal();turn=starter;lastCap=starter;over=false;busy=false;logs=[];hideOv();log('دست جدید! میز: '+table.map(cs).join(' '));render();if(turn===1)botMove()}
+function deal(){for(let i=0;i<4;i++){H[0].push(stock.pop());H[1].push(stock.pop())}}
+function render(){
+  $('score').textContent='امتیاز کل — تو: '+tot[0]+' | حریف: '+tot[1]+'   (هدف ۲۱)';
+  $('oppw').innerHTML='<span class="who '+(turn===1&&!over?'on':'')+'">حریف 🂠×'+H[1].length+' · برده: '+C[1].length+' · سور: '+sur[1]+'</span>';
+  const t=$('tbl');t.innerHTML='';if(!table.length)t.innerHTML='<span style="opacity:.6">میز خالی است</span>';table.forEach(c=>t.append(el(c,'')));
+  $('info').textContent=over?'':turn===0?'یک کارت بازی کن ('+stock.length+' کارت در دسته)':'نوبت حریف…';
+  const h=$('hand');h.innerHTML='';H[0].forEach(c=>{const e=el(c,'');e.onclick=()=>humanPlay(c);h.append(e)});
+  $('cap').textContent='کارت‌های بردی تو: '+C[0].length+' · سور: '+sur[0]}
+function move(p,c){H[p].splice(H[p].indexOf(c),1);const who=p===0?'تو':'حریف';let took=[];
+  if(c.r===10&&table.length){took=table.splice(0)}
+  else{const m=table.filter(x=>x.r===c.r);if(m.length){took=m;table=table.filter(x=>x.r!==c.r);if(took.length===1&&table.length===0&&c.r!==10){sur[p]++;log('✨ سور! +۵ برای '+who)}}}
+  if(took.length){C[p].push(c,...took);lastCap=p;log(who+': '+cs(c)+' ← '+took.map(cs).join(' '));beep(700,.1)}else{table.push(c);log(who+': '+cs(c)+' روی میز');beep(350,.05)}
+  afterMove()}
+function afterMove(){
+  if(!H[0].length&&!H[1].length){if(stock.length){deal();log('۴ کارت جدید پخش شد')}else{table.length&&C[lastCap].push(...table.splice(0));endRound();return}}
+  turn=1-turn;render();if(turn===1)botMove()}
+function humanPlay(c){if(over||turn!==0||busy)return;move(0,c)}
+async function botMove(){busy=true;await sleep(850);if(over){busy=false;return}
+  let best=null,bv=-1e9;H[1].forEach(c=>{let v=0;const m=c.r===10?table.slice():table.filter(x=>x.r===c.r);
+    if(m.length){v=20+m.length*3+m.reduce((a,x)=>a+pts(x),0)*4+pts(c)*3;if(m.length===table.length&&table.length===1&&c.r!==10)v+=15;if(c.r===10&&table.length<3)v-=14}
+    else{v=-pts(c)*5-(c.r===10?30:0)+(table.some(x=>x.r===c.r)?0:2)-Math.random()}
+    if(v>bv){bv=v;best=c}});
+  busy=false;move(1,best)}
+function endRound(){over=true;const add=[0,0];for(let p=0;p<2;p++){add[p]+=C[p].reduce((a,c)=>a+pts(c),0)+sur[p]*5}
+  if(C[0].length!==C[1].length)add[C[0].length>C[1].length?0:1]+=3;tot[0]+=add[0];tot[1]+=add[1];render();
+  const fin=tot[0]>=21||tot[1]>=21,w=tot[0]>tot[1];beep(w?900:200,.4);
+  overlay('<h2>پایان دست</h2><div>کارت: تو '+C[0].length+' — حریف '+C[1].length+'</div><div>امتیاز این دست: تو +'+add[0]+' | حریف +'+add[1]+'</div><div>مجموع: '+tot[0]+' — '+tot[1]+'</div>'+(fin?'<h1>'+(w?'🏆 بردی!':'😅 حریف برد')+'</h1>':'')+'<button class=p id=nx>'+(fin?'بازی جدید':'دست بعدی')+'</button>');
+  $('nx').onclick=()=>{if(fin)tot=[0,0];starter=1-starter;newRound()}}
+newRound();
+</script>

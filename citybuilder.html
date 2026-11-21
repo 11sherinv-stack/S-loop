@@ -1,0 +1,72 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>City Builder</title>
+<style>body{margin:0;background:#0f2a3a;color:#fff;font:14px system-ui;text-align:center;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;margin:auto;max-width:100%;touch-action:none}a,button{background:#2f80ed;color:#fff;border:0;border-radius:10px;padding:7px 10px;margin:2px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+#tools{max-width:380px;margin:auto;display:flex;flex-wrap:wrap;justify-content:center}#tools button{background:#24465c;min-width:76px;font-size:13px;line-height:1.25}#tools button.on{background:#2f80ed;box-shadow:0 0 0 2px #fff}#tools button.no{opacity:.45}
+#info{min-height:34px;font-size:13px;opacity:.95;padding:2px 8px}</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}" style="padding:6px 12px">← S loop</a><b>City Builder</b>
+<canvas id=c width=360 height=330></canvas>
+<div id=info></div><div id=tools></div>
+<div><button id=rs style="background:#5a2a2a">↺ New city</button></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),N=8,TW=40,TH=20,OX=180,OY=70;
+const B={house:{n:'🏠 House',cost:100,col:'#e8b68a',h:15,cap:5},farm:{n:'🌾 Farm',cost:150,col:'#8bc34a',h:5,food:6,jobs:3},factory:{n:'🏭 Factory',cost:300,col:'#7b8d97',h:28,jobs:8,inc:14,pol:6,pw:6},
+ shop:{n:'🏪 Shop',cost:200,col:'#ffb74d',h:19,jobs:4,inc:8,pw:2},park:{n:'🌳 Park',cost:80,col:'#43a047',h:4,joy:5},power:{n:'⚡ Power',cost:400,col:'#ffd54f',h:32,pwr:22},hospital:{n:'🏥 Clinic',cost:500,col:'#f5f5f5',h:24,joy:8,pw:4,jobs:5},bull:{n:'🚜 Remove',cost:0}};
+const MIS=[[10,150],[25,250],[50,400],[100,700],[200,1200],[400,2500],[800,5000]];
+let G=JSON.parse(localStorage.getItem('cb1')||'null');
+function fresh(){return{money:800,pop:0,mis:0,t:0,tiles:Array.from({length:N*N},()=>null),income:0,food:0,power:0,joy:50,log:''}}
+if(!G||!G.tiles||G.tiles.length!==N*N)G=fresh();
+let tool='house',sel=-1,au,msg='',msgT=0,tick=0;
+const $=i=>document.getElementById(i);
+function beep(f,d=.08){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const cnt=k=>G.tiles.filter(t=>t===k).length;
+function sim(){
+  const h=cnt('house'),fa=cnt('farm'),fc=cnt('factory'),sh=cnt('shop'),pk=cnt('park'),pw=cnt('power'),hp=cnt('hospital'),cap=h*5;
+  const jobs=fa*3+fc*8+sh*4+hp*5,foodP=fa*6+3,foodN=G.pop*.35,pwrP=pw*22,pwrN=fc*6+sh*2+hp*4;
+  const foodOk=foodP>=foodN,pwrOk=pwrP>=pwrN;
+  const joy=Math.max(0,Math.min(100,50+pk*5+hp*8-fc*4-(pwrOk?0:18)-(foodOk?0:22)-(jobs<G.pop*.6?10:0)));
+  if(foodOk&&joy>35&&cap>G.pop)G.pop+=Math.min(3,cap-G.pop);else if(G.pop>cap||!foodOk)G.pop=Math.max(0,G.pop-(foodOk?1:2));
+  const emp=Math.min(G.pop,jobs),inc=emp*2.2+(pwrOk?fc*14+sh*(G.pop>0?8:0):0)+G.pop*.8*joy/100;
+  G.money+=Math.round(inc);G.income=Math.round(inc);G.food=Math.round(foodP-foodN);G.power=pwrP-pwrN;G.joy=joy;
+  if(G.mis<MIS.length&&G.pop>=MIS[G.mis][0]){G.money+=MIS[G.mis][1];say('🎯 Goal reached! +$'+MIS[G.mis][1]);G.mis++;beep(880,.2)}
+  if(++tick%12===0&&Math.random()<.35){const bs=G.tiles.map((t,i)=>t&&t!=='park'?i:-1).filter(i=>i>=0);
+    if(Math.random()<.5&&bs.length&&!hp){const i=bs[Math.random()*bs.length|0];say('🔥 Fire destroyed a '+B[G.tiles[i]].n.split(' ')[1]+'! (build a Clinic)');G.tiles[i]=null;beep(150,.3)}
+    else{const g=40+G.pop;G.money+=g;say('🎉 Festival! +$'+g)}}
+  localStorage.setItem('cb1',JSON.stringify(G))}
+function say(t){msg=t;msgT=3}
+const pr=(r,q,z)=>[OX+(q-r)*TW/2,OY+(q+r)*TH/2-z];
+function sh(col,f){const n=parseInt(col.slice(1),16),r=Math.min(255,(n>>16)*f),g=Math.min(255,(n>>8&255)*f),b=Math.min(255,(n&255)*f);return'rgb('+(r|0)+','+(g|0)+','+(b|0)+')'}
+function poly(p,col){x.fillStyle=col;x.beginPath();p.forEach((a,i)=>i?x.lineTo(a[0],a[1]):x.moveTo(a[0],a[1]));x.closePath();x.fill()}
+function tile(r,q,col,z){poly([pr(r,q,z),pr(r,q+1,z),pr(r+1,q+1,z),pr(r+1,q,z)],col)}
+function box(r,q,h,col,ins){const a=ins||0,r0=r+a,r1=r+1-a,q0=q+a,q1=q+1-a;
+  poly([pr(r1,q0,0),pr(r1,q1,0),pr(r1,q1,h),pr(r1,q0,h)],sh(col,.78));poly([pr(r0,q1,0),pr(r1,q1,0),pr(r1,q1,h),pr(r0,q1,h)],sh(col,.6));poly([pr(r0,q0,h),pr(r0,q1,h),pr(r1,q1,h),pr(r1,q0,h)],sh(col,1.08))}
+function draw(){
+  x.fillStyle='#4aa3d8';x.fillRect(0,0,360,330);
+  poly([pr(-.6,-.6,0),pr(-.6,N+.6,0),pr(N+.6,N+.6,0),pr(N+.6,-.6,0)],'#6ec06a');
+  for(let s=0;s<=2*N-2;s++)for(let r=Math.max(0,s-N+1);r<=Math.min(s,N-1);r++){const q=s-r,t=G.tiles[r*N+q];
+    tile(r,q,(r+q)%2?'#7ccf76':'#72c46c',0);
+    if(r*N+q===sel){x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();[pr(r,q,0),pr(r,q+1,0),pr(r+1,q+1,0),pr(r+1,q,0)].forEach((a,i)=>i?x.lineTo(a[0],a[1]):x.moveTo(a[0],a[1]));x.closePath();x.stroke()}
+    if(t){const b=B[t],ctr=pr(r+.5,q+.5,b.h+2);
+      if(t==='farm'){box(r,q,3,'#8d6e3f',.06);for(let i=0;i<3;i++)poly([pr(r+.2+i*.25,q+.15,3.5),pr(r+.2+i*.25,q+.85,3.5),pr(r+.3+i*.25,q+.85,3.5),pr(r+.3+i*.25,q+.15,3.5)],'#9ccc4a')}
+      else if(t==='park'){box(r,q,2,'#2e8b3a',.04)}
+      else box(r,q,b.h,b.col,.1);
+      if(t==='factory'){box(r+.65,q+.15,40,'#555',.22)}
+      if(t==='house'){poly([pr(r+.1,q+.1,b.h),pr(r+.1,q+.9,b.h),pr(r+.5,q+.5,b.h+9)],'#c0504d')}
+      if(t==='hospital'){x.fillStyle='#e53935';x.fillRect(ctr[0]-6,ctr[1]-2,12,4);x.fillRect(ctr[0]-2,ctr[1]-6,4,12)}
+      x.font='13px serif';x.textAlign='center';if(t!=='hospital')x.fillText(b.n.split(' ')[0],ctr[0],ctr[1]-(t==='factory'?14:0))}}
+  x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,360,40);x.fillStyle='#fff';x.font='bold 14px system-ui';x.textAlign='left';x.fillText('💰 $'+G.money+'  (+'+G.income+')',8,16);x.fillText('👥 '+G.pop,8,34);
+  x.textAlign='center';x.fillText('🌾 '+(G.food>=0?'+':'')+G.food,150,34);x.fillText('⚡ '+(G.power>=0?'+':'')+G.power,215,34);x.fillText((G.joy>60?'😊':G.joy>35?'😐':'😠')+' '+Math.round(G.joy),275,34);
+  x.textAlign='right';const m=MIS[G.mis];x.fillText(m?'🎯 Pop '+m[0]+' → $'+m[1]:'🏆 All goals done!',352,16);
+  if(msgT>0){x.fillStyle='rgba(0,0,0,.7)';x.fillRect(30,290,300,28);x.fillStyle='#fff';x.font='13px system-ui';x.textAlign='center';x.fillText(msg,180,309)}}
+function pick(px,py){let best=-1,bd=1e9;for(let r=0;r<N;r++)for(let q=0;q<N;q++){const p=pr(r+.5,q+.5,0),d=Math.hypot(px-p[0],(py-p[1])*2);if(d<bd){bd=d;best=r*N+q}}return bd<TW*.62?best:-1}
+c.onpointerdown=e=>{const b=c.getBoundingClientRect(),i=pick((e.clientX-b.left)*360/b.width,(e.clientY-b.top)*330/b.height);if(i<0)return;sel=i;const t=G.tiles[i],bd=B[tool];
+  if(tool==='bull'){if(t){G.money+=Math.round(B[t].cost/2);G.tiles[i]=null;beep(200,.1)}}
+  else if(t){$('info').textContent=B[t].n+' — '+desc(t)}
+  else if(G.money>=bd.cost){G.money-=bd.cost;G.tiles[i]=tool;beep(500,.08)}else say('Not enough money 💸')};
+function desc(t){const b=B[t];return[b.cap?'+'+b.cap+' homes':'',b.food?'+'+b.food+' food':'',b.pwr?'+'+b.pwr+' power':'',b.jobs?b.jobs+' jobs':'',b.inc?'+$'+b.inc+'/tick':'',b.joy?'+'+b.joy+' happiness':'',b.pol?'pollution':'',b.pw?'uses '+b.pw+' power':''].filter(Boolean).join(' · ')}
+function tools(){$('tools').innerHTML=Object.keys(B).map(k=>'<button data-k='+k+' class="'+(k===tool?'on ':'')+(G.money<B[k].cost?'no':'')+'">'+B[k].n+'<br>'+(B[k].cost?'$'+B[k].cost:'free')+'</button>').join('')}
+$('tools').onclick=e=>{const k=e.target.closest('[data-k]');if(k){tool=k.dataset.k;$('info').textContent=tool==='bull'?'Tap a building to remove it (50% refund)':B[tool].n+' — '+desc(tool);tools()}};
+$('rs').onclick=()=>{if(confirm('Start a new city?')){G=fresh();localStorage.removeItem('cb1');tools()}};
+setInterval(()=>{sim();tools()},2000);
+let last=0;(function f(ts){msgT-=Math.min(.05,(ts-last)/1000||0);last=ts;draw();requestAnimationFrame(f)})(0);
+sim();tools();$('info').textContent='Build houses 🏠, farms 🌾 and power ⚡ first, then add jobs and parks.';
+</script>

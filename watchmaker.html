@@ -1,0 +1,71 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Watchmaker</title>
+<style>body{margin:0;background:radial-gradient(circle at 50% 30%,#2b2a33,#101014);color:#fff;font:14px system-ui;text-align:center;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+canvas{display:block;margin:auto;max-width:100%;touch-action:none}a,button{background:#b8872b;color:#fff;border:0;border-radius:10px;padding:7px 12px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g{background:#3b3a47}button.on{background:#b8872b;box-shadow:0 0 0 2px #fff}#opts{display:none;max-width:400px;margin:auto}.sw{display:inline-block;width:26px;height:26px;border-radius:50%;margin:3px;border:2px solid #fff6;cursor:pointer}.sw.on{border-color:#fff;transform:scale(1.2)}</style>
+<a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}" style="padding:6px 12px">← S loop</a><b>Watchmaker ⌚</b> <span id=tm>0:00</span>
+<canvas id=c width=360 height=500></canvas>
+<div><button class=g id=hint>💡 Hint: off</button><button class=g id=rs>↺ Restart</button></div>
+<div id=opts><div>Dial <span id=dials></span></div><div>Case <span id=cases></span></div><div>Strap <span id=straps></span></div></div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),$=i=>document.getElementById(i),W=360,H=500,CX=180,CY=200;
+const METAL={silver:['#e3e7ee','#9aa3b0','#5d6573'],gold:['#ffe28a','#d8a935','#8a6414'],rose:['#ffd2c0','#d98f78','#8d4c3b'],black:['#6a6a74','#2e2e36','#0d0d10']};
+const DIAL={white:'#f4f1ea',black:'#15171c',blue:'#1d3a8a',green:'#14532d',skeleton:null},STRAP={brown:'#6b3f1d',black:'#141414',blue:'#1e3a8a',red:'#9b1c1c'};
+let opt={dial:'white',metal:'gold',strap:'brown'};
+function ring(q,R,cols){const g=q.createLinearGradient(-R,-R,R,R);g.addColorStop(0,cols[0]);g.addColorStop(.5,cols[1]);g.addColorStop(1,cols[2]);return g}
+function gear(q,R,n,cols,hole){q.beginPath();for(let i=0;i<n*2;i++){const a=i*Math.PI/n,r=i%2?R-5:R;q.lineTo(Math.cos(a)*r,Math.sin(a)*r);q.lineTo(Math.cos(a+Math.PI/n*.5)*r,Math.sin(a+Math.PI/n*.5)*r)}q.closePath();q.fillStyle=ring(q,R,cols);q.fill();q.strokeStyle='rgba(0,0,0,.4)';q.lineWidth=1;q.stroke();
+  q.fillStyle='rgba(0,0,0,.35)';for(let i=0;i<4;i++){q.beginPath();q.arc(Math.cos(i*1.57)*R*.52,Math.sin(i*1.57)*R*.52,R*.2,0,7);q.fill()}q.fillStyle='#222';q.beginPath();q.arc(0,0,hole,0,7);q.fill()}
+const PARTS=[
+ {id:'case',n:'Case',req:[],t:[0,0],d:(q,T)=>{const m=METAL[opt.metal];q.fillStyle=ring(q,126,m);q.beginPath();q.arc(0,0,124,0,7);q.fill();q.fillStyle='#16161a';q.beginPath();q.arc(0,0,108,0,7);q.fill();q.strokeStyle=m[0];q.lineWidth=2;q.beginPath();q.arc(0,0,111,0,7);q.stroke()}},
+ {id:'plate',n:'Movement plate',req:['case'],t:[0,0],d:q=>{q.fillStyle=ring(q,104,METAL.gold);q.beginPath();q.arc(0,0,102,0,7);q.fill();q.strokeStyle='rgba(0,0,0,.25)';for(let i=0;i<12;i++){q.beginPath();q.arc(0,0,102-i*8,0,7);q.stroke()}}},
+ {id:'barrel',n:'Main gear',req:['plate'],t:[-30,12],d:(q,T)=>{q.rotate(T*.5);gear(q,34,16,METAL.silver,5)}},
+ {id:'mid',n:'Center gear',req:['barrel'],t:[30,12],d:(q,T)=>{q.rotate(-T*.5*34/26+Math.PI/12);gear(q,26,12,METAL.gold,4)}},
+ {id:'pin',n:'Pinion',req:['mid'],t:[30,54],d:(q,T)=>{q.rotate(T*.5*34/16);gear(q,16,8,METAL.silver,3)}},
+ {id:'bal',n:'Balance wheel',req:['plate'],t:[-48,-52],d:(q,T)=>{q.rotate(Math.sin(T*3)*.9);q.strokeStyle=ring(q,24,METAL.gold);q.lineWidth=5;q.beginPath();q.arc(0,0,22,0,7);q.stroke();q.lineWidth=3;q.beginPath();q.moveTo(-22,0);q.lineTo(22,0);q.moveTo(0,-22);q.lineTo(0,22);q.stroke();q.fillStyle='#c0392b';[[22,0],[-22,0]].forEach(p=>{q.beginPath();q.arc(p[0],p[1],3.5,0,7);q.fill()});q.strokeStyle='#8fd3ff';q.lineWidth=1;q.beginPath();for(let a=0;a<18;a+=.2){const r=2+a*.9;q.lineTo(Math.cos(a)*r*.7,Math.sin(a)*r*.7)}q.stroke()}},
+ {id:'dial',n:'Dial',req:['barrel','mid','pin','bal'],t:[0,0],d:q=>{const col=DIAL[opt.dial];q.beginPath();q.arc(0,0,102,0,7);if(!col){q.moveTo(70,0);q.arc(0,0,70,0,7);q.fillStyle='#14161b';q.fill('evenodd')}else{q.fillStyle=col;q.fill()}
+   const light=opt.dial==='white'?'#222':'#f2f2f2';q.strokeStyle=light;q.fillStyle=light;for(let i=0;i<60;i++){const a=i*Math.PI/30,l=i%5?4:11;q.lineWidth=i%5?1:3;q.beginPath();q.moveTo(Math.cos(a)*(98-l),Math.sin(a)*(98-l));q.lineTo(Math.cos(a)*98,Math.sin(a)*98);q.stroke()}
+   q.font='bold 10px system-ui';q.textAlign='center';q.fillText('S LOOP',0,-52);q.font='8px system-ui';q.fillText('AUTOMATIC',0,64)}},
+ {id:'hour',n:'Hour hand',req:['dial'],t:[0,0],d:(q,T,live)=>{const hh=live?(new Date().getHours()%12+new Date().getMinutes()/60):10.17;q.rotate(hh*Math.PI/6);hand(q,56,7)}},
+ {id:'min',n:'Minute hand',req:['hour'],t:[0,0],d:(q,T,live)=>{const mm=live?(new Date().getMinutes()+new Date().getSeconds()/60):10;q.rotate(mm*Math.PI/30);hand(q,84,5)}},
+ {id:'sec',n:'Second hand',req:['min'],t:[0,0],d:(q,T,live)=>{const ss=live?(new Date().getSeconds()+new Date().getMilliseconds()/1000):30;q.rotate(ss*Math.PI/30);q.strokeStyle='#e53935';q.lineWidth=1.5;q.beginPath();q.moveTo(0,16);q.lineTo(0,-92);q.stroke();q.fillStyle='#e53935';q.beginPath();q.arc(0,0,4.5,0,7);q.fill()}},
+ {id:'glass',n:'Crystal',req:['sec'],t:[0,0],d:q=>{const g=q.createLinearGradient(-90,-90,90,90);g.addColorStop(0,'rgba(255,255,255,.35)');g.addColorStop(.45,'rgba(255,255,255,.05)');g.addColorStop(.55,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.15)');q.fillStyle=g;q.beginPath();q.arc(0,0,106,0,7);q.fill()}},
+ {id:'crown',n:'Crown',req:['glass'],t:[132,0],d:q=>{const m=METAL[opt.metal];q.fillStyle=ring(q,12,m);q.fillRect(-6,-9,16,18);q.strokeStyle='rgba(0,0,0,.4)';for(let i=-8;i<=8;i+=3){q.beginPath();q.moveTo(-6,i);q.lineTo(10,i);q.stroke()}}}];
+function hand(q,L,w){const m=opt.dial==='white'?['#222','#111','#000']:METAL[opt.metal];q.fillStyle=ring(q,L,m);q.beginPath();q.moveTo(-w/2,10);q.lineTo(-w,-L*.6);q.lineTo(0,-L);q.lineTo(w,-L*.6);q.lineTo(w/2,10);q.closePath();q.fill();q.strokeStyle='rgba(0,0,0,.4)';q.stroke();q.fillStyle=m[1];q.beginPath();q.arc(0,0,6,0,7);q.fill()}
+let placed,tray,drag,hint=false,t0,secs,done,msg='',msgT=0,sparks=[],au,T=0;
+const P=id=>PARTS.find(p=>p.id===id);
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+function init(){placed=new Set();tray=PARTS.map(p=>p.id).sort(()=>Math.random()-.5);drag=null;t0=performance.now();secs=0;done=false;sparks=[];$('opts').style.display='none';opt={dial:'white',metal:'gold',strap:'brown'}}
+const slot=i=>[36+(i%6)*58,420+Math.floor(i/6)*52];
+function drawPart(p,cx,cy,s,alpha,live){x.save();x.globalAlpha=alpha||1;x.translate(cx,cy);x.scale(s,s);p.d(x,T,live);x.restore()}
+function watch(live){
+  if(done){const sc=STRAP[opt.strap],mm=METAL[opt.metal];[[-1],[1]].forEach(([d])=>{x.fillStyle=sc;x.beginPath();x.roundRect(CX-34,d<0?CY-240:CY+90,68,150,16);x.fill();x.strokeStyle='rgba(255,255,255,.15)';x.lineWidth=2;x.setLineDash([6,5]);x.strokeRect(CX-26,d<0?CY-232:CY+98,52,134);x.setLineDash([])})}
+  for(const id of PARTS.map(p=>p.id))if(placed.has(id)){const p=P(id);drawPart(p,CX+p.t[0],CY+p.t[1],1,1,done)}}
+function draw(){
+  T=(performance.now()-t0)/1000;if(!done)secs=Math.floor(T);$('tm').textContent=Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  x.clearRect(0,0,W,H);
+  x.fillStyle='rgba(255,255,255,.05)';x.beginPath();x.arc(CX,CY,128,0,7);x.fill();
+  if(!placed.has('case')){x.strokeStyle='rgba(255,255,255,.2)';x.setLineDash([6,6]);x.beginPath();x.arc(CX,CY,124,0,7);x.stroke();x.setLineDash([])}
+  watch();
+  if(hint||drag){for(const p of PARTS){if(placed.has(p.id)||!p.req.every(r=>placed.has(r)))continue;if(drag&&drag.id!==p.id)continue;x.strokeStyle='rgba(255,215,0,.8)';x.lineWidth=2;x.setLineDash([4,4]);x.beginPath();x.arc(CX+p.t[0],CY+p.t[1],p.id==='dial'||p.id==='plate'||p.id==='glass'?100:p.id==='case'?124:24,0,7);x.stroke();x.setLineDash([])}}
+  if(!done){x.fillStyle='rgba(0,0,0,.35)';x.fillRect(0,396,W,104);tray.forEach((id,i)=>{if(drag&&drag.id===id)return;const p=P(id),[sx,sy]=slot(i);x.fillStyle='rgba(255,255,255,.1)';x.beginPath();x.roundRect(sx-27,sy-24,54,50,10);x.fill();
+    const sc=id==='case'?.2:id==='plate'||id==='dial'||id==='glass'?.24:id==='crown'?1:id==='hour'||id==='min'||id==='sec'?.38:id==='barrel'||id==='mid'||id==='pin'||id==='bal'?.7:.4;
+    x.save();x.beginPath();x.rect(sx-27,sy-24,54,50);x.clip();drawPart(p,sx,sy+(id==='hour'||id==='min'||id==='sec'?12:0),sc,1,false);x.restore()});
+    x.fillStyle='#fff';x.font='13px system-ui';x.textAlign='center';x.fillText(drag?P(drag.id).n:'Drag each part onto the watch · '+placed.size+'/'+PARTS.length,W/2,392)}
+  if(drag)drawPart(P(drag.id),drag.x,drag.y-30,1,.92);
+  sparks=sparks.filter(s=>(s.l-=.03)>0);sparks.forEach(s=>{s.x+=s.vx;s.y+=s.vy;x.globalAlpha=s.l;x.fillStyle='#ffe28a';x.fillRect(s.x,s.y,3,3);x.globalAlpha=1});
+  if(msgT>0){msgT-=.016;x.fillStyle='rgba(0,0,0,.7)';x.fillRect(40,40,280,30);x.fillStyle='#ffd54f';x.font='bold 14px system-ui';x.textAlign='center';x.fillText(msg,W/2,60)}
+  if(done){x.fillStyle='#ffd54f';x.font='bold 18px system-ui';x.textAlign='center';const st=secs<100?3:secs<180?2:1;x.fillText('Assembled in '+Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0')+'  '+'★'.repeat(st)+'☆'.repeat(3-st),W/2,30)}
+  requestAnimationFrame(draw)}
+function pos(e){const b=c.getBoundingClientRect();return[(e.clientX-b.left)*W/b.width,(e.clientY-b.top)*H/b.height]}
+c.onpointerdown=e=>{if(done)return;const[px,py]=pos(e);if(py<396)return;for(let i=0;i<tray.length;i++){const[sx,sy]=slot(i);if(Math.abs(px-sx)<28&&Math.abs(py-sy)<26){drag={id:tray[i],x:px,y:py};c.setPointerCapture(e.pointerId);beep(500,.04);return}}};
+c.onpointermove=e=>{if(!drag)return;const[px,py]=pos(e);drag.x=px;drag.y=py};
+c.onpointerup=c.onpointercancel=e=>{if(!drag)return;const p=P(drag.id),tx=CX+p.t[0],ty=CY+p.t[1],d=Math.hypot(drag.x-tx,drag.y-30-ty),d2=Math.hypot(drag.x-tx,drag.y-ty),near=Math.min(d,d2)<(p.id==='case'||p.id==='plate'||p.id==='dial'||p.id==='glass'?60:34);
+  if(near&&p.req.every(r=>placed.has(r))){placed.add(p.id);tray=tray.filter(i=>i!==p.id);beep(900,.12);for(let i=0;i<14;i++)sparks.push({x:tx,y:ty,vx:(Math.random()-.5)*4,vy:(Math.random()-.5)*4,l:1});
+    if(!tray.length){done=true;$('opts').style.display='block';msg='Your watch is running! Customize it ⬇';msgT=3;beep(1200,.3)}}
+  else if(near){const m=p.req.find(r=>!placed.has(r));msg='Place the '+P(m).n.toLowerCase()+' first';msgT=1.6;beep(180,.15,'square')}
+  drag=null};
+$('hint').onclick=()=>{hint=!hint;$('hint').textContent='💡 Hint: '+(hint?'on':'off')};$('rs').onclick=init;
+function sw(id,map,key,fn){$(id).innerHTML=Object.keys(map).map(k=>'<span class="sw '+(opt[key]===k?'on':'')+'" data-k="'+k+'" style="background:'+(fn?fn(k):map[k]||'repeating-conic-gradient(#888 0 25%,#222 0 50%) 50%/8px 8px')+'"></span>').join('');
+  $(id).onclick=e=>{const k=e.target.dataset.k;if(!k)return;opt[key]=k;sw('dials',DIAL,'dial');sw('cases',METAL,'metal',k=>METAL[k][1]);sw('straps',STRAP,'strap')}}
+sw('dials',DIAL,'dial');sw('cases',METAL,'metal',k=>METAL[k][1]);sw('straps',STRAP,'strap');
+init();requestAnimationFrame(draw);
+</script>

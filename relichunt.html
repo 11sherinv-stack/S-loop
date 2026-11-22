@@ -1,0 +1,58 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Relic Hunter</title>
+<style>
+body{margin:0;background:#1a1410;color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button{background:#b45309;color:#fff;border:0;border-radius:12px;padding:9px 14px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}button.g{background:#4a3a2a}button:disabled{opacity:.4}
+#main{max-width:430px;margin:auto;padding:6px 10px 40px}#tabs button.on{box-shadow:0 0 0 2px #fff}
+#scene{position:relative;width:360px;max-width:100%;height:400px;margin:6px auto;border-radius:14px;overflow:hidden;touch-action:manipulation}
+#scene .cl{position:absolute;opacity:.9;pointer-events:none}#scene .it{position:absolute;cursor:pointer;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.it.found{opacity:.25;filter:grayscale(1);pointer-events:none}
+.list{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:4px 0}.chip{background:rgba(255,255,255,.1);border-radius:10px;padding:4px 8px;font-size:13px}.chip.d{opacity:.35;text-decoration:line-through}
+.rar-common{color:#cbd5e1}.rar-uncommon{color:#6ee7a0}.rar-rare{color:#60a5fa}.rar-epic{color:#c084fc}.rar-legendary{color:#fbbf24}
+.slot{display:inline-block;width:76px;height:84px;margin:4px;background:rgba(255,255,255,.07);border-radius:12px;padding:4px;box-sizing:border-box;font-size:11px;vertical-align:top}.slot .e{font-size:30px;margin-top:4px}.slot.m .e{filter:grayscale(1) brightness(.2)}
+.set{background:rgba(255,255,255,.06);border-radius:14px;padding:8px;margin:8px 0}
+.locs button{display:block;width:100%;text-align:left;margin:6px 0;padding:12px;background:#33271c}.sub{opacity:.75;font-size:13px}
+</style>
+<div style="padding:6px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a><b>Relic Hunter 🏺</b> · 💰 <b id=coins>0</b></div>
+<div id=tabs><button class="g on" data-t=hunt>🔍 Hunt</button><button class=g data-t=coll>🗄 Collection</button></div>
+<div id=main></div>
+<script>
+const $=i=>document.getElementById(i);
+const W={get:()=>{try{return JSON.parse(localStorage.getItem('sl-wallet'))||{coins:0}}catch(e){return{coins:0}}},set:w=>localStorage.setItem('sl-wallet',JSON.stringify(w))};
+const pay=n=>{const w=W.get();w.coins+=n;W.set(w);$('coins').textContent=w.coins};
+let SV=JSON.parse(localStorage.getItem('sl-relics')||'null')||{own:{},sets:{}};const save=()=>localStorage.setItem('sl-relics',JSON.stringify(SV));
+const RV={common:5,uncommon:12,rare:30,epic:80,legendary:200};
+const LOC=[
+ {id:'attic',n:'🏚 Attic',bg:['#4a3426','#1f140d'],clut:['📦','🧸','🪑','🕸️','🧳','📚'],items:[['🕰️','Grandpa\'s Clock','common'],['📻','Tube Radio','common'],['🪞','Gilded Mirror','uncommon'],['🎻','Old Violin','uncommon'],['📷','Box Camera','uncommon'],['🗝️','Skeleton Key','rare'],['📜','Faded Letter','common'],['🎭','Opera Mask','rare'],['🧭','Brass Compass','rare'],['💍','Lost Ring','epic'],['🗺️','Pirate Map','epic'],['👑','Forgotten Crown','legendary']]},
+ {id:'beach',n:'🏖 Beach',bg:['#f6d7a0','#2a8fb5'],clut:['🌴','🐚','🦀','⛱️','🪸','🌊'],items:[['🐚','Spiral Shell','common'],['⭐','Sea Star','common'],['🍾','Message Bottle','uncommon'],['🪸','Pink Coral','uncommon'],['🦪','Pearl Oyster','uncommon'],['⚓','Rusty Anchor','rare'],['🧿','Sea Charm','rare'],['🦑','Tiny Squid','rare'],['🔱','Trident','epic'],['💎','Blue Gem','epic'],['🏺','Sunken Amphora','epic'],['🧜','Mermaid Statue','legendary']]},
+ {id:'market',n:'🛍 Flea Market',bg:['#6b3b5a','#2a1230'],clut:['🧺','🪔','🪆','🎨','🧵','🏮'],items:[['🧶','Wool Ball','common'],['🪙','Odd Coin','common'],['🎲','Bone Dice','common'],['🔔','Temple Bell','uncommon'],['🪆','Nesting Doll','uncommon'],['🏮','Paper Lantern','uncommon'],['🧿','Evil Eye','rare'],['⚱️','Jade Urn','rare'],['🪬','Hamsa Hand','rare'],['🔮','Crystal Ball','epic'],['📿','Amber Beads','epic'],['🪄','Wizard\'s Wand','legendary']]},
+ {id:'ruins',n:'🏛 Ancient Ruins',bg:['#8a7a55','#2d2616'],clut:['🏛️','🪨','🌿','🐍','🦂','🌵'],items:[['🪨','Carved Stone','common'],['🏺','Clay Pot','common'],['🦴','Fossil Bone','uncommon'],['🗿','Stone Idol','uncommon'],['🔨','Bronze Axe','uncommon'],['📿','Sun Pendant','rare'],['🪶','Golden Feather','rare'],['⚱️','Burial Urn','rare'],['🛡️','Hero Shield','epic'],['⚔️','Lost Sword','epic'],['🦅','Eagle Totem','epic'],['🏆','Sacred Chalice','legendary']]}];
+let tab='hunt',H=null,iv=0;
+function render(){$('coins').textContent=W.get().coins;document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));clearInterval(iv);
+  if(tab==='hunt'){if(H){hunt();return}$('main').innerHTML='<div class=sub>جای را انتخاب کن؛ ۷۵ ثانیه وقت داری وسایل خاص را میان شلوغی پیدا کنی.</div><div class=locs>'+LOC.map((l,i)=>{const n=SV.own[l.id]?Object.keys(SV.own[l.id]).length:0;return'<button data-l='+i+'>'+l.n+' <span class=sub>('+n+'/12 پیدا شده)</span></button>'}).join('')+'</div>';document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>start(+b.dataset.l))}
+  else coll()}
+function start(i){const L=LOC[i],pool=L.items.map((it,k)=>({it,k})),tg=[];
+  const ws={common:5,uncommon:3,rare:1.6,epic:.7,legendary:.25};
+  while(tg.length<7){const tot=pool.filter(p=>!tg.includes(p)).reduce((a,p)=>a+ws[p.it[2]],0);let r=Math.random()*tot;for(const p of pool){if(tg.includes(p))continue;r-=ws[p.it[2]];if(r<=0){tg.push(p);break}}}
+  const items=[],used=[];tg.forEach(p=>{let x,y,t=0;do{x=14+Math.random()*312;y=20+Math.random()*350;t++}while(used.some(u=>Math.hypot(u[0]-x,u[1]-y)<34)&&t<40);used.push([x,y]);items.push({x,y,p,found:false,s:22+Math.random()*8,rot:(Math.random()-.5)*60})});
+  const clut=[];for(let k=0;k<30;k++)clut.push({e:L.clut[k%6],x:Math.random()*330,y:Math.random()*370,s:34+Math.random()*30,o:.35+Math.random()*.4});
+  H={L,i,items,clut,t:75,hint:1,got:0};hunt()}
+function hunt(){const{L,items,clut}=H;
+  $('main').innerHTML='<div><b>'+L.n+'</b> · ⏱ <b id=tm>'+Math.ceil(H.t)+'</b>s · پیدا شده: <b id=gt>'+H.got+'</b>/7</div><div id=scene style="background:linear-gradient(160deg,'+L.bg[0]+','+L.bg[1]+')"></div><div class=list id=lst></div><div><button class=g id=hn>💡 راهنما ('+H.hint+')</button><button class=g id=qt>✖ خروج</button></div>';
+  const sc=$('scene');clut.forEach(c=>{const d=document.createElement('div');d.className='cl';d.style.cssText='left:'+c.x+'px;top:'+c.y+'px;font-size:'+c.s+'px;opacity:'+c.o;d.textContent=c.e;sc.append(d)});
+  items.forEach((m,k)=>{const d=document.createElement('div');d.className='it'+(m.found?' found':'');d.id='it'+k;d.style.cssText='left:'+m.x+'px;top:'+m.y+'px;font-size:'+m.s+'px;transform:rotate('+m.rot+'deg)';d.textContent=m.p.it[0];d.onclick=()=>found(k);sc.append(d)});
+  lst();$('hn').onclick=()=>{if(!H.hint)return;const m=items.find(x=>!x.found);if(!m)return;H.hint--;const e=$('it'+items.indexOf(m));e.style.transition='transform .3s';e.style.transform+=' scale(2.4)';e.style.zIndex=5;setTimeout(()=>{e.style.transform='rotate('+m.rot+'deg)';e.style.zIndex=''},1200);$('hn').textContent='💡 راهنما ('+H.hint+')'};
+  $('qt').onclick=()=>{H=null;render()};clearInterval(iv);iv=setInterval(tick,250)}
+function lst(){$('lst').innerHTML=H.items.map(m=>'<span class="chip'+(m.found?' d':'')+'">'+m.p.it[0]+' <span class="rar-'+m.p.it[2]+'">'+m.p.it[1]+'</span></span>').join('')}
+function tick(){if(!H)return;H.t-=.25;$('tm').textContent=Math.ceil(H.t);if(H.t<=0)end()}
+function found(k){const m=H.items[k];if(m.found)return;m.found=true;H.got++;$('it'+k).classList.add('found');$('gt').textContent=H.got;lst();beep(500+RVn(m.p.it[2])*120,.12);
+  const L=H.L;SV.own[L.id]=SV.own[L.id]||{};const first=!SV.own[L.id][m.p.k];SV.own[L.id][m.p.k]=(SV.own[L.id][m.p.k]||0)+1;pay(RV[m.p.it[2]]);if(first)toast('✨ جدید در مجموعه: '+m.p.it[1]);save();if(H.got>=7)end()}
+const RVn=r=>['common','uncommon','rare','epic','legendary'].indexOf(r);
+function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#000c;padding:8px 14px;border-radius:12px;z-index:9';document.body.append(d);setTimeout(()=>d.remove(),1800)}
+function end(){clearInterval(iv);const{L,got}=H;let bonus=0,msg='';if(got>=7){bonus=40;msg='🎉 همه را پیدا کردی! +۴۰ سکه'}else msg='زمان تمام شد — '+got+' از ۷ پیدا شد';
+  if(bonus)pay(bonus);
+  const own=SV.own[L.id]||{};if(Object.keys(own).length===12&&!SV.sets[L.id]){SV.sets[L.id]=1;pay(300);msg+='<br>🏆 مجموعه‌ی '+L.n+' کامل شد! +۳۰۰ سکه'}save();
+  $('main').innerHTML='<h2>'+msg+'</h2><div><button id=ag>🔁 دوباره</button><button class=g id=bk>برگشت</button></div>';$('ag').onclick=()=>start(H.i);$('bk').onclick=()=>{H=null;render()};beep(got>=7?900:250,.4)}
+function coll(){$('main').innerHTML='<div class=sub>همه‌ی وسایل خاصی که پیدا کردی. هر مجموعه‌ی کامل ۳۰۰ سکه جایزه دارد.</div>'+LOC.map(l=>{const own=SV.own[l.id]||{};return'<div class=set><b>'+l.n+'</b> <span class=sub>'+Object.keys(own).length+'/12 '+(SV.sets[l.id]?'🏆':'')+'</span><div>'+l.items.map((it,k)=>'<div class="slot'+(own[k]?'':' m')+'"><div class=e>'+it[0]+'</div><span class="rar-'+it[2]+'">'+(own[k]?it[1]:'???')+'</span>'+(own[k]>1?' ×'+own[k]:'')+'</div>').join('')+'</div></div>'}).join('')}
+let au;function beep(f,d=.1){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const x=au.createOscillator(),g=au.createGain();x.type='triangle';x.frequency.value=f;g.gain.value=.05;x.connect(g);g.connect(au.destination);x.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);x.stop(au.currentTime+d)}catch(e){}}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});render();
+</script>

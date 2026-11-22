@@ -1,0 +1,72 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Monster Cards</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 0,#2b1b5a,#0c0820 70%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button{background:#7c3aed;color:#fff;border:0;border-radius:12px;padding:9px 14px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}button.g{background:#3a2d66}button.y{background:#d97706}button:disabled{opacity:.4}
+#top{padding:6px}#tabs button.on{box-shadow:0 0 0 2px #fff}#main{max-width:430px;margin:auto;padding:6px 10px 40px}
+.card{width:150px;height:210px;border-radius:12px;padding:6px;box-sizing:border-box;position:relative;display:inline-block;margin:4px;text-align:left;color:#111;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.5);transition:transform .3s}
+.card .in{height:100%;border-radius:8px;background:#fdfcf8;position:relative;overflow:hidden;padding:4px;box-sizing:border-box}
+.card .nm{font-weight:800;font-size:13px;display:flex;justify-content:space-between}.card .ar{height:100px;border-radius:6px;overflow:hidden;margin:3px 0;border:2px solid rgba(0,0,0,.2)}.card .ar svg{width:100%;height:100%;display:block}
+.card .st{display:flex;justify-content:space-around;font-size:12px;font-weight:700;margin-top:3px}.card .rr{font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.7;text-align:center;margin-top:3px}
+.card.common{background:#9aa5b1}.card.uncommon{background:linear-gradient(135deg,#3fb56b,#1d7a45)}.card.rare{background:linear-gradient(135deg,#4aa3ff,#1d4ed8)}.card.epic{background:linear-gradient(135deg,#c084fc,#7e22ce)}.card.legendary{background:linear-gradient(135deg,#ffe066,#f59e0b,#ef4444)}
+.card.holo .in::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.55) 40%,rgba(120,200,255,.35) 50%,rgba(255,150,230,.35) 60%,transparent 80%);background-size:250% 250%;animation:sh 2.4s linear infinite;mix-blend-mode:screen;pointer-events:none}
+@keyframes sh{0%{background-position:0% 0}100%{background-position:200% 200%}}
+.card.back{background:repeating-linear-gradient(45deg,#4c1d95 0 8px,#5b21b6 8px 16px);border:3px solid #ddd}.card.back .in{display:none}.card.back::after{content:"?";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:50px;color:#ffffffaa}
+.card.miss{background:#2a2540;color:#fff;opacity:.55}.card.miss .in{background:#1b1730;color:#8a82b5;display:flex;align-items:center;justify-content:center;font-size:30px}
+.badge{position:absolute;right:4px;bottom:4px;background:#111;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;z-index:2}.new{position:absolute;left:4px;top:4px;background:#ef4444;color:#fff;border-radius:8px;padding:1px 6px;font-size:10px;z-index:2}
+.pack{width:150px;height:210px;margin:10px auto;border-radius:12px;position:relative;box-shadow:0 8px 20px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;cursor:pointer}
+.pack.b{background:linear-gradient(160deg,#3b82f6,#1e3a8a)}.pack.p{background:linear-gradient(160deg,#a855f7,#581c87)}.pack.l{background:linear-gradient(160deg,#fbbf24,#b45309)}
+.shake{animation:sk .5s}@keyframes sk{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.grid{display:flex;flex-wrap:wrap;justify-content:center}.sub{opacity:.75;font-size:13px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:16px;box-sizing:border-box}
+</style>
+<div id=top><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">← S loop</a><b>Monster Cards</b> · 💰 <b id=coins>0</b></div>
+<div id=tabs><button class="g on" data-t=shop>📦 Packs</button><button class=g data-t=book>📖 Binder</button></div>
+<div id=main></div><div id=ov></div>
+<script>
+const $=i=>document.getElementById(i);
+const W={get:()=>{try{return JSON.parse(localStorage.getItem('sl-wallet'))||{coins:0}}catch(e){return{coins:0}}},set:w=>localStorage.setItem('sl-wallet',JSON.stringify(w))};
+let SV=JSON.parse(localStorage.getItem('sl-cards')||'null')||{own:{},first:true,free:''};
+if(SV.first){const w=W.get();w.coins+=300;W.set(w);SV.first=false}
+const save=()=>localStorage.setItem('sl-cards',JSON.stringify(SV)),coins=()=>W.get().coins,pay=n=>{const w=W.get();w.coins+=n;W.set(w);$('coins').textContent=w.coins};
+const EL=[['Fire','🔥','#ff7043','#b71c1c'],['Water','💧','#4fc3f7','#01579b'],['Grass','🍃','#81c784','#1b5e20'],['Spark','⚡','#fff176','#f57f17'],['Shadow','🌑','#7e57c2','#1a0f3a'],['Light','✨','#fff9c4','#ffb300'],['Rock','⛰️','#bcaaa4','#4e342e'],['Frost','❄️','#b3e5fc','#0277bd']];
+const A=['Flare','Aqua','Thorn','Zap','Umbra','Lumi','Pebble','Frost','Ember','Tide','Moss','Volt','Gloom','Halo','Cliff','Glace'],B=['pup','fin','bud','wing','claw','horn','tail','fang','paw','shell','mane','beak'];
+const RAR=[['common',26,'Common',10],['uncommon',16,'Uncommon',25],['rare',10,'Rare',60],['epic',5,'Epic',150],['legendary',3,'Legendary',400]];
+const CARDS=[];(function(){let id=0;RAR.forEach(([k,n,l,v],ri)=>{for(let i=0;i<n;i++,id++){const r=mul(id*977+13),e=id%8;CARDS.push({id,rar:k,ri,val:v,el:e,name:A[(id*5+ri)%16]+B[(id*7+ri*3)%12],hp:40+ri*25+(r()*30|0),atk:10+ri*8+(r()*15|0),def:5+ri*6+(r()*12|0)})}})})();
+function mul(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function art(c){const r=mul(c.id*31+7),e=EL[c.el],bg='<defs><radialGradient id="g'+c.id+'" cx="50%" cy="40%"><stop offset="0" stop-color="'+e[2]+'"/><stop offset="1" stop-color="'+e[3]+'"/></radialGradient></defs><rect width="100" height="70" fill="url(#g'+c.id+')"/>';
+  const col='hsl('+(r()*360|0)+',65%,'+(45+r()*20|0)+'%)',col2='hsl('+(r()*360|0)+',70%,35%)',bw=22+r()*10,bh=18+r()*8;let s=bg;
+  for(let i=0;i<5;i++)s+='<circle cx="'+(r()*100)+'" cy="'+(r()*70)+'" r="'+(1+r()*2)+'" fill="#fff" opacity=".5"/>';
+  const hornT=r()<.5;if(hornT)s+='<path d="M30 20L36 6L42 20Z M58 20L64 6L70 20Z" fill="'+col2+'"/>';else s+='<ellipse cx="30" cy="16" rx="7" ry="11" fill="'+col2+'"/><ellipse cx="70" cy="16" rx="7" ry="11" fill="'+col2+'"/>';
+  if(c.ri>=2)s+='<path d="M16 40Q4 25 14 14Q22 28 30 38Z M84 40Q96 25 86 14Q78 28 70 38Z" fill="'+col2+'" opacity=".85"/>';
+  s+='<ellipse cx="50" cy="42" rx="'+bw+'" ry="'+bh+'" fill="'+col+'" stroke="rgba(0,0,0,.35)" stroke-width="1.5"/>';
+  for(let i=0;i<3;i++)s+='<circle cx="'+(38+r()*24)+'" cy="'+(46+r()*10)+'" r="'+(2+r()*2)+'" fill="'+col2+'" opacity=".6"/>';
+  const ey=r()<.3?3:2;for(let i=0;i<ey;i++){const x=ey===2?(i?58:42):(40+i*10);s+='<circle cx="'+x+'" cy="'+(ey===3&&i===1?30:36)+'" r="5" fill="#fff"/><circle cx="'+(x+1)+'" cy="'+(ey===3&&i===1?30:36)+'" r="2.4" fill="#111"/>'}
+  s+=r()<.5?'<path d="M42 50Q50 57 58 50" stroke="#111" stroke-width="2" fill="none"/>':'<path d="M42 51L46 55L50 51L54 55L58 51" stroke="#111" stroke-width="1.6" fill="#fff"/>';
+  s+='<ellipse cx="38" cy="62" rx="6" ry="4" fill="'+col2+'"/><ellipse cx="62" cy="62" rx="6" ry="4" fill="'+col2+'"/>';
+  return'<svg viewBox="0 0 100 70" xmlns="http://www.w3.org/2000/svg">'+s+'</svg>'}
+function face(c,extra){const e=EL[c.el];return'<div class="card '+c.rar+(c.ri>=2?' holo':'')+'" data-id="'+c.id+'"><div class="in"><div class="nm"><span>'+c.name+'</span><span>'+e[1]+'</span></div><div class="ar">'+art(c)+'</div><div class="st"><span>❤️'+c.hp+'</span><span>⚔️'+c.atk+'</span><span>🛡'+c.def+'</span></div><div class="rr">#'+String(c.id+1).padStart(2,'0')+' · '+RAR[c.ri][2]+'</div></div>'+(extra||'')+'</div>'}
+const PACKS={b:{n:'Basic Pack',cost:100,min:0,cls:'b'},p:{n:'Premium Pack',cost:300,min:2,cls:'p'},l:{n:'Legend Pack',cost:800,min:3,cls:'l'}};
+function roll(min,guar){const r=Math.random();let ri=r<.005?4:r<.04?3:r<.16?2:r<.45?1:0;if(guar)ri=Math.max(ri,min);else if(min===2&&r>.5)ri=Math.max(ri,2);const pool=CARDS.filter(c=>c.ri===ri);return pool[Math.random()*pool.length|0]}
+function open(k,free){const P=PACKS[k];if(!free){if(coins()<P.cost){alert('سکه کافی نیست! از Daily Challenge یا فروش کارت‌های تکراری سکه بگیر.');return}pay(-P.cost)}
+  const cs=[];for(let i=0;i<5;i++)cs.push(roll(P.min,i===4&&P.min>0));
+  const o=$('ov');o.style.display='flex';o.innerHTML='<div class="pack '+P.cls+'" id=pk><div style="font-size:42px">🎴</div>'+P.n+'<div class=sub>بزن تا باز شود</div></div>';
+  $('pk').onclick=()=>{$('pk').classList.add('shake');beep(300,.3,'sawtooth');setTimeout(()=>reveal(cs),500)}}
+function reveal(cs){const o=$('ov');let i=0;const news=cs.map(c=>!SV.own[c.id]);cs.forEach(c=>SV.own[c.id]=(SV.own[c.id]||0)+1);save();
+  o.innerHTML='<div class=sub id=hint>روی کارت‌ها بزن تا برگردند</div><div class=grid id=gr></div><button id=dn class=y style="display:none">✔ ببند</button>';
+  const gr=$('gr');cs.forEach((c,k)=>{const d=document.createElement('div');d.innerHTML='<div class="card back" data-k='+k+'></div>';gr.append(d.firstChild)});
+  let left=cs.length;gr.onclick=e=>{const b=e.target.closest('.card.back');if(!b)return;const k=+b.dataset.k,c=cs[k],t=document.createElement('div');t.innerHTML=face(c,news[k]?'<span class=new>NEW!</span>':'');b.replaceWith(t.firstChild);beep(400+c.ri*150,.15+c.ri*.05);if(c.ri>=3)beep(900,.4);if(--left===0)$('dn').style.display='inline-block'};
+  $('dn').onclick=()=>{o.style.display='none';render()}}
+let au;function beep(f,d=.1,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const x=au.createOscillator(),g=au.createGain();x.type=ty;x.frequency.value=f;g.gain.value=.05;x.connect(g);g.connect(au.destination);x.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);x.stop(au.currentTime+d)}catch(e){}}
+let tab='shop',page=0,sel=null;const today=()=>new Date().toDateString();
+function render(){$('coins').textContent=coins();document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  if(tab==='shop'){const fr=SV.free!==today();$('main').innerHTML='<div class=sub>پاک‌های کارت را باز کن و هیولاهای نایاب را جمع کن!</div>'+
+    '<div><button class="y" id=fp '+(fr?'':'disabled')+'>🎁 پاک رایگان امروز '+(fr?'':'(گرفتی)')+'</button></div><div class=grid>'+Object.keys(PACKS).map(k=>'<div><div class="pack '+PACKS[k].cls+'" data-p='+k+'><div style="font-size:42px">🎴</div>'+PACKS[k].n+'</div><button data-p='+k+'>💰 '+PACKS[k].cost+'</button></div>').join('')+'</div><div class=sub>Basic: ۵ کارت · Premium: حداقل ۱ کارت Rare · Legend: حداقل ۱ کارت Epic</div>';
+    $('fp').onclick=()=>{if(SV.free!==today()){SV.free=today();save();open('b',true)}};document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>open(b.dataset.p))}
+  else{const own=CARDS.filter(c=>SV.own[c.id]).length,per=9,pages=Math.ceil(CARDS.length/per);page=Math.min(page,pages-1);
+    $('main').innerHTML='<div><b>📖 مجله‌ی کارت‌ها</b> — '+own+'/'+CARDS.length+' ('+Math.round(own/CARDS.length*100)+'%)</div><div class=grid id=bg></div><div><button class=g id=pv>◀</button> صفحه '+(page+1)+'/'+pages+' <button class=g id=nx>▶</button></div><div><button class=y id=sl>💰 فروش همه‌ی کارت‌های تکراری</button></div>';
+    CARDS.slice(page*per,page*per+per).forEach(c=>{const n=SV.own[c.id]||0,d=document.createElement('div');d.innerHTML=n?face(c,n>1?'<span class=badge>×'+n+'</span>':''):'<div class="card miss"><div class=in>#'+String(c.id+1).padStart(2,'0')+'</div></div>';const e=d.firstChild;e.style.transform='scale(.62)';e.style.margin='-34px -20px';if(n)e.onclick=()=>zoom(c);$('bg').append(e)});
+    $('pv').onclick=()=>{page=(page+pages-1)%pages;render()};$('nx').onclick=()=>{page=(page+1)%pages;render()};
+    $('sl').onclick=()=>{let t=0;CARDS.forEach(c=>{const n=SV.own[c.id]||0;if(n>1){t+=(n-1)*c.val;SV.own[c.id]=1}});if(!t){alert('کارت تکراری نداری');return}save();pay(t);alert('فروخته شد: +'+t+' سکه');render()}}}
+function zoom(c){const o=$('ov');o.style.display='flex';o.innerHTML='<div style="transform:scale(1.6);margin:60px 0">'+face(c)+'</div><div class=sub>تعداد: '+SV.own[c.id]+' · ارزش فروش: '+c.val+'</div><button id=cz class=g>ببند</button>';$('cz').onclick=()=>o.style.display='none'}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});render();
+</script>

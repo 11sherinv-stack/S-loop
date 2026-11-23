@@ -1,0 +1,68 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Hearts</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>Hearts</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>Hearts</b><br>• ۴ بازیکن؛ هر کس ۱۳ کارت. هدف: <b>کمترین امتیاز</b> گرفتن. هر دل (♥) ۱ امتیاز منفی و بی‌دامای پیک (Q♠) ۱۳ امتیاز دارد.<br>• ابتدای هر دست (به‌جز هر چهارمی) ۳ کارت به نفر سمت چپ می‌دهی. دست با ۲♣ شروع می‌شود.<br>• باید هم‌خال بازی کنی؛ اگر نداری هر کارتی. تا وقتی دل «شکسته» نشده نمی‌توانی با دل شروع کنی.<br>• برنده‌ی هر دور، همه‌ی کارت‌های امتیازدار را برمی‌دارد. اگر کسی همه‌ی ۲۶ امتیاز را بگیرد («ماه‌گیری»)، بقیه ۲۶ امتیاز می‌گیرند. بازی تا ۵۰ امتیاز است.</div>
+<div id=score class=who></div>
+<div style="display:flex;justify-content:space-around"><span id=o2 class=who></span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;max-width:420px;margin:auto"><span id=o1 class=who></span><div id=tr style="width:200px;height:150px;position:relative;direction:ltr"></div><span id=o3 class=who></span></div>
+<div id=info style="font-weight:bold;min-height:22px"></div><div id=log></div>
+<div class=hand id=hand></div><div><button class=p id=go style="display:none">پاس بده →</button></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+const NM=['تو','سارا','کیان','نیلوفر'];let hands,tricks,pts,tot=[0,0,0,0],trick,lead,turn,broken,phase,sel=new Set(),hand=0,over=false,busy=false,passed;
+const rk=c=>c.r===0?14:c.r+1,pv=c=>c.s===1?1:(c.s===0&&c.r===11?13:0);
+function newHand(){const d=shuf(deck());hands=[[],[],[],[]];d.forEach((c,i)=>hands[i%4].push(c));pts=[0,0,0,0];trick=[];broken=false;sel.clear();over=false;busy=false;logs=[];hideOv();
+  const left=hand%4!==3;if(left){phase='pass';log('۳ کارت برای نفر چپ انتخاب کن')}else{startPlay()}render()}
+function startPlay(){phase='play';tricks=0;let s=0;hands.forEach((h,i)=>{if(h.some(c=>c.s===3&&c.r===1))s=i});turn=lead=s;trick=[];log(NM[s]+' با ۲♣ شروع می‌کند');render();if(turn!==0)setTimeout(botPlay,700)}
+function sortH(h){h.sort((a,b)=>a.s-b.s||rk(a)-rk(b))}
+$('go').onclick=()=>{if(phase!=='pass'||sel.size!==3)return;const mine=[...sel];const out=[mine,...[1,2,3].map(i=>botPass(i))];
+  hands.forEach((h,i)=>{out[i].forEach(c=>h.splice(h.indexOf(c),1))});for(let i=0;i<4;i++)hands[(i+1)%4].push(...out[i]);sel.clear();$('go').style.display='none';startPlay()};
+function botPass(i){return hands[i].slice().sort((a,b)=>(pv(b)*3+rk(b)+(b.s===0&&b.r>=11?10:0))-(pv(a)*3+rk(a)+(a.s===0&&a.r>=11?10:0))).slice(0,3)}
+function legal(i){const h=hands[i];if(!trick.length){if(tricks===0&&h.some(c=>c.s===3&&c.r===1))return h.filter(c=>c.s===3&&c.r===1);const nh=h.filter(c=>c.s!==1);return broken||!nh.length?h:nh}
+  const ls=trick[0].c.s,f=h.filter(c=>c.s===ls);if(f.length)return f;if(tricks===0){const ok=h.filter(c=>c.s!==1&&!(c.s===0&&c.r===11));if(ok.length)return ok}return h}
+function playC(i,c){hands[i].splice(hands[i].indexOf(c),1);trick.push({p:i,c});if(c.s===1)broken=true;beep(400+rk(c)*20,.05);render();
+  if(trick.length===4){busy=true;setTimeout(endTrick,900)}else{turn=(turn+1)%4;render();if(turn!==0)setTimeout(botPlay,650)}}
+function endTrick(){const ls=trick[0].c.s;let w=trick[0];trick.forEach(t=>{if(t.c.s===ls&&rk(t.c)>rk(w.c))w=t});const p=trick.reduce((a,t)=>a+pv(t.c),0);pts[w.p]+=p;log(NM[w.p]+' این دور را برد'+(p?' (+'+p+')':''));beep(p?200:600,.12);
+  trick=[];tricks++;busy=false;if(!hands[0].length){endHand();return}turn=lead=w.p;render();if(turn!==0)setTimeout(botPlay,650)}
+function botPlay(){if(over||phase!=='play')return;const L=legal(turn),h=hands[turn];let c;
+  const cur=trick.length?trick.filter(t=>t.c.s===trick[0].c.s).reduce((a,t)=>rk(t.c)>a?rk(t.c):a,0):0,pointsIn=trick.reduce((a,t)=>a+pv(t.c),0);
+  if(!trick.length){c=L.slice().sort((a,b)=>(pv(a)+rk(a)*.3+(a.s===1?5:0))-(pv(b)+rk(b)*.3+(b.s===1?5:0)))[0]}
+  else{const ls=trick[0].c.s,f=L.filter(x=>x.s===ls);if(f.length){const under=f.filter(x=>rk(x)<cur).sort((a,b)=>rk(b)-rk(a));if(under.length)c=under[0];else{const last=trick.length===3;c=last&&pointsIn===0?f.sort((a,b)=>rk(b)-rk(a))[0]:f.sort((a,b)=>rk(a)-rk(b))[0]}}
+    else{c=L.slice().sort((a,b)=>(pv(b)*2+(b.s===0&&b.r===11?20:0)+rk(b)*.2)-(pv(a)*2+(a.s===0&&a.r===11?20:0)+rk(a)*.2))[0]}}
+  playC(turn,c)}
+function humanClick(c){if(over||busy)return;if(phase==='pass'){sel.has(c)?sel.delete(c):sel.size<3&&sel.add(c);render();return}if(phase!=='play'||turn!==0)return;if(!legal(0).includes(c)){log('این کارت مجاز نیست');beep(150,.1,'square');return}playC(0,c)}
+function endHand(){over=true;let m=pts.findIndex(p=>p===26);if(m>=0){pts=pts.map((p,i)=>i===m?0:26);log('🌙 '+NM[m]+' ماه را گرفت!')}pts.forEach((p,i)=>tot[i]+=p);hand++;render();
+  const fin=tot.some(t=>t>=50),w=tot.indexOf(Math.min(...tot));
+  overlay('<h2>پایان دست</h2><div>'+NM.map((n,i)=>n+': +'+pts[i]+' (جمع '+tot[i]+')').join('<br>')+'</div>'+(fin?'<h1>'+(w===0?'🏆 تو برنده شدی!':'😅 '+NM[w]+' برنده شد')+'</h1>':'')+'<button class=p id=nx>'+(fin?'بازی جدید':'دست بعدی')+'</button>');$('nx').onclick=()=>{if(fin){tot=[0,0,0,0];hand=0}newHand()}}
+function render(){
+  $('score').textContent='امتیاز: '+NM.map((n,i)=>n+' '+tot[i]).join(' | ');
+  [1,2,3].forEach(i=>$('o'+i).innerHTML=NM[i]+'<br>🂠×'+hands[i].length+'<br><small>+'+pts[i]+'</small>');
+  const t=$('tr');t.innerHTML='';const pos={0:[70,95],1:[10,45],2:[70,0],3:[130,45]};trick.forEach(x=>{const e=el(x.c,'sm');e.style.cssText+='position:absolute;left:'+pos[x.p][0]+'px;top:'+pos[x.p][1]+'px;margin:0';t.append(e)});
+  $('info').textContent=over?'':phase==='pass'?'۳ کارت انتخاب کن ('+sel.size+'/3)':turn===0?'نوبت توست':'نوبت '+NM[turn]+'…';
+  sortH(hands[0]);const h=$('hand');h.innerHTML='';const L=phase==='play'&&turn===0&&!busy?legal(0):[];hands[0].forEach(c=>{const e=el(c,(sel.has(c)?'sel ':'')+(phase==='play'&&turn===0&&!L.includes(c)?'dim ':'')+(hands[0].length>10?'tight':''));e.onclick=()=>humanClick(c);h.append(e)});
+  $('go').style.display=phase==='pass'&&sel.size===3?'inline-block':'none'}
+newHand();
+</script>

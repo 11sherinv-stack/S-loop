@@ -1,0 +1,63 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Blackjack</title>
+<style>
+body{margin:0;background:radial-gradient(circle at 50% 30%,#14633f,#073320 75%);color:#fff;font:15px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button,select{background:#d97706;color:#fff;border:0;border-radius:11px;padding:8px 13px;margin:3px;text-decoration:none;display:inline-block;font:inherit;cursor:pointer}
+button.g,select{background:#2c5a45}button:disabled{opacity:.35}button.p{background:#16a34a}button.r{background:#dc2626}
+.card{display:inline-block;position:relative;width:52px;height:76px;background:#fff;border-radius:7px;color:#111;box-shadow:0 2px 5px rgba(0,0,0,.5);vertical-align:top;margin:0 -10px 0 0;transition:transform .12s;cursor:pointer;direction:ltr;text-align:left}
+.card.red{color:#c62828}.card b{position:absolute;top:3px;left:5px;font-size:17px}.card i{position:absolute;top:21px;left:6px;font-size:14px;font-style:normal}.card u{position:absolute;bottom:4px;right:6px;font-size:26px;text-decoration:none}
+.card.sel{transform:translateY(-14px);box-shadow:0 0 0 3px #ffd54f,0 2px 6px #000}.card.dim{opacity:.45}.card.sm{width:40px;height:58px;margin:0 -8px 0 0}.card.sm b{font-size:13px;top:2px;left:4px}.card.sm i{display:none}.card.sm u{font-size:19px;bottom:2px;right:4px}
+.card.back{background:repeating-linear-gradient(45deg,#1d4ed8 0 5px,#1e40af 5px 10px);border:3px solid #fff;box-sizing:border-box}.card.back *{display:none}.card.tight{margin-right:-24px}
+.hand{direction:ltr;overflow-x:auto;white-space:nowrap;padding:20px 22px 8px;text-align:center}.row{margin:6px 8px}.pile{display:inline-block;margin:0 14px;vertical-align:top}.pile small{display:block;margin-top:4px;opacity:.85}
+#log{font-size:13px;opacity:.9;min-height:20px;max-width:420px;margin:4px auto;line-height:1.7}.who{display:inline-block;background:rgba(0,0,0,.28);border-radius:12px;padding:6px 10px;margin:3px;font-size:13px}.who.on{box-shadow:0 0 0 2px #ffd54f}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9;padding:20px;box-sizing:border-box}
+.rules{max-width:420px;margin:6px auto;background:rgba(0,0,0,.25);border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.9;text-align:right;display:none}
+</style>
+<div style="padding:5px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}">→ S loop</a><b>Blackjack</b> <button class=g id=hb>❓ قوانین</button></div>
+<div class=rules id=rules><b>Blackjack</b><br>• به ۲۱ نزدیک شو بدون اینکه رد کنی. آس ۱ یا ۱۱، J/Q/K = ۱۰.<br>• Hit = کارت بگیر · Stand = بایست · Double = شرط ×۲ و فقط یک کارت · Split = جفت را دو دست کن.<br>• بلک‌جک (۲۱ با دو کارت) ۳ به ۲ پرداخت می‌شود. دیلر روی ۱۷ می‌ایستد. سکه‌ها همان کیف پول مشترک سایت هستند.</div>
+<div style="padding:4px">💰 <b id=bal>0</b> <span class=sub id=lim></span></div>
+<div class=who>دیلر: <b id=dt></b></div><div class=hand id=dh style="padding-top:8px"></div>
+<div id=hands></div><div id=info style="font-weight:bold;min-height:24px;margin:6px"></div>
+<div id=bets><div>شرط: <b id=bet>0</b></div><div id=chips></div><div><button class=g id=clr>پاک</button><button class=p id=deal>🃏 پخش کن</button></div></div>
+<div id=acts style="display:none"><button id=hit>Hit</button><button id=stand class=g>Stand</button><button id=dbl class=y>Double</button><button id=spl class=g>Split</button></div>
+<div id=ov></div>
+<script>
+const SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],$=i=>document.getElementById(i),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const isRed=s=>s===1||s===2;
+function deck(){const d=[];for(let s=0;s<4;s++)for(let r=0;r<13;r++)d.push({s,r,id:s*13+r});return d}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function el(c,cls){const e=document.createElement('div');if(!c){e.className='card back '+(cls||'');return e}e.className='card '+(isRed(c.s)?'red ':'')+(cls||'');e.innerHTML='<b>'+RK[c.r]+'</b><i>'+SU[c.s]+'</i><u>'+SU[c.s]+'</u>';return e}
+const cs=c=>RK[c.r]+SU[c.s];let au;
+function beep(f,d=.07,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.05;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+let logs=[];function log(t){logs.push(t);if(logs.length>4)logs.shift();const l=$('log');if(l)l.innerHTML=logs.join('<br>')}
+$('hb').onclick=()=>{const r=$('rules');r.style.display=r.style.display==='block'?'none':'block'};
+function overlay(h){const o=$('ov');o.style.display='flex';o.innerHTML=h}function hideOv(){$('ov').style.display='none'}
+
+const W={get:()=>{try{return JSON.parse(localStorage.getItem('sl-wallet'))||{coins:0}}catch(e){return{coins:0}}},set:w=>localStorage.setItem('sl-wallet',JSON.stringify(w))};
+const bal=()=>W.get().coins,pay=n=>{const w=W.get();w.coins+=n;W.set(w);$('bal').textContent=w.coins};
+const VIP=()=>{try{return JSON.parse(localStorage.getItem('sl-vip'))&&JSON.parse(localStorage.getItem('sl-vip')).on}catch(e){return false}};
+const MAXB=()=>VIP()?5000:500;
+let shoe=[],dealer=[],hs=[],cur=0,bet=0,state='bet';
+function newShoe(){shoe=[];for(let k=0;k<6;k++)shoe.push(...deck());shuf(shoe)}
+const val=a=>{let t=0,ac=0;a.forEach(c=>{if(c.r===0){ac++;t+=11}else t+=Math.min(10,c.r+1)});while(t>21&&ac){t-=10;ac--}return t},soft=a=>a.some(c=>c.r===0)&&val(a)!==a.reduce((s,c)=>s+(c.r===0?1:Math.min(10,c.r+1)),0);
+const draw=()=>{if(shoe.length<52*6*.25)newShoe();return shoe.pop()};
+function chips(){$('bal').textContent=bal();$('lim').textContent='(حداکثر شرط '+MAXB()+(VIP()?' · VIP':'')+')';$('chips').innerHTML=[10,50,100,500,1000].filter(v=>v<=MAXB()).map(v=>'<button class=g data-v='+v+'>'+v+'</button>').join('');$('chips').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{if(state!=='bet')return;const v=+b.dataset.v;if(bet+v>MAXB()||bet+v>bal()){beep(150,.1,'square');return}bet+=v;$('bet').textContent=bet;beep(500,.04)})}
+$('clr').onclick=()=>{if(state==='bet'){bet=0;$('bet').textContent=0}};
+$('deal').onclick=()=>{if(state!=='bet')return;if(bal()<10){pay(100);$('info').textContent='کیف پولت خالی بود — ۱۰۰ سکه‌ی کمکی گرفتی';chips();return}if(bet<10){$('info').textContent='حداقل شرط ۱۰ است';return}pay(-bet);dealer=[draw(),draw()];hs=[{c:[draw(),draw()],b:bet,done:false}];cur=0;state='play';$('bets').style.display='none';$('acts').style.display='block';render(false);
+  if(val(hs[0].c)===21){setTimeout(()=>finish(),600)}}
+function render(reveal){const dh=$('dh');dh.innerHTML='';dealer.forEach((c,i)=>dh.append(i===1&&!reveal?el(null):el(c,'')));$('dt').textContent=reveal?val(dealer):'?';
+  $('hands').innerHTML='';hs.forEach((h,i)=>{const d=document.createElement('div');d.innerHTML='<div class=who '+(i===cur&&state==='play'?'style="box-shadow:0 0 0 2px #ffd54f"':'')+'>دست شما: <b>'+val(h.c)+'</b> · شرط '+h.b+'</div><div class=hand style="padding-top:8px"></div>';h.c.forEach(c=>d.lastChild.append(el(c,'')));$('hands').append(d)});
+  const h=hs[cur];$('dbl').disabled=!h||h.c.length!==2||bal()<h.b;$('spl').disabled=!h||h.c.length!==2||hs.length>1||h.c[0].r!==h.c[1].r&&Math.min(10,h.c[0].r+1)!==Math.min(10,h.c[1].r+1)||bal()<h.b}
+function nextHand(){cur++;if(cur>=hs.length)dealerPlay();else{render(false);if(val(hs[cur].c)===21)nextHand()}}
+$('hit').onclick=()=>{if(state!=='play')return;const h=hs[cur];h.c.push(draw());beep(500,.05);render(false);if(val(h.c)>21){h.done=true;$('info').textContent='Bust! '+val(h.c);setTimeout(nextHand,700)}else if(val(h.c)===21)setTimeout(nextHand,500)};
+$('stand').onclick=()=>{if(state!=='play')return;nextHand()};
+$('dbl').onclick=()=>{if(state!=='play')return;const h=hs[cur];if(h.c.length!==2||bal()<h.b)return;pay(-h.b);h.b*=2;h.c.push(draw());render(false);setTimeout(nextHand,600)};
+$('spl').onclick=()=>{if(state!=='play'||$('spl').disabled)return;const h=hs[cur];pay(-h.b);const c2=h.c.pop();h.c.push(draw());hs.push({c:[c2,draw()],b:h.b,done:false});render(false)};
+function dealerPlay(){state='dealer';$('acts').style.display='none';render(true);const live=hs.some(h=>val(h.c)<=21&&!(h.c.length===2&&val(h.c)===21&&hs.length===1));
+  const step=()=>{if(live&&val(dealer)<17){dealer.push(draw());beep(450,.05);render(true);setTimeout(step,650)}else finish()};setTimeout(step,500)}
+function finish(){state='done';$('acts').style.display='none';render(true);const dv=val(dealer),dbj=dealer.length===2&&dv===21;let net=0,msg=[];
+  hs.forEach(h=>{const v=val(h.c),bj=h.c.length===2&&v===21&&hs.length===1;let r;if(v>21){r=0;msg.push('باخت')}else if(bj&&!dbj){r=Math.round(h.b*2.5);msg.push('بلک‌جک! 🎉')}else if(dv>21||v>dv){r=h.b*2;msg.push('بردی ✅')}else if(v===dv){r=h.b;msg.push('مساوی')}else{r=0;msg.push('باخت')}net+=r-h.b;if(r)pay(r)});
+  $('info').textContent=msg.join(' | ')+(net>0?' (+'+net+')':net<0?' ('+net+')':'');beep(net>0?900:net<0?200:500,.3);
+  overlay2()}
+function overlay2(){const b=document.createElement('button');b.className='p';b.textContent='دست بعدی';b.onclick=()=>{b.remove();state='bet';bet=Math.min(bet,bal(),MAXB());$('bet').textContent=bet;$('bets').style.display='block';$('dh').innerHTML='';$('hands').innerHTML='';$('dt').textContent='';$('info').textContent='';chips()};$('info').after(b)}
+newShoe();chips();
+</script>

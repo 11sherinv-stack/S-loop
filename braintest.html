@@ -1,0 +1,59 @@
+<!doctype html><html lang=fa dir=rtl><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,user-scalable=no"><title>Brain Test</title>
+<style>
+body{margin:0;background:linear-gradient(#4f46e5,#7c3aed);color:#fff;font:16px system-ui;text-align:center;touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;min-height:100vh}
+a,button{background:#f59e0b;color:#111;border:0;border-radius:14px;padding:11px 16px;margin:5px;text-decoration:none;display:inline-block;font:inherit;font-weight:700;cursor:pointer}button.g{background:rgba(255,255,255,.2);color:#fff}
+#m{max-width:420px;margin:auto;padding:8px 16px 40px}.q{font-size:21px;line-height:1.7;margin:18px 0;min-height:90px;direction:ltr}.opt{display:block;width:100%;text-align:center;background:#fff;color:#222;margin:8px 0;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;direction:ltr;font-size:20px}.grid span{padding:5px 0;cursor:pointer;background:rgba(255,255,255,.12);border-radius:4px}
+input{font:inherit;font-size:22px;text-align:center;padding:10px;border-radius:12px;border:0;width:140px}
+#msg{min-height:28px;font-weight:700;font-size:18px}.big{font-size:70px}.bar{height:8px;background:rgba(255,255,255,.25);border-radius:4px;margin:6px 0}.bar i{display:block;height:100%;background:#fde047;border-radius:4px}
+.shake{animation:sk .4s}@keyframes sk{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+</style>
+<div style="padding:6px"><a href="index.html" onclick="if(parent!==window){parent.postMessage('sl-close','*');return false}" style="padding:6px 12px">→ S loop</a><b>🧠 Brain Test</b> · 💰 <b id=co>0</b></div>
+<div id=m></div>
+<script>
+const $=i=>document.getElementById(i);
+const W={get:()=>{try{return JSON.parse(localStorage.getItem('sl-wallet'))||{coins:0}}catch(e){return{coins:0}}},set:w=>localStorage.setItem('sl-wallet',JSON.stringify(w))};
+const pay=n=>{const w=W.get();w.coins+=n;W.set(w);$('co').textContent=w.coins};
+let lv=+(localStorage.getItem('bt-lv')||0),timer=0,au;
+function beep(f,d=.1,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.06;o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
+const LV=[
+ {q:'Which is heavier: 1 kg of iron or 1 kg of cotton?',t:'mc',o:['Iron','Cotton','They weigh the same'],a:2,h:'Both are 1 kg!'},
+ {q:'How many months have 28 days?',t:'num',a:12,h:'Every month has at least 28.'},
+ {q:'A farmer has 17 sheep. All but 9 run away. How many are left?',t:'num',a:9,h:'"All but 9" means 9 stay.'},
+ {q:'What is half of 2 + 2?',t:'num',a:3,h:'Half of 2 is 1. Then add 2.'},
+ {q:'Tap the biggest number!',t:'big',h:'Biggest = looks biggest, not highest value.'},
+ {q:'Which is bigger: 0.9 or 0.11?',t:'mc',o:['0.11','0.9','Equal'],a:1,h:'Compare 0.90 and 0.11.'},
+ {q:'Don\'t touch the screen for 5 seconds!',t:'wait',h:'Just wait… and don\'t tap.'},
+ {q:'You pass the person in 2nd place in a race. What place are you in?',t:'mc',o:['1st','2nd','3rd'],a:1,h:'You took their place.'},
+ {q:'Find the odd one out!',t:'odd',h:'Look closely at the emoji.'},
+ {q:'If you have 3 apples and take away 2, how many do YOU have?',t:'num',a:2,h:'You took 2.'},
+ {q:'Tap the square 7 times in 3 seconds!',t:'mash',n:7,s:3,h:'Tap fast!'},
+ {q:'What gets wetter the more it dries?',t:'mc',o:['A sponge','A towel','Rain'],a:1,h:'You use it after a shower.'},
+ {q:'A clock takes 5 seconds to strike 6. How many seconds to strike 12?',t:'num',a:11,h:'Count the gaps between strikes, not the strikes.'},
+ {q:'Find the number 5 hidden among the 6s!',t:'five',h:'Scan carefully.'},
+ {q:'How many letters are in the word "NUMBER"?',t:'num',a:6,h:'N-U-M-B-E-R.'},
+ {q:'Which month has 28 days?',t:'mc',o:['February','Only leap years','All of them'],a:2,h:'Each month has at least 28 days.'},
+ {q:'Mary\'s father has 5 daughters: Lala, Lele, Lili, Lolo and …?',t:'text',a:['mary'],h:'Read the first words again.'},
+ {q:'Tap the button that is NOT a button!',t:'fake',h:'Something here is only text.'},
+ {q:'Which number is missing? 2, 4, 8, 16, __',t:'num',a:32,h:'Doubling.'},
+ {q:'Don\'t tap the red circle. Tap the blue one only if the red one stays still for 3 seconds.',t:'wait2',h:'Wait first, then tap blue.'},
+ {q:'Type the answer to this question.',t:'text',a:['the answer to this question','answer'],h:'Literally type the words…'},
+ {q:'You have 10 coins. You give half to your friend, then take 2 back. How many now?',t:'num',a:7,h:'10 → 5 → 7.'},
+ {q:'Which is faster to say: "yes" or "no"? (Tap any answer.)',t:'mc',o:['Yes','No','Both are equal'],a:2,h:'It\'s a trick — they\'re one syllable each.'}];
+function head(){const L=LV[lv%LV.length];return'<div class=bar><i style="width:'+Math.round((lv%LV.length)/LV.length*100)+'%"></i></div><div>Level <b>'+(lv+1)+'</b></div><div class=q>'+L.q+'</div>'}
+function foot(){return'<div id=msg></div><div><button class=g id=hint>💡 Hint (5🪙)</button><button class=g id=skip>⏭ Skip (20🪙)</button></div>'}
+function win(){beep(800,.2);beep(1100,.3);pay(5);lv++;localStorage.setItem('bt-lv',lv);$('m').innerHTML='<div class=big>🎉</div><h2>Correct!</h2><div>+5 coins</div><button id=nx>Next level ▶</button>';$('nx').onclick=show}
+function lose(){beep(150,.3,'square');$('m').classList.add('shake');setTimeout(()=>$('m').classList.remove('shake'),400);$('msg')&&($('msg').textContent='❌ Wrong — try again!')}
+function show(){clearTimeout(timer);$('co').textContent=W.get().coins;const L=LV[lv%LV.length];let h=head(),act=()=>{};
+  if(L.t==='mc'){h+=L.o.map((o,i)=>'<button class=opt data-i='+i+'>'+o+'</button>').join('');act=()=>document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>+b.dataset.i===L.a?win():lose())}
+  else if(L.t==='num'||L.t==='text'){h+='<input id=in '+(L.t==='num'?'type=number inputmode=numeric':'')+' placeholder="..."><br><button id=ok>OK</button>';act=()=>{$('ok').onclick=()=>{const v=$('in').value.trim().toLowerCase();(L.t==='num'?+v===L.a&&v!=='':L.a.includes(v))?win():lose()}}}
+  else if(L.t==='big'){const nums=[[3,18],[9,22],[5,60],[7,30],[2,26]];h+='<div style="direction:ltr;line-height:1.3">'+nums.map(n=>'<span class=nb data-s='+n[1]+' style="font-size:'+n[1]+'px;margin:8px;cursor:pointer;display:inline-block">'+n[0]+'</span>').join('')+'</div>';act=()=>document.querySelectorAll('.nb').forEach(b=>b.onclick=()=>+b.dataset.s===60?win():lose())}
+  else if(L.t==='wait'){h+='<div class=big>⏳</div>';let failed=false;const f=()=>{failed=true;lose();setTimeout(show,900)};act=()=>{setTimeout(()=>document.addEventListener('pointerdown',f,{once:true}),400);timer=setTimeout(()=>{document.removeEventListener('pointerdown',f);if(!failed)win()},5400)}}
+  else if(L.t==='mash'){h+='<div style="margin:20px"><button id=sq style="width:110px;height:110px;font-size:30px;background:#34d399">0</button></div>';act=()=>{let n=0,t0=0;$('sq').onclick=()=>{if(!n)t0=performance.now();n++;$('sq').textContent=n;beep(400+n*40,.05);if(n>=L.n){performance.now()-t0<=L.s*1000?win():(lose(),n=0,$('sq').textContent=0)}}}}
+  else if(L.t==='odd'){const k=Math.random()*20|0;h+='<div class=grid style="grid-template-columns:repeat(5,1fr);font-size:34px">'+Array.from({length:20},(_,i)=>'<span data-i='+i+'>'+(i===k?'🍐':'🍎')+'</span>').join('')+'</div>';act=()=>document.querySelectorAll('.grid span').forEach(s=>s.onclick=()=>+s.dataset.i===k?win():lose())}
+  else if(L.t==='five'){const k=Math.random()*48|0;h+='<div class=grid>'+Array.from({length:48},(_,i)=>'<span data-i='+i+'>'+(i===k?5:6)+'</span>').join('')+'</div>';act=()=>document.querySelectorAll('.grid span').forEach(s=>s.onclick=()=>+s.dataset.i===k?win():lose())}
+  else if(L.t==='fake'){h+='<div style="margin:16px"><button class=opt id=b1>Button</button><button class=opt id=b2>Button</button><div id=b3 style="background:#fff;color:#222;padding:14px;border-radius:14px;margin:8px 0">Button</div></div>';act=()=>{$('b1').onclick=lose;$('b2').onclick=lose;$('b3').onclick=win}}
+  else if(L.t==='wait2'){h+='<div style="margin:16px"><button id=red style="width:90px;height:90px;border-radius:50%;background:#ef4444;border:0;margin:10px"></button><button id=blu disabled style="width:90px;height:90px;border-radius:50%;background:#3b82f6;border:0;margin:10px;opacity:.4"></button></div>';act=()=>{$('red').onclick=lose;timer=setTimeout(()=>{$('blu').disabled=false;$('blu').style.opacity=1;$('blu').onclick=win},3000);$('blu').onclick=lose}}
+  $('m').innerHTML=h+foot();act();$('hint').onclick=()=>{if(W.get().coins<5){$('msg').textContent='سکه کافی نیست';return}pay(-5);$('msg').textContent='💡 '+L.h};$('skip').onclick=()=>{if(W.get().coins<20){$('msg').textContent='سکه کافی نیست';return}pay(-20);lv++;localStorage.setItem('bt-lv',lv);show()}}
+show();
+</script>

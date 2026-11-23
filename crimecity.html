@@ -37,6 +37,7 @@ function init(){P={x:4*BLK+32,y:3*BLK+32,a:0,hp:100,ar:0,veh:null,w:S.own[2]?2:0
   const sp=makeVeh(P.x+40,P.y,0,'sport');sp.ai='parked';cars.push(sp);
   const pad=makeVeh(18*BLK+RW+75,3*BLK+RW+75,0,'heli');pad.ai='parked';pad.fly=1;cars.push(pad);const tk=makeVeh(19*BLK+RW+75,18*BLK+RW+158,0,'tank');tk.ai='parked';cars.push(tk);
   newMarkers();for(let i=0;i<14;i++)pick.push(rpick())}
+try{if(JSON.parse(localStorage.getItem('sl-vip')).on&&!S.vipGift){S.vipGift=1;S.cash+=10000;window.__vg=1}}catch(e){}
 const rpick=()=>({x:rnd(100,WORLD-100),y:BLK*ri(NB+1)+32+rnd(-20,20),t:['hp','ar','ammo','ammo','cash'][ri(5)],v:ri(60)+20});
 /* ---------- world ---------- */
 function blockAt(px,py){const bx=Math.floor(px/BLK),by=Math.floor(py/BLK),lx=px-bx*BLK,ly=py-by*BLK;if(lx<RW||ly<RW)return null;return{i:bx,j:by,lx:lx-RW,ly:ly-RW,t:btype(bx,by)}}
@@ -301,6 +302,6 @@ $('wpn').onpointerdown=e=>{e.preventDefault();nextW();snd(500,.05)};
 let radIv=0;$('rad').onpointerdown=e=>{e.preventDefault();rad=(rad+1)%4;$('rad').textContent=['📻','🎵1','🎵2','🎵3'][rad];clearInterval(radIv);if(rad){const sc=[[0,3,5,7,10,12],[0,2,4,7,9,12],[0,3,7,10,12,15]][rad-1],bpm=[120,150,90][rad-1];let k=0;radIv=setInterval(()=>{if(paused)return;if(k%4===0)snd(55+sc[(k/4|0)%3]*2,.2,'sine',.05);snd(220*Math.pow(2,sc[(k*3+(k>>2))%6]/12),.12,rad===2?'sawtooth':'triangle',.018);k++},60000/bpm/2)}};
 addEventListener('keydown',e=>{keys[e.key]=1;if(e.key==='e'||e.key==='E')enterExit();if(e.key==='q'||e.key==='Q')nextW();if(e.key==='p'||e.key==='P')pauseMenu();if(e.key===' ')e.preventDefault();if(e.key==='n'||e.key==='N')nitOn=1});addEventListener('keyup',e=>{keys[e.key]=0;if(e.key==='n'||e.key==='N')nitOn=0});
 setInterval(()=>{if(!dead)localStorage.setItem('cc-save',JSON.stringify(S))},20000);
-init();say('Walk to a vehicle and tap 🚪 · yellow markers = missions!',4);
+init();if(window.__vg){P.ar=100;say('👑 VIP gift: $10,000 + armor!',4)}else say('Walk to a vehicle and tap 🚪 · yellow markers = missions!',4);
 let last=0;(function f(ts){const dt=Math.min(.05,(ts-last)/1000||0);last=ts;if(!paused)update(dt);render();requestAnimationFrame(f)})(0);
 </script>

@@ -35,7 +35,7 @@ function start(i){const L=LOC[i],pool=L.items.map((it,k)=>({it,k})),tg=[];
   while(tg.length<7){const tot=pool.filter(p=>!tg.includes(p)).reduce((a,p)=>a+ws[p.it[2]],0);let r=Math.random()*tot;for(const p of pool){if(tg.includes(p))continue;r-=ws[p.it[2]];if(r<=0){tg.push(p);break}}}
   const items=[],used=[];tg.forEach(p=>{let x,y,t=0;do{x=14+Math.random()*312;y=20+Math.random()*350;t++}while(used.some(u=>Math.hypot(u[0]-x,u[1]-y)<34)&&t<40);used.push([x,y]);items.push({x,y,p,found:false,s:22+Math.random()*8,rot:(Math.random()-.5)*60})});
   const clut=[];for(let k=0;k<30;k++)clut.push({e:L.clut[k%6],x:Math.random()*330,y:Math.random()*370,s:34+Math.random()*30,o:.35+Math.random()*.4});
-  H={L,i,items,clut,t:75,hint:1,got:0};hunt()}
+  H={L,i,items,clut,t:75+(JSON.parse(localStorage.getItem('sl-vip')||'null')&&JSON.parse(localStorage.getItem('sl-vip')).on?30:0),hint:1,got:0};hunt()}
 function hunt(){const{L,items,clut}=H;
   $('main').innerHTML='<div><b>'+L.n+'</b> · ⏱ <b id=tm>'+Math.ceil(H.t)+'</b>s · پیدا شده: <b id=gt>'+H.got+'</b>/7</div><div id=scene style="background:linear-gradient(160deg,'+L.bg[0]+','+L.bg[1]+')"></div><div class=list id=lst></div><div><button class=g id=hn>💡 راهنما ('+H.hint+')</button><button class=g id=qt>✖ خروج</button></div>';
   const sc=$('scene');clut.forEach(c=>{const d=document.createElement('div');d.className='cl';d.style.cssText='left:'+c.x+'px;top:'+c.y+'px;font-size:'+c.s+'px;opacity:'+c.o;d.textContent=c.e;sc.append(d)});

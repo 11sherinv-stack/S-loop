@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Card House</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#14502e;color:#fff;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation;overflow:hidden}
+a.b{position:fixed;top:8px;left:8px;background:#0008;color:#fff;padding:6px 12px;border-radius:10px;text-decoration:none;z-index:5}h1{margin:14px 0 2px;font-size:1.3rem}
+canvas{display:block;margin:0 auto;max-width:100vw}#bar{width:min(86vw,320px);height:26px;margin:6px auto;background:#0006;border-radius:13px;position:relative;overflow:hidden}
+#z{position:absolute;top:0;bottom:0;background:#4caf50aa;left:38%;width:24%}#p{position:absolute;top:0;bottom:0;width:6px;background:#fff;left:0}
+button{background:#c6e03c;border:0;padding:12px 28px;border-radius:12px;font-weight:800;font-size:1rem;margin:4px}#s{min-height:24px}</style></head><body>
+<a class="b" href="index.html">←</a><h1>🃏 Card House</h1><div id="s"></div><div id="bar"><div id="z"></div><div id="p"></div></div><canvas id="c" width="360" height="440"></canvas><br><button id="go"></button><button id="rs"></button>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const c=document.getElementById('c'),x=c.getContext('2d'),s=document.getElementById('s'),pe=document.getElementById('p'),ze=document.getElementById('z');
+// Slots: levels from bottom; level k has (N-k) A-frames. Order: frames in level, then flats between them on top.
+let N=4,slots,idx,fails,wob,pos=0,dir=1,over=0,lvl=1,speed=1.6;
+function init(){slots=[];for(let k=0;k<N;k++){const n=N-k;for(let i=0;i<n;i++)slots.push({k,i,n,t:'f'});if(k<N-1)for(let i=0;i<n-1;i++)slots.push({k,i,n,t:'t'})}
+ idx=0;fails=0;wob=0;over=0;zone();msg();}
+function zone(){const w=Math.max(12,26-lvl*2-N);ze.style.width=w+'%';ze.style.left=(10+Math.random()*(80-w))+'%'}
+function msg(){s.textContent=t('Level ','مرحله ')+lvl+' · '+t('Cards ','کارت ')+(idx*2)+' · '+t('Shaky: ','لرزش: ')+'❌'.repeat(fails)+'⚪'.repeat(3-fails)}
+function pxy(sl){const W=70,H=84,x0=180-(sl.n*W)/2+W/2;const cx=x0+sl.i*W+(sl.t==='t'?W/2:0),base=400-sl.k*(H+10);return{cx,base,W,H}}
+function card(cx,cy,w,h,rot,col){x.save();x.translate(cx,cy);x.rotate(rot);x.fillStyle='#fff';x.strokeStyle='#999';x.lineWidth=1;x.beginPath();x.roundRect(-w/2,-h/2,w,h,4);x.fill();x.stroke();x.fillStyle=col;x.font='16px sans-serif';x.fillText(col==='#c0182b'?'♥':'♠',-w/2+4,-h/2+16);x.restore()}
+function draw(t0){x.clearRect(0,0,360,440);x.fillStyle='#0003';x.fillRect(10,402,340,6);const sh=Math.sin(t0/60)*wob*(fails+1);
+ for(let i=0;i<idx;i++){const sl=slots[i],{cx,base,W,H}=pxy(sl),j=(i*7%5-2)*wob*.2;x.save();x.translate(sh*(sl.k+1)*.4,0);
+  if(sl.t==='f'){card(cx-W*.24,base-H/2,40,H,.3+j*.01,'#111');card(cx+W*.24,base-H/2,40,H,-.3+j*.01,'#c0182b')}else card(cx,base-H-4,W*1.1,10,0,'#111');x.restore()}
+ if(idx<slots.length){const sl=slots[idx],{cx,base,W,H}=pxy(sl);x.globalAlpha=.4+.3*Math.sin(t0/200);x.strokeStyle='#ffe066';x.lineWidth=3;x.strokeRect(cx-W/2,sl.t==='f'?base-H:base-H-10,W,sl.t==='f'?H:12);x.globalAlpha=1}}
+let last=0;function loop(ts){if(!over){pos+=dir*speed*(1+lvl*.08);if(pos>100||pos<0){dir*=-1;pos=Math.max(0,Math.min(100,pos))}pe.style.left=pos+'%'}
+ if(wob>0)wob*=.97;draw(ts);requestAnimationFrame(loop)}
+function place(){if(over)return;const zl=parseFloat(ze.style.left),zw=parseFloat(ze.style.width);
+ if(pos>=zl&&pos<=zl+zw){idx++;zone();wob=Math.min(wob+.4,2);beep(420+idx*12);if(idx>=slots.length){over=1;s.textContent=t('🏰 House complete! Next: bigger!','🏰 خانه کامل شد! مرحله بعد بزرگ‌تر!');lvl++;N=Math.min(N+1,7);return}msg()}
+ else{fails++;wob=3;beep(120,.3);if(fails>=3){over=1;s.textContent=t('💥 The house collapsed at '+(idx*2)+' cards','💥 خانه با '+(idx*2)+' کارت فروریخت');slots.length=idx;draw(0);x.fillStyle='#14502eee';x.fillRect(0,0,360,440);for(let i=0;i<30;i++)card(30+Math.random()*300,340+Math.random()*80,40,60,Math.random()*6,i%2?'#111':'#c0182b');return}msg()}}
+function beep(f,d=.1){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+const go=document.getElementById('go'),rs=document.getElementById('rs');go.textContent=t('Place card','بگذار');rs.textContent=t('Restart','دوباره');
+go.onclick=()=>{if(over&&idx>=slots.length)init();else place()};rs.onclick=()=>{lvl=1;N=4;init()};
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();go.onclick()}});
+init();requestAnimationFrame(loop);
+</script></body></html>

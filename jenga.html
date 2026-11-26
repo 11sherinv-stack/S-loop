@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Jenga</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#2b1d12;color:#fff;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation}
+a.b{position:fixed;top:8px;left:8px;background:#0008;color:#fff;padding:6px 12px;border-radius:10px;text-decoration:none;z-index:5}
+h1{margin:14px 0 2px;font-size:1.3rem}#st{font-size:.95rem;margin:4px}#tw{margin:8px auto;width:min(92vw,300px);display:flex;flex-direction:column-reverse;height:min(62vh,520px);justify-content:flex-start;perspective:700px}
+.ly{display:flex;gap:2px;height:calc(100%/19);margin-top:2px;justify-content:center;transition:transform .5s}
+.bk{flex:1;border-radius:3px;cursor:pointer;background:linear-gradient(#d9a86a,#b9854a);border:1px solid #7a5428;max-width:90px}
+.ly.o .bk{background:linear-gradient(#c8935a,#a37038)}.bk.e{visibility:hidden}.bk:active{filter:brightness(1.2)}
+.fall .ly{transition:transform 1.2s,opacity 1.2s;opacity:.0}button.r{background:#c6e03c;border:0;padding:10px 20px;border-radius:12px;font-weight:700}</style></head><body>
+<a class="b" href="index.html">←</a><h1>🧱 Jenga</h1><div id="st"></div><div id="tw"></div><div id="msg" style="min-height:26px"></div><button class="r" id="rs"></button>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+let T=[],top=null,pl=0,sc=[0,0],over=0,twoP=false;
+const tw=document.getElementById('tw'),st=document.getElementById('st'),msg=document.getElementById('msg');
+function init(){T=[];for(let i=0;i<14;i++)T.push([1,1,1]);top=[];over=0;pl=0;sc=[0,0];tw.className='';tw.innerHTML='';msg.textContent=t('Tap a block to pull it out. Never leave an edge block alone!','یک بلوک را بزن تا بیرون بیاید. بلوک کناری را تنها نگذار!');draw()}
+function draw(){tw.innerHTML='';const all=T.concat(top.length?[top.concat([0,0,0]).slice(0,3)]:[]);
+ all.forEach((l,i)=>{const d=document.createElement('div');d.className='ly'+(i%2?' o':'');
+  l.forEach((v,j)=>{const b=document.createElement('div');b.className='bk'+(v?'':' e');b.style.filter=i%2?'brightness(.92)':'';if(v&&i<T.length-1)b.onclick=()=>pull(i,j);d.appendChild(b)});tw.appendChild(d)});
+ st.textContent=twoP?t('Player ','بازیکن ')+(pl+1)+' · '+sc[0]+' - '+sc[1]:t('Blocks moved: ','بلوک‌های جابه‌جا شده: ')+sc[0]}
+function stable(l){const n=l.filter(x=>x).length;if(n===0)return false;if(n===1&&!l[1])return false;return true}
+function pull(i,j){if(over)return;if(i>=T.length-1){msg.textContent=t('Top layer can\'t be touched','طبقه‌ی بالایی را نمی‌شود برداشت');return}
+ if(!T[i][j])return;const l=T[i].slice();l[j]=0;
+ // risk: removing middle when edge already gone, or sloppy pull random wobble
+ const n=l.filter(x=>x).length;const wob=Math.random()<(i>T.length-5?.12:.03)*(n===2?1:.5);
+ if(!stable(l)||(i<2&&n<3&&false)||wob){return collapse()}
+ T[i]=l;add(pl);sc[twoP?pl:0]++;if(twoP)pl^=1;draw();beep(260+Math.random()*80)}
+function add(){if(top.length>=3||top.length===0&&false){}top.push(1);if(top.length===3){T.push(top);top=[]}}
+function collapse(){over=1;tw.classList.add('fall');tw.querySelectorAll('.ly').forEach(l=>l.style.transform=`translate(${(Math.random()-.5)*300}px,${200+Math.random()*200}px) rotate(${(Math.random()-.5)*80}deg)`);
+ msg.textContent=twoP?t('💥 Tower fell! Player '+(pl+1)+' loses','💥 برج ریخت! بازیکن '+(pl+1)+' باخت'):t('💥 Tower fell! Score: '+sc[0],'💥 برج ریخت! امتیاز: '+sc[0]);beep(90,.5)}
+function beep(f,d=.12){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type='triangle';g.gain.value=.15;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+const rs=document.getElementById('rs');rs.textContent=t('New game','بازی جدید');rs.onclick=init;
+const m=document.createElement('button');m.className='r';m.style.margin='0 6px';m.textContent=t('2 Players','دو نفره');m.onclick=()=>{twoP=!twoP;init()};rs.before(m);
+init();
+</script></body></html>

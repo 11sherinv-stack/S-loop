@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Hidden Cups</title>
+<style>*{box-sizing:border-box}body{margin:0;background:linear-gradient(#3b2a5a,#1d1433);color:#fff;font-family:system-ui,sans-serif;text-align:center;touch-action:manipulation}
+a.b{position:fixed;top:8px;left:8px;background:#0008;color:#fff;padding:6px 12px;border-radius:10px;text-decoration:none;z-index:5}h1{margin:14px 0 2px;font-size:1.3rem}
+#g{display:flex;flex-wrap:wrap;justify-content:center;gap:18px 12px;padding:16px;max-width:520px;margin:0 auto}
+.cup{width:58px;height:150px;border:3px solid #fff9;border-top:0;border-radius:0 0 14px 14px;display:flex;flex-direction:column-reverse;padding:3px;gap:2px;cursor:pointer;background:#ffffff14;transition:transform .15s}
+.cup.sel{transform:translateY(-16px);border-color:#c6e03c}.cup.done{border-color:#4caf50;box-shadow:0 0 12px #4caf50}
+.l{flex:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;max-height:32px}.l.h{background:#555!important;color:#aaa}
+button{background:#c6e03c;border:0;padding:9px 16px;border-radius:12px;font-weight:700;margin:4px}#s{min-height:24px}</style></head><body>
+<a class="b" href="index.html">←</a><h1>🥤 Hidden Cups</h1><div id="s"></div><div id="g"></div>
+<button id="u"></button><button id="n"></button>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const COL=['#e53935','#1e88e5','#43a047','#fdd835','#8e24aa','#fb8c00','#00acc1','#ec407a','#8d6e63'];
+let cups=[],sel=-1,lvl=1,hist=[],mv=0;const CAP=4;
+function init(){const k=Math.min(3+Math.floor(lvl/2),9),pool=[];for(let c=0;c<k;c++)for(let i=0;i<CAP;i++)pool.push(c);
+ for(let i=pool.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[pool[i],pool[j]]=[pool[j],pool[i]]}
+ cups=[];for(let i=0;i<k;i++)cups.push(pool.splice(0,CAP));cups.push([],[]);sel=-1;hist=[];mv=0;draw()}
+function top(c){return c[c.length-1]}
+function draw(){const g=document.getElementById('g');g.innerHTML='';
+ cups.forEach((c,i)=>{const d=document.createElement('div');d.className='cup'+(i===sel?' sel':'')+(c.length===CAP&&c.every(v=>v===c[0])?' done':'');
+  c.forEach((v,j)=>{const l=document.createElement('div');const vis=j===c.length-1;l.className='l'+(vis?'':' h');if(vis)l.style.background=COL[v];else l.textContent='?';d.appendChild(l)});
+  d.onclick=()=>tap(i);g.appendChild(d)});
+ document.getElementById('s').textContent=t('Level ','مرحله ')+lvl+' · '+t('Moves ','حرکت ')+mv;
+ if(cups.filter(c=>c.length).every(c=>c.length===CAP&&c.every(v=>v===c[0]))){document.getElementById('s').textContent=t('🎉 Solved in '+mv+' moves!','🎉 حل شد در '+mv+' حرکت!')}}
+function tap(i){if(sel<0){if(cups[i].length)sel=i;draw();return}
+ if(sel===i){sel=-1;draw();return}
+ const a=cups[sel],b=cups[i];if(!a.length||b.length>=CAP||(b.length&&top(b)!==top(a))){sel=cups[i].length?i:-1;draw();return}
+ hist.push(JSON.stringify(cups));const c=top(a);while(a.length&&top(a)===c&&b.length<CAP)b.push(a.pop());mv++;sel=-1;draw()}
+document.getElementById('u').textContent=t('Undo','برگشت');document.getElementById('u').onclick=()=>{if(hist.length){cups=JSON.parse(hist.pop());mv--;sel=-1;draw()}};
+document.getElementById('n').textContent=t('Next / Shuffle','مرحله بعد / دوباره');document.getElementById('n').onclick=()=>{if(cups.filter(c=>c.length).every(c=>c.length===CAP&&c.every(v=>v===c[0])))lvl++;init()};
+init();
+</script></body></html>

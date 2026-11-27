@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Pink Cat Paint War</title>
+<style>*{margin:0;box-sizing:border-box}body{background:#2a1a33;color:#fff;font-family:system-ui,sans-serif;text-align:center;touch-action:none;overflow:hidden}
+a.b{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px;border-radius:10px;text-decoration:none;z-index:5}#h{padding:8px;font-weight:700}canvas{display:block;margin:0 auto;max-width:100vw;max-height:58vh}
+.pad{position:fixed;bottom:10px;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,52px);gap:4px}.pad button{border:0;border-radius:12px;font-size:1.3rem;background:#fff3;color:#fff}#p1{left:8px}#p2{right:8px}
+#m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000b;padding:20px}#m button{padding:12px 26px;border:0;border-radius:12px;background:#ff7eb6;font-weight:800;font-size:1rem}</style></head><body>
+<a class="b" href="index.html">←</a><div id="h"></div><canvas id="c" width="480" height="320"></canvas>
+<div class="pad" id="p1"><span></span><button data-p="0" data-d="u">▲</button><span></span><button data-p="0" data-d="l">◀</button><button data-p="0" data-d="d">▼</button><button data-p="0" data-d="r">▶</button></div>
+<div class="pad" id="p2"><span></span><button data-p="1" data-d="u">▲</button><span></span><button data-p="1" data-d="l">◀</button><button data-p="1" data-d="d">▼</button><button data-p="1" data-d="r">▶</button></div>
+<div id="m"><div id="mt" style="white-space:pre-line;font-size:1.1rem"></div><button id="mb"></button></div>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const c=document.getElementById('c'),x=c.getContext('2d'),h=document.getElementById('h'),M=document.getElementById('m');
+const CW=16,CH=10,CS=30,COL=['#ff5fa2','#4aa3ff'];let grid,pl,time,run=0,bombs,keys={},hold=[{},{}];
+function init(){grid=Array.from({length:CH},()=>Array(CW).fill(-1));pl=[{x:1,y:1,t:0},{x:CW-2,y:CH-2,t:0}];time=60;bombs=[];run=1;M.style.display='none';paint(0);paint(1)}
+function paint(i,r=0){const p=pl[i];for(let a=-r;a<=r;a++)for(let b=-r;b<=r;b++){const X=p.x+a,Y=p.y+b;if(grid[Y]&&grid[Y][X]!==undefined)grid[Y][X]=i}}
+function mv(i,dx,dy){const p=pl[i];const nx=Math.max(0,Math.min(CW-1,p.x+dx)),ny=Math.max(0,Math.min(CH-1,p.y+dy));p.x=nx;p.y=ny;paint(i);
+ const k=bombs.findIndex(b=>b.x===nx&&b.y===ny);if(k>=0){bombs.splice(k,1);paint(i,2);beep(600,.2)}}
+const MAP=[{KeyW:[0,-1],KeyS:[0,1],KeyA:[-1,0],KeyD:[1,0]},{ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}];
+addEventListener('keydown',e=>{if(!run)return;MAP.forEach((m,i)=>{if(m[e.code]){e.preventDefault();mv(i,...m[e.code])}})});
+const D={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
+document.querySelectorAll('.pad button').forEach(b=>{let iv;const go=e=>{e.preventDefault();if(!run)return;mv(+b.dataset.p,...D[b.dataset.d]);clearInterval(iv);iv=setInterval(()=>mv(+b.dataset.p,...D[b.dataset.d]),120)};const st=()=>clearInterval(iv);
+ b.addEventListener('touchstart',go);b.addEventListener('mousedown',go);['touchend','touchcancel','mouseup','mouseleave'].forEach(k=>b.addEventListener(k,st))});
+function beep(f,d=.08){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.1;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+function face(px,py,i){const cx=px*CS+CS/2,cy=py*CS+CS/2;x.fillStyle=COL[i];x.beginPath();x.arc(cx,cy,13,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+ if(i===0){x.fillStyle=COL[0];x.beginPath();x.moveTo(cx-12,cy-6);x.lineTo(cx-10,cy-18);x.lineTo(cx-3,cy-11);x.fill();x.beginPath();x.moveTo(cx+12,cy-6);x.lineTo(cx+10,cy-18);x.lineTo(cx+3,cy-11);x.fill();x.fillStyle='#fff';x.fillRect(cx-8,cy-4,6,4);x.fillRect(cx+2,cy-4,6,4)}
+ else{x.fillStyle='#fff';x.fillRect(cx-8,cy-5,5,4);x.fillRect(cx+3,cy-5,5,4);x.fillStyle='#222';x.fillRect(cx-9,cy+3,18,4);x.fillStyle='#fff8';x.fillRect(cx-12,cy-17,24,6)}
+ x.fillStyle='#222';x.fillRect(cx-6,cy+1,0,0)}
+function draw(){x.clearRect(0,0,480,320);x.fillStyle='#e9dcc6';x.fillRect(0,0,480,320);
+ for(let r=0;r<CH;r++)for(let q=0;q<CW;q++){const g=grid[r][q];if(g>=0){x.fillStyle=COL[g];x.globalAlpha=.85;x.fillRect(q*CS+1,r*CS+1,CS-2,CS-2);x.globalAlpha=1}}
+ bombs.forEach(b=>{x.font='20px sans-serif';x.fillText('🪣',b.x*CS+4,b.y*CS+24)});face(pl[0].x,pl[0].y,0);face(pl[1].x,pl[1].y,1)}
+function score(){let a=0,b=0;grid.forEach(r=>r.forEach(v=>{if(v===0)a++;else if(v===1)b++}));return[a,b]}
+setInterval(()=>{if(!run)return;time--;if(bombs.length<3&&Math.random()<.6)bombs.push({x:Math.random()*CW|0,y:Math.random()*CH|0});
+ if(time<=0){run=0;const[a,b]=score();document.getElementById('mt').textContent=(a===b?t('Draw!','مساوی!'):a>b?t('🐱 Pink Cat wins!','🐱 گربه صورتی برد!'):t('🎨 Painter wins!','🎨 نقاش برد!'))+`\n${a} - ${b}`;document.getElementById('mb').textContent=t('Rematch','دوباره');M.style.display='flex'}},1000);
+function loop(){if(run){const[a,b]=score();h.textContent=`🐱 ${a}   ⏱ ${time}   ${b} 🎨`}draw();requestAnimationFrame(loop)}
+document.getElementById('mt').textContent=t('Paint more of the wall than your rival in 60 seconds!\nP1 (pink cat): WASD / left pad · P2 (painter): arrows / right pad\n🪣 buckets splash a big area.','در ۶۰ ثانیه بیشتر از رقیبت دیوار را رنگ کن!\nبازیکن ۱ (گربه صورتی): WASD / پد چپ · بازیکن ۲ (نقاش): جهت‌ها / پد راست\n🪣 سطل‌ها منطقه‌ی بزرگی را رنگ می‌کنند.');
+document.getElementById('mb').textContent=t('Start','شروع');document.getElementById('mb').onclick=init;grid=Array.from({length:CH},()=>Array(CW).fill(-1));pl=[{x:1,y:1},{x:14,y:8}];bombs=[];loop();
+</script></body></html>

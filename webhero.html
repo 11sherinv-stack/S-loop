@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Web Hero 2D</title>
+<style>*{margin:0;box-sizing:border-box}body{background:#101a3a;overflow:hidden;touch-action:none;color:#fff;font-family:system-ui,sans-serif}canvas{display:block;width:100vw;height:100vh}a{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px;border-radius:10px;text-decoration:none;z-index:5}
+.bt{position:fixed;bottom:22px;width:88px;height:88px;border-radius:50%;border:0;background:#ffffff40;color:#fff;font-weight:800;font-size:.9rem}#a{left:18px}#b{right:18px}#m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000b;padding:20px;text-align:center;white-space:pre-line}#m button{padding:12px 26px;border:0;border-radius:12px;background:#ff4a4a;color:#fff;font-weight:800}</style></head><body>
+<a href="index.html">←</a><canvas id="c"></canvas><button class="bt" id="a"></button><button class="bt" id="b"></button><div id="m"><div id="mt"></div><button id="mb"></button></div>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const cv=document.getElementById('c'),x=cv.getContext('2d');let W,H,GY;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;GY=H*.8}rs();onresize=rs;
+const M=document.getElementById('m');let run=0,hero,cam,en,anc,webs,dist,lives,best=+localStorage.getItem('sl-wh-best')||0,sw=null,inv=0,hold=0;
+function init(){hero={x:100,y:GY-30,vx:4,vy:0,g:1};cam=0;en=[];webs=[];anc=[];dist=0;lives=3;sw=null;inv=0;run=1;M.style.display='none';gen(600)}
+let gx=0;function gen(from){gx=from;}
+function spawn(){while(gx<cam+W*2){const r=Math.random();if(r<.55)en.push({x:gx,y:GY-24,hp:1,t:0});if(r>.35)anc.push({x:gx+120+Math.random()*80,y:H*.12+Math.random()*H*.12});gx+=260+Math.random()*180}}
+function jump(){if(!run)return;if(hero.y>=GY-30-1){hero.vy=-14}else if(!sw){const a=anc.filter(a=>a.x>hero.x-40&&a.x<hero.x+300).sort((p,q)=>p.x-q.x)[0];if(a){sw={a,l:Math.hypot(a.x-hero.x,a.y-hero.y)};}}}
+function release(){if(sw){hero.vx=Math.min(hero.vx*1.15,9);hero.vy*=1.1;sw=null}}
+function shoot(){if(run)webs.push({x:hero.x+20,y:hero.y-6,vx:12,t:0});beep(500)}
+function beep(f,d=.06){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+const A=document.getElementById('a'),B=document.getElementById('b');A.textContent=t('JUMP / SWING','پرش / تاب');B.textContent=t('WEB','تار');
+A.addEventListener('touchstart',e=>{e.preventDefault();jump()});A.addEventListener('touchend',release);A.addEventListener('mousedown',jump);A.addEventListener('mouseup',release);B.addEventListener('touchstart',e=>{e.preventDefault();shoot()});B.addEventListener('mousedown',shoot);
+addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();if(!e.repeat)jump()}if(e.code==='KeyX'||e.code==='KeyF')shoot()});addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')release()});
+function hurt(){if(inv>0)return;lives--;inv=90;hero.vy=-8;beep(120,.3);if(lives<=0)over()}
+function over(){run=0;const s=dist|0;if(s>best){best=s;localStorage.setItem('sl-wh-best',s)}document.getElementById('mt').textContent=t('Game over\nDistance '+s+' m · Best '+best+' m','باخت\nمسافت '+s+' متر · رکورد '+best);document.getElementById('mb').textContent=t('Again','دوباره');M.style.display='flex'}
+function step(){spawn();
+ if(sw){const dx=hero.x-sw.a.x,dy=hero.y-sw.a.y;const d=Math.hypot(dx,dy);hero.vy+=.5;hero.x+=hero.vx;hero.y+=hero.vy;const nx=hero.x-sw.a.x,ny=hero.y-sw.a.y,nd=Math.hypot(nx,ny);if(nd>sw.l){hero.x=sw.a.x+nx/nd*sw.l;hero.y=sw.a.y+ny/nd*sw.l;const tx=-ny/nd,ty=nx/nd,v=hero.vx*tx+hero.vy*ty;hero.vx=tx*v*1.01;hero.vy=ty*v*1.01}if(hero.x>sw.a.x+sw.l*.9)release()}
+ else{hero.vy+=.7;hero.x+=hero.vx;hero.y+=hero.vy;hero.vx+=(4.5+Math.min(dist/400,3)-hero.vx)*.02;if(hero.y>GY-30){hero.y=GY-30;hero.vy=0}}
+ cam=hero.x-W*.25;dist=hero.x/20;inv--;
+ webs.forEach(w=>{w.x+=w.vx;w.t++});webs=webs.filter(w=>w.t<50);
+ en.forEach(e=>{e.t++;if(e.hp>0)e.x-=1.2;webs.forEach(w=>{if(e.hp>0&&Math.abs(w.x-e.x)<22&&Math.abs(w.y-e.y)<30){e.hp=0;w.t=99;dist+=5;beep(300)}});if(e.hp>0&&Math.abs(hero.x-e.x)<22&&Math.abs(hero.y-e.y)<36)hurt()});
+ en=en.filter(e=>e.x>cam-100);anc=anc.filter(a=>a.x>cam-100);}
+function draw(){const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1b2a63');g.addColorStop(1,'#e98a5a');x.fillStyle=g;x.fillRect(0,0,W,H);
+ x.fillStyle='#0b1230';for(let i=0;i<14;i++){const bx=((i*170-cam*.3)%(W+200)+W+200)%(W+200)-100,bh=100+(i*53%140);x.fillRect(bx,GY-bh,90,bh)}
+ x.fillStyle='#222836';x.fillRect(0,GY,W,H-GY);x.fillStyle='#3a4256';x.fillRect(0,GY,W,5);
+ anc.forEach(a=>{x.fillStyle='#8aa';x.fillRect(a.x-cam-6,a.y-6,12,12)});
+ if(sw){x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();x.moveTo(sw.a.x-cam,sw.a.y);x.lineTo(hero.x-cam,hero.y-8);x.stroke()}
+ webs.forEach(w=>{x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();x.arc(w.x-cam,w.y,6,0,7);x.stroke();x.beginPath();x.arc(w.x-cam,w.y,12,0,7);x.stroke()});
+ en.forEach(e=>{const ex=e.x-cam;x.fillStyle=e.hp>0?'#444':'#ccc8';x.fillRect(ex-12,e.y-22,24,44);x.fillStyle='#e8b';x.beginPath();x.arc(ex,e.y-28,9,0,7);x.fill();if(e.hp<=0){x.strokeStyle='#fff';x.strokeRect(ex-14,e.y-30,28,54)}});
+ if(inv<=0||inv%8<4){const hx=hero.x-cam,hy=hero.y;x.fillStyle='#d32f2f';x.fillRect(hx-10,hy-22,20,34);x.fillStyle='#1565c0';x.fillRect(hx-10,hy+4,20,14);x.fillStyle='#d32f2f';x.beginPath();x.arc(hx,hy-30,10,0,7);x.fill();x.fillStyle='#fff';x.beginPath();x.ellipse(hx-4,hy-31,3,4,.3,0,7);x.ellipse(hx+4,hy-31,3,4,-.3,0,7);x.fill();x.strokeStyle='#000';x.lineWidth=1;x.beginPath();x.moveTo(hx,hy-40);x.lineTo(hx,hy-20);x.stroke()}
+ x.fillStyle='#fff';x.font='bold 18px sans-serif';x.fillText('❤'.repeat(Math.max(0,lives))+'   '+(dist|0)+' m   '+t('Best ','رکورد ')+best,60,30)}
+function loop(){if(run)step();draw();requestAnimationFrame(loop)}
+document.getElementById('mt').textContent=t('WEB HERO 2D\nRun automatically. Tap JUMP to jump; in the air tap and HOLD to swing from a web anchor, release to launch. WEB shoots at thugs.\nKeys: Space = jump/swing, X = web','قهرمان تارعنکبوتی ۲بعدی\nخودکار می‌دود. با «پرش» بپر؛ در هوا نگه دار تا از نقطه‌ی تار تاب بخوری و رها کن تا پرتاب شوی. دکمه‌ی تار به دشمن‌ها شلیک می‌کند.\nکیبورد: Space = پرش/تاب، X = تار');
+document.getElementById('mb').textContent=t('Start','شروع');document.getElementById('mb').onclick=init;hero={x:100,y:GY-30};en=[];anc=[];webs=[];loop();
+</script></body></html>

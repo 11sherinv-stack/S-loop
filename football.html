@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Football</title>
+<style>*{margin:0;box-sizing:border-box}body{background:#0d3b1c;color:#fff;font-family:system-ui,sans-serif;overflow:hidden;touch-action:none}
+canvas{display:block;width:100vw;height:100vh;background:#2e8b3d}a{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px;border-radius:10px;text-decoration:none;z-index:5}
+#js{position:fixed;left:16px;bottom:20px;width:110px;height:110px;border-radius:50%;background:#fff2;border:2px solid #fff5}#kn{position:absolute;width:46px;height:46px;border-radius:50%;background:#fff7;left:32px;top:32px}
+.bt{position:fixed;right:16px;width:74px;height:74px;border-radius:50%;border:0;background:#ffffff40;color:#fff;font-weight:800}#sh{bottom:30px}#ps{bottom:116px;width:60px;height:60px}
+#m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000b;padding:20px;text-align:center;white-space:pre-line}#m button{padding:12px 26px;border:0;border-radius:12px;background:#c6e03c;font-weight:800}</style></head><body>
+<a href="index.html">←</a><canvas id="c"></canvas><div id="js"><div id="kn"></div></div><button class="bt" id="sh"></button><button class="bt" id="ps"></button><div id="m"><div id="mt"></div><button id="mb"></button></div>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const cv=document.getElementById('c'),x=cv.getContext('2d');cv.width=900;cv.height=520;const FW=900,FH=520,GY0=190,GY1=330;
+let P=[],ball,score=[0,0],time=0,half=1,run=0,ctrl=0,keys={},jx=0,jy=0,msg='',msgT=0,HT=60;
+const M=document.getElementById('m');
+function reset(side){const f=[[110,260,1],[260,150,0],[260,370,0],[360,210,0],[360,320,0]];P=[];f.forEach((p,i)=>P.push({x:p[0],y:p[1],vx:0,vy:0,team:0,gk:i===0,hx:p[0],hy:p[1],cd:0}));
+ f.forEach((p,i)=>P.push({x:FW-p[0],y:FH-p[1]+(i?0:0)-(i?0:0)+ (i?0:0),vx:0,vy:0,team:1,gk:i===0,hx:FW-p[0],hy:i===0?260:FH-p[1],cd:0}));P[5].y=260;P[5].hy=260;
+ ball={x:FW/2,y:FH/2,vx:0,vy:0};ctrl=pickCtrl()}
+function pickCtrl(){let b=0,bd=1e9;P.forEach((p,i)=>{if(p.team===0&&!p.gk){const d=Math.hypot(p.x-ball.x,p.y-ball.y);if(d<bd){bd=d;b=i}}});return b}
+function kick(p,tx,ty,pw){const a=Math.atan2(ty-p.y,tx-p.x);ball.vx=Math.cos(a)*pw;ball.vy=Math.sin(a)*pw;p.cd=18;beep(200,.06)}
+function step(){
+ let ix=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+jx,iy=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0)+jy;const il=Math.hypot(ix,iy);if(il>1){ix/=il;iy/=il}
+ if(frame%10===0)ctrl=pickCtrl();
+ P.forEach((p,i)=>{p.cd=Math.max(0,p.cd-1);let tx=p.hx,ty=p.hy,sp=2.2;const d=Math.hypot(ball.x-p.x,ball.y-p.y);
+  if(i===ctrl){p.vx=ix*3.1;p.vy=iy*3.1}
+  else{const mates=P.filter(q=>q.team===p.team&&!q.gk);const near=mates.reduce((a,q)=>Math.hypot(q.x-ball.x,q.y-ball.y)<Math.hypot(a.x-ball.x,a.y-ball.y)?q:a);
+   if(p.team===1&&!p.gk){if(near===p){tx=ball.x;ty=ball.y;sp=2.5}else{tx=(p.hx+ball.x)/2;ty=(p.hy+ball.y)/2}}
+   else if(p.team===0&&!p.gk){if(near===p&&i!==ctrl&&d<160){tx=ball.x;ty=ball.y;sp=2.2}else{tx=(p.hx+ball.x)/2+20;ty=(p.hy+ball.y)/2}}
+   else{ty=Math.max(GY0+10,Math.min(GY1-10,ball.y));tx=p.hx;sp=2}
+   const dx=tx-p.x,dy=ty-p.y,l=Math.hypot(dx,dy);p.vx=l>4?dx/l*sp:0;p.vy=l>4?dy/l*sp:0;
+   if(p.team===1&&d<16&&!p.cd){const gx=0,gy=260+(Math.random()-.5)*90;kick(p,gx,gy,p.gk?9:7.5)}
+   if(p.team===0&&d<16&&!p.cd&&i!==ctrl){kick(p,FW,260+(Math.random()-.5)*80,7)}}
+  p.x=Math.max(15,Math.min(FW-15,p.x+p.vx));p.y=Math.max(15,Math.min(FH-15,p.y+p.vy));
+  if(d<17&&!p.cd){ball.vx+=p.vx*.35;ball.vy+=p.vy*.35;const a=Math.atan2(ball.y-p.y,ball.x-p.x);ball.x=p.x+Math.cos(a)*17;ball.y=p.y+Math.sin(a)*17}});
+ ball.x+=ball.vx;ball.y+=ball.vy;ball.vx*=.985;ball.vy*=.985;
+ if(ball.y<8){ball.y=8;ball.vy*=-.8}if(ball.y>FH-8){ball.y=FH-8;ball.vy*=-.8}
+ const ing=ball.y>GY0&&ball.y<GY1;
+ if(ball.x<8){if(ing)goal(1);else{ball.x=8;ball.vx*=-.8}}if(ball.x>FW-8){if(ing)goal(0);else{ball.x=FW-8;ball.vx*=-.8}}}
+function goal(w){score[w]++;msg=t('⚽ GOAL!','⚽ گل!');msgT=90;beep(700,.3);reset();ball.vx=ball.vy=0}
+function shoot(){const p=P[ctrl];if(Math.hypot(ball.x-p.x,ball.y-p.y)<28)kick(p,ball.x+(Math.abs(p.vx)+Math.abs(p.vy)>0?p.vx*40:60),ball.y+p.vy*40+(p.vx||p.vy?0:0)+(ball.x>FW-250?(260-ball.y)*.3:0),11)}
+function pass(){const p=P[ctrl];if(Math.hypot(ball.x-p.x,ball.y-p.y)>30)return;const m=P.filter((q,i)=>q.team===0&&!q.gk&&i!==ctrl).sort((a,b)=>Math.hypot(a.x-p.x-p.vx*30,a.y-p.y-p.vy*30)-Math.hypot(b.x-p.x-p.vx*30,b.y-p.y-p.vy*30))[0];if(m)kick(p,m.x+30,m.y,8)}
+function draw(){x.fillStyle='#2e8b3d';x.fillRect(0,0,FW,FH);for(let i=0;i<9;i++){x.fillStyle=i%2?'#2a8238':'#318f40';x.fillRect(i*100,0,100,FH)}
+ x.strokeStyle='#fff9';x.lineWidth=3;x.strokeRect(6,6,FW-12,FH-12);x.beginPath();x.moveTo(FW/2,6);x.lineTo(FW/2,FH-6);x.stroke();x.beginPath();x.arc(FW/2,FH/2,60,0,7);x.stroke();x.strokeRect(6,150,110,220);x.strokeRect(FW-116,150,110,220);
+ x.fillStyle='#fff3';x.fillRect(0,GY0,8,GY1-GY0);x.fillRect(FW-8,GY0,8,GY1-GY0);
+ P.forEach((p,i)=>{x.fillStyle=p.team?'#ffd21f':'#e53935';if(p.gk)x.fillStyle=p.team?'#7ee':'#ffa';x.beginPath();x.arc(p.x,p.y,13,0,7);x.fill();x.strokeStyle=i===ctrl?'#fff':'#0006';x.lineWidth=i===ctrl?3:1.5;x.stroke();x.fillStyle='#fdd';x.beginPath();x.arc(p.x,p.y-4,5,0,7);x.fill()});
+ x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,7,0,7);x.fill();x.strokeStyle='#000';x.lineWidth=1.5;x.stroke();
+ x.fillStyle='#000a';x.fillRect(FW/2-110,8,220,34);x.fillStyle='#fff';x.font='bold 20px sans-serif';x.textAlign='center';x.fillText(`🔴 ${score[0]}  -  ${score[1]} 🟡   ${Math.max(0,time|0)}s  H${half}`,FW/2,32);
+ if(msgT>0){x.font='bold 54px sans-serif';x.fillText(msg,FW/2,FH/2);msgT--}x.textAlign='left'}
+let frame=0,lt=0;function loop(ts){if(run){frame++;if(ts-lt>=16){lt=ts;step();time-=1/60;if(time<=0){if(half===1){half=2;time=HT;reset();msg=t('Second half','نیمه‌ی دوم');msgT=80}else{run=0;const r=score[0]>score[1]?t('🏆 You win!','🏆 بردی!'):score[0]<score[1]?t('You lost','باختی'):t('Draw','مساوی');document.getElementById('mt').textContent=r+`\n${score[0]} - ${score[1]}`;document.getElementById('mb').textContent=t('Play again','دوباره');M.style.display='flex'}}}}draw();requestAnimationFrame(loop)}
+function beep(f,d=.08){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.1;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+function start(){score=[0,0];half=1;time=HT;reset();run=1;M.style.display='none'}
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='Space'){e.preventDefault();shoot()}if(e.code==='KeyX')pass()});addEventListener('keyup',e=>keys[e.code]=0);
+const sh=document.getElementById('sh'),ps=document.getElementById('ps');sh.textContent=t('SHOOT','شوت');ps.textContent=t('PASS','پاس');sh.onclick=shoot;ps.onclick=pass;
+['touchstart'].forEach(k=>{sh.addEventListener(k,e=>{e.preventDefault();shoot()});ps.addEventListener(k,e=>{e.preventDefault();pass()})});
+const js=document.getElementById('js'),kn=document.getElementById('kn');let jid=null;
+function jm(q){const r=js.getBoundingClientRect();let a=q.clientX-r.left-55,b=q.clientY-r.top-55;const d=Math.hypot(a,b),m=40;if(d>m){a*=m/d;b*=m/d}kn.style.left=32+a+'px';kn.style.top=32+b+'px';jx=a/m;jy=b/m}
+js.addEventListener('touchstart',e=>{jid=e.changedTouches[0].identifier;jm(e.changedTouches[0]);e.preventDefault()});js.addEventListener('touchmove',e=>{for(const q of e.changedTouches)if(q.identifier===jid)jm(q);e.preventDefault()});js.addEventListener('touchend',()=>{jid=null;jx=jy=0;kn.style.left=kn.style.top='32px'});
+document.getElementById('mt').textContent=t('FOOTBALL 5v5 — 2 halves of 60s\nMove: WASD / joystick · Shoot: Space · Pass: X\nYou are red, attacking right.','فوتبال ۵ نفره — دو نیمه‌ی ۶۰ ثانیه‌ای\nحرکت: WASD / جوی‌استیک · شوت: Space · پاس: X\nتو تیم قرمز هستی و به سمت راست حمله می‌کنی.');document.getElementById('mb').textContent=t('Kick off','شروع');document.getElementById('mb').onclick=start;reset();requestAnimationFrame(loop);
+</script></body></html>

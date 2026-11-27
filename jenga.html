@@ -9,10 +9,10 @@ h1{margin:14px 0 2px;font-size:1.3rem}#st{font-size:.95rem;margin:4px}#tw{margin
 <a class="b" href="index.html">←</a><h1>🧱 Jenga</h1><div id="st"></div><div id="tw"></div><div id="msg" style="min-height:26px"></div><button class="r" id="rs"></button>
 <script>
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
-let T=[],top=null,pl=0,sc=[0,0],over=0,twoP=false;
+let T=[],tp=null,pl=0,sc=[0,0],over=0,twoP=false;
 const tw=document.getElementById('tw'),st=document.getElementById('st'),msg=document.getElementById('msg');
-function init(){T=[];for(let i=0;i<14;i++)T.push([1,1,1]);top=[];over=0;pl=0;sc=[0,0];tw.className='';tw.innerHTML='';msg.textContent=t('Tap a block to pull it out. Never leave an edge block alone!','یک بلوک را بزن تا بیرون بیاید. بلوک کناری را تنها نگذار!');draw()}
-function draw(){tw.innerHTML='';const all=T.concat(top.length?[top.concat([0,0,0]).slice(0,3)]:[]);
+function init(){T=[];for(let i=0;i<14;i++)T.push([1,1,1]);tp=[];over=0;pl=0;sc=[0,0];tw.className='';tw.innerHTML='';msg.textContent=t('Tap a block to pull it out. Never leave an edge block alone!','یک بلوک را بزن تا بیرون بیاید. بلوک کناری را تنها نگذار!');draw()}
+function draw(){tw.innerHTML='';const all=T.concat(tp.length?[tp.concat([0,0,0]).slice(0,3)]:[]);
  all.forEach((l,i)=>{const d=document.createElement('div');d.className='ly'+(i%2?' o':'');
   l.forEach((v,j)=>{const b=document.createElement('div');b.className='bk'+(v?'':' e');b.style.filter=i%2?'brightness(.92)':'';if(v&&i<T.length-1)b.onclick=()=>pull(i,j);d.appendChild(b)});tw.appendChild(d)});
  st.textContent=twoP?t('Player ','بازیکن ')+(pl+1)+' · '+sc[0]+' - '+sc[1]:t('Blocks moved: ','بلوک‌های جابه‌جا شده: ')+sc[0]}
@@ -23,7 +23,7 @@ function pull(i,j){if(over)return;if(i>=T.length-1){msg.textContent=t('Top layer
  const n=l.filter(x=>x).length;const wob=Math.random()<(i>T.length-5?.12:.03)*(n===2?1:.5);
  if(!stable(l)||(i<2&&n<3&&false)||wob){return collapse()}
  T[i]=l;add(pl);sc[twoP?pl:0]++;if(twoP)pl^=1;draw();beep(260+Math.random()*80)}
-function add(){if(top.length>=3||top.length===0&&false){}top.push(1);if(top.length===3){T.push(top);top=[]}}
+function add(){if(tp.length>=3||tp.length===0&&false){}tp.push(1);if(tp.length===3){T.push(tp);tp=[]}}
 function collapse(){over=1;tw.classList.add('fall');tw.querySelectorAll('.ly').forEach(l=>l.style.transform=`translate(${(Math.random()-.5)*300}px,${200+Math.random()*200}px) rotate(${(Math.random()-.5)*80}deg)`);
  msg.textContent=twoP?t('💥 Tower fell! Player '+(pl+1)+' loses','💥 برج ریخت! بازیکن '+(pl+1)+' باخت'):t('💥 Tower fell! Score: '+sc[0],'💥 برج ریخت! امتیاز: '+sc[0]);beep(90,.5)}
 function beep(f,d=.12){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type='triangle';g.gain.value=.15;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}

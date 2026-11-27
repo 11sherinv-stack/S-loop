@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Home Designer</title>
+<style>*{box-sizing:border-box;margin:0}body{background:#e8eef5;font-family:system-ui,sans-serif;color:#223;text-align:center;touch-action:manipulation}
+a.b{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px;border-radius:10px;text-decoration:none;z-index:5}h1{font-size:1.1rem;padding:10px}
+#gw{display:inline-block;touch-action:none;border:3px solid #567;border-radius:6px;background:#8bc56a}canvas{display:block;max-width:96vw}
+#tb{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;padding:8px;max-width:640px;margin:0 auto}#tb button{border:2px solid #9ab;background:#fff;border-radius:10px;padding:6px 9px;font-size:1.15rem;min-width:44px}#tb button.on{border-color:#1976d2;background:#d6e8ff}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #567}.sw.on{box-shadow:0 0 0 3px #1976d2}#act button{background:#1976d2;color:#fff;border:0;border-radius:10px;padding:8px 14px;margin:3px;font-weight:700}</style></head><body>
+<a class="b" href="index.html">←</a><h1>🏠 Home Designer</h1><div id="gw"><canvas id="c" width="560" height="420"></canvas></div>
+<div id="tb"></div><div id="cb" style="display:flex;justify-content:center;gap:6px;padding:4px"></div><div id="act"></div>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+const CW=14,CH=10,S=40,c=document.getElementById('c'),x=c.getContext('2d');
+let fl,wl,fu,tool='floor',col='#d9b382',night=0;
+const FC=['#d9b382','#b07a45','#e8e8e8','#8fb8de','#c9a0dc','#9ccc65','#f2c4c4','#555a64'],WC=['#8b4a2b','#f5f5f5','#37474f','#c0392b','#2e86c1','#f4d03f'];
+const TOOLS=[['floor','🟫',t('Floor','کف')],['wall','🧱',t('Wall','دیوار')],['door','🚪',t('Door','در')],['win','🪟',t('Window','پنجره')],['grass','🌱',t('Erase floor','پاک کف')],['del','🧹',t('Remove item','حذف'),'']];
+const ITEMS=['🛏️','🛋️','🪑','🚽','🛁','🚿','🖥️','📺','🍳','🧊','🪴','💡','🖼️','🚪','📚','🪞','🧸','🎹','🐈','🚗','🌳','⛲'];
+function newMap(){fl=Array.from({length:CH},()=>Array(CW).fill(null));wl=Array.from({length:CH},()=>Array(CW).fill(0));fu=[]}
+function save(){try{localStorage.setItem('sl-home',JSON.stringify({fl,wl,fu,night}))}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem('sl-home'));if(d){fl=d.fl;wl=d.wl;fu=d.fu;night=d.night||0;return true}}catch(e){}return false}
+function draw(){x.fillStyle='#8bc56a';x.fillRect(0,0,560,420);
+ for(let r=0;r<CH;r++)for(let q=0;q<CW;q++){if(fl[r][q]){x.fillStyle=fl[r][q];x.fillRect(q*S,r*S,S,S);x.strokeStyle='#0001';x.strokeRect(q*S,r*S,S,S)}else{x.strokeStyle='#0000000d';x.strokeRect(q*S,r*S,S,S)}}
+ for(let r=0;r<CH;r++)for(let q=0;q<CW;q++){const w=wl[r][q];if(!w)continue;const px=q*S,py=r*S;
+  if(w.k==='wall'){x.fillStyle=w.c;x.fillRect(px+3,py+3,S-6,S-6);x.fillRect(px,py+S/2-5,S,10);x.fillRect(px+S/2-5,py,10,S)}
+  else if(w.k==='door'){x.fillStyle='#a9743b';x.fillRect(px+6,py+4,S-12,S-8);x.fillStyle='#ffd54f';x.fillRect(px+S-14,py+S/2-2,4,4)}
+  else{x.fillStyle=w.c||'#8b4a2b';x.fillRect(px+2,py+10,S-4,S-20);x.fillStyle='#bfe6ff';x.fillRect(px+5,py+14,S-10,S-28)}}
+ x.font='28px serif';x.textAlign='center';x.textBaseline='middle';fu.forEach(f=>x.fillText(f.e,f.x*S+S/2,f.y*S+S/2+2));
+ if(night){x.fillStyle='#0a1030aa';x.fillRect(0,0,560,420);x.fillStyle='#ffe08a55';fu.filter(f=>f.e==='💡'||f.e==='📺'||f.e==='🍳').forEach(f=>{x.beginPath();x.arc(f.x*S+S/2,f.y*S+S/2,70,0,7);x.fill()})}}
+function cell(e){const r=c.getBoundingClientRect(),q=e.touches?e.touches[0]:e;return{x:Math.floor((q.clientX-r.left)*560/r.width/S),y:Math.floor((q.clientY-r.top)*420/r.height/S)}}
+let down=false,lastc='';function act(e){const p=cell(e);if(p.x<0||p.y<0||p.x>=CW||p.y>=CH)return;const k=p.x+','+p.y+tool+col;if(k===lastc)return;lastc=k;
+ if(tool==='floor')fl[p.y][p.x]=col;else if(tool==='grass'){fl[p.y][p.x]=null;wl[p.y][p.x]=0}
+ else if(tool==='wall')wl[p.y][p.x]={k:'wall',c:wcol};else if(tool==='door')wl[p.y][p.x]={k:'door'};else if(tool==='win')wl[p.y][p.x]={k:'win',c:wcol};
+ else if(tool==='del'){fu=fu.filter(f=>!(f.x===p.x&&f.y===p.y));wl[p.y][p.x]=0}
+ else if(tool.length>0&&ITEMS.includes(tool)){if(!down||true){fu=fu.filter(f=>!(f.x===p.x&&f.y===p.y));fu.push({x:p.x,y:p.y,e:tool})}}
+ draw();save()}
+let wcol=WC[0];
+['mousedown','touchstart'].forEach(k=>c.addEventListener(k,e=>{e.preventDefault();down=true;lastc='';act(e)},{passive:false}));['mousemove','touchmove'].forEach(k=>c.addEventListener(k,e=>{if(down){e.preventDefault();if(!ITEMS.includes(tool))act(e)}},{passive:false}));['mouseup','touchend','mouseleave'].forEach(k=>c.addEventListener(k,()=>down=false));
+function ui(){const tb=document.getElementById('tb');tb.innerHTML='';TOOLS.forEach(a=>{const b=document.createElement('button');b.textContent=a[1];b.title=a[2];b.className=tool===a[0]?'on':'';b.onclick=()=>{tool=a[0];ui()};tb.appendChild(b)});
+ ITEMS.forEach(e=>{const b=document.createElement('button');b.textContent=e;b.className=tool===e?'on':'';b.onclick=()=>{tool=e;ui()};tb.appendChild(b)});
+ const cb=document.getElementById('cb');cb.innerHTML='';const arr=tool==='wall'||tool==='win'?WC:FC;arr.forEach(k=>{const s=document.createElement('div');s.className='sw'+((tool==='wall'||tool==='win'?wcol:col)===k?' on':'');s.style.background=k;s.onclick=()=>{if(tool==='wall'||tool==='win')wcol=k;else{col=k;if(tool!=='floor')tool='floor'}ui()};cb.appendChild(s)})}
+const A=document.getElementById('act');[[t('🌙 Day / Night','🌙 روز / شب'),()=>{night^=1;draw();save()}],[t('🗑 Clear all','🗑 پاک کردن همه'),()=>{if(confirm(t('Clear everything?','همه چیز پاک شود؟'))){newMap();draw();save()}}],[t('🏗 Start template','🏗 خانه‌ی نمونه'),()=>{newMap();for(let q=3;q<=10;q++)for(let r=2;r<=7;r++){fl[r][q]=r<5?FC[0]:FC[2];if(q===3||q===10||r===2||r===7)wl[r][q]={k:'wall',c:WC[0]}}wl[7][6]={k:'door'};wl[2][5]={k:'win',c:WC[0]};wl[2][8]={k:'win',c:WC[0]};for(let r=3;r<=6;r++)wl[r][3]=wl[r][3];fu=[{x:4,y:3,e:'🛏️'},{x:8,y:3,e:'🛋️'},{x:9,y:6,e:'🍳'},{x:5,y:6,e:'🪴'}];draw();save()}],[t('📷 Save image','📷 ذخیره عکس'),()=>{const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='my-home.png';a.click()}]].forEach(([n,f])=>{const b=document.createElement('button');b.textContent=n;b.onclick=f;A.appendChild(b)});
+if(!load())newMap();ui();draw();
+</script></body></html>

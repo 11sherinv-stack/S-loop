@@ -45,7 +45,7 @@ mb.onclick=start;mt.textContent=t('BACKROOMS — find the exit before it finds y
 addEventListener('keydown',e=>keys[e.code]=1);addEventListener('keyup',e=>keys[e.code]=0);
 const js=document.getElementById('js'),kn=document.getElementById('kn');let jid=null;
 js.addEventListener('touchstart',e=>{jid=e.changedTouches[0].identifier;jm(e.changedTouches[0]);e.preventDefault()});js.addEventListener('touchmove',e=>{for(const q of e.changedTouches)if(q.identifier===jid)jm(q);e.preventDefault()});js.addEventListener('touchend',()=>{jid=null;jx=jy=0;kn.style.left=kn.style.top='35px'});
-function jm(q){const r=js.getBoundingClientRect();let a=q.clientX-r.left-60,b=q.clientY-r.top-60;const d=Math.hypot(a,b),m=45;if(d>m){a*=m/d;b*=m/d}kn.style.left=35+a+'px';kn.style.top=35+b+'px';jx=a/m;jy=-b/m}
+function jm(q){const r=js.getBoundingClientRect();let a=q.clientX-r.left-60,b=q.clientY-r.top-60;const d=Math.hypot(a,b),m=45;if(d>m){a*=m/d;b*=m/d}kn.style.left=35+a+'px';kn.style.top=35+b+'px';jx=a/m;jy=b/m}
 let ld=null;cv.addEventListener('touchstart',e=>{ld=e.touches[e.touches.length-1].clientX});cv.addEventListener('touchmove',e=>{if(ld!==null){const q=e.touches[e.touches.length-1];pa+=(q.clientX-ld)*.006;ld=q.clientX}});cv.addEventListener('touchend',()=>ld=null);
 cv.addEventListener('mousemove',e=>{if(e.buttons)pa+=e.movementX*.005});
 let lt=0;function loop(ts){const dt=Math.min(.05,(ts-lt)/1000||0);lt=ts;if(run){upd(dt);}if(map)render(ts);requestAnimationFrame(loop)}

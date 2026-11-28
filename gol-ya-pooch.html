@@ -54,23 +54,25 @@ button.pr{background:#ffd54f;color:#2b2100;border:0;font-weight:800;padding:10px
 <div class="act"><button class="pr" id="next" style="display:none">دور بعد</button></div>
 <div class="rules">یک نفر «گل» را در یکی از دست‌هایش پنهان می‌کند (یا هر دو دست را خالی نگه می‌دارد = <b>پوچ</b>). نفر مقابل حدس می‌زند: دست چپ، دست راست یا پوچ. حدس درست = ۱ امتیاز و نوبت پنهان‌کردن. حدس غلط = امتیاز برای پنهان‌کننده.</div>
 <div id="cover"><div style="font-size:3rem">🙈</div><div id="ctext" style="font-size:1.1rem"></div><button class="pr" id="cok">آماده‌ام</button></div>
+<script src="slnet.js"></script>
 <script>
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
 var GV=(function(m){return m?Math.min(1,+m[1]/100):.8})(location.hash.match(/v(\d+)/));
 var ac=null;function snd(f,d,ty,v){try{if(!ac){var X=window.AudioContext||window.webkitAudioContext;ac=new X()}if(ac.state==='suspended')ac.resume();var t=ac.currentTime,o=ac.createOscillator(),q=ac.createGain();o.type=ty||'sine';o.frequency.value=f;q.gain.setValueAtTime(GV*(v||.2),t);q.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(q);q.connect(ac.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
-var mode='cpu',goal=7,sc=[0,0],hider=0,hidden=null,phase='',hist=[0,0,0],last=[];
-var NAMES=function(i){return mode==='cpu'?(i===0?'شما':'کامپیوتر'):(i===0?'نفر ۱':'نفر ۲')};
+var online=false,net=null,netNames=['',''],myGuess=null,mode='cpu',goal=7,sc=[0,0],hider=0,hidden=null,phase='',hist=[0,0,0],last=[];
+var NAMES=function(i){if(online)return netNames[i]+(i===net.seat?' (تو)':'');return mode==='cpu'?(i===0?'شما':'کامپیوتر'):(i===0?'نفر ۱':'نفر ۲')};
 var LBL={L:'دست چپ',R:'دست راست',P:'پوچ'};
 function paint(){
   $('v0').textContent=sc[0];$('v1').textContent=sc[1];$('n0').textContent=NAMES(0);$('n1').textContent=NAMES(1);
   $('s0').classList.toggle('h',hider===0);$('s1').classList.toggle('h',hider===1);
 }
 function reset(){['hl','hr'].forEach(function(i){var e=$(i);e.className='hd';e.firstChild.nodeValue='✊';e.disabled=false});$('pooch').className='';$('pooch').disabled=false;$('next').style.display='none'}
-function newGame(){mode=$('mode').value;goal=+$('goal').value;sc=[0,0];hider=0;hist=[0,0,0];last=[];round()}
+function newGame(){if(online){mode='two';goal=+$('goal').value;sc=[0,0];hider=0;hist=[0,0,0];last=[];round();return}mode=$('mode').value;goal=+$('goal').value;sc=[0,0];hider=0;hist=[0,0,0];last=[];round()}
 function round(){
   reset();paint();hidden=null;
+  if(online){if(hider===net.seat){phase='hide';$('info').textContent='تو گل را پنهان کن: یک دست یا «پوچ» را انتخاب کن.'}else{phase='wait';lock();$('info').textContent=NAMES(hider)+' دارد پنهان می‌کند…'}return}
   if(mode==='cpu'&&hider===1){ // کامپیوتر پنهان می‌کند، شما حدس می‌زنید
     hidden=cpuHide();phase='guess';$('info').textContent='کامپیوتر گل را پنهان کرد. حدس بزن: کدام دست؟ یا پوچ؟';return;
   }
@@ -89,6 +91,7 @@ function cpuGuess(){
   var s=w[0]+w[1]+w[2],r=Math.random()*s;return r<w[0]?'L':r<w[0]+w[1]?'R':'P';
 }
 function choose(c){
+  if(online){if(phase==='hide'&&hider===net.seat){hidden=c;phase='wait';mark(c,'pick');lock();$('info').textContent='پنهان شد! منتظر حدس '+NAMES(1-hider);net.send({k:'h'});snd(380,.1)}else if(phase==='guess'&&hider!==net.seat){phase='done';myGuess=c;mark(c,'pick');lock();net.send({k:'g',c:c});$('info').textContent='منتظر نتیجه…'}return}
   if(phase==='hide'){
     hidden=c;
     if(mode==='cpu'){hist[c==='L'?0:c==='R'?1:2]++;last.push(c);phase='wait';mark(c,'pick');$('info').textContent='پنهان شد! کامپیوتر حدس می‌زند…';lock();snd(380,.1);setTimeout(function(){reveal(cpuGuess())},1100)}
@@ -112,11 +115,16 @@ function reveal(guess){
   $('info').textContent=NAMES(gi)+' گفت «'+LBL[guess]+'» — '+what+' '+(ok?'حدس درست! +۱ برای '+NAMES(gi)+' و نوبت پنهان‌کردن او.':'حدس غلط! +۱ برای '+NAMES(winner)+'.');
   paint();
   var done=sc[winner]>=goal;
-  if(done){$('info').textContent+='  🏆 '+NAMES(winner)+' برنده شد!';snd(1046,.5);var n=$('next');n.textContent='بازی تازه';n.style.display='';n.onclick=newGame;return}
-  var n2=$('next');n2.textContent='دور بعد';n2.style.display='';n2.onclick=round;
+  if(done){$('info').textContent+='  🏆 '+NAMES(winner)+' برنده شد!';snd(1046,.5);var n=$('next');n.textContent='بازی تازه';n.style.display='';n.onclick=newGame;if(winner===(online?net.seat:0)&&(mode==='cpu'||online)){var wn=(+localStorage.getItem('golpooch-wins')||0)+1;try{localStorage.setItem('golpooch-wins',wn)}catch(e){}SLNet.rec('golpooch',wn)}if(online){n.style.display='none';setTimeout(newGame,4500)}return}
+  var n2=$('next');n2.textContent='دور بعد';n2.style.display='';n2.onclick=round;if(online){n2.style.display='none';setTimeout(round,2400)}
 }
 $('hl').onclick=function(){choose('L')};$('hr').onclick=function(){choose('R')};$('pooch').onclick=function(){choose('P')};
 $('new').onclick=newGame;$('mode').onchange=newGame;$('goal').onchange=newGame;
+SLNet.init({game:'golpooch',max:2,start(n){net=n;online=true;netNames=n.players.map(p=>p.n);$('mode').disabled=$('goal').disabled=true;newGame()},msg(m){
+ if(m.k==='h'&&phase==='wait'){phase='guess';reset();$('info').textContent=NAMES(1-hider)+': حدس بزن کدام دست؟ یا پوچ؟'}
+ else if(m.k==='g'&&hider===net.seat){reveal(m.c);net.send({k:'r',h:hidden})}
+ else if(m.k==='r'){hidden=m.h;reveal(myGuess)}},left(){$('info').textContent='حریف خارج شد';phase='x';lock()}});
+SLNet.rec('golpooch',+localStorage.getItem('golpooch-wins')||0);
 newGame();
 })();
 </script>

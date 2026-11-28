@@ -5,6 +5,7 @@ a.b{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px
 button{background:#7cf;border:0;padding:10px 22px;border-radius:12px;font-weight:800;margin:4px}</style></head><body>
 <a class="b" href="index.html">←</a><div id="h"></div><canvas id="c" width="360" height="480"></canvas><div id="g"><div id="bar"><i id="bi"></i></div><button id="r"></button></div>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const c=document.getElementById('c'),x=c.getContext('2d'),h=document.getElementById('h'),bi=document.getElementById('bi');
 let lvl=1,path,hw,st='idle',hits=0,stress=0,last=null,jit=0,n=0,t0=0,pt={x:0,y:0},inside=false;
@@ -21,7 +22,7 @@ function mvv(e){if(st!=='run')return;e.preventDefault();const p=pos(e);pt=p;cons
  if(stress>=100){st='fail';h.textContent=t('💥 Nerves broke! Try again.','💥 اعصابت خرد شد! دوباره.');draw();return}
  if(Math.hypot(p.x-path[120].x,p.y-path[120].y)<hw*1.2&&p.y>400)fin();draw()}
 function up(){if(st==='run'){st='idle';h.textContent=t('You lifted your finger. Start again.','انگشتت را برداشتی. دوباره شروع کن.');stress=0;bi.style.width=0;draw()}}
-function fin(){st='done';const sec=(Date.now()-t0)/1000,sc=Math.max(0,Math.round(100-hits*1.5-jit/Math.max(n,1)*3));const r=sc>85?t('🧊 Nerves of steel','🧊 اعصاب فولادی'):sc>60?t('😌 Calm','😌 آرام'):sc>35?t('😬 A bit shaky','😬 کمی لرزان'):t('🤯 Very jumpy','🤯 خیلی عصبی');
+function fin(){st='done';const sec=(Date.now()-t0)/1000,sc=Math.max(0,Math.round(100-hits*1.5-jit/Math.max(n,1)*3));slRec('nerve',sc);const r=sc>85?t('🧊 Nerves of steel','🧊 اعصاب فولادی'):sc>60?t('😌 Calm','😌 آرام'):sc>35?t('😬 A bit shaky','😬 کمی لرزان'):t('🤯 Very jumpy','🤯 خیلی عصبی');
  h.innerHTML=`${r}<br>${t('Nerve score','امتیاز اعصاب')}: ${sc}/100 · ${sec.toFixed(1)}s · ${t('Touches','برخورد')}: ${hits}`;lvl++;draw()}
 ['mousedown','touchstart'].forEach(k=>c.addEventListener(k,dn,{passive:false}));['mousemove','touchmove'].forEach(k=>c.addEventListener(k,mvv,{passive:false}));['mouseup','touchend','touchcancel'].forEach(k=>c.addEventListener(k,up));
 const r=document.getElementById('r');r.textContent=t('New path','مسیر جدید');r.onclick=()=>{if(st==='fail')lvl=Math.max(1,lvl);bi.style.width=0;mk()};mk();

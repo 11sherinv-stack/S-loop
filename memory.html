@@ -44,10 +44,11 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <div class="hud" id="hud"></div>
 <div class="wrap"><div id="bd"></div><div class="ov" id="ov"><h2 id="ot"></h2><p id="om"></p><button class="b pr" id="ob">دوباره</button></div></div>
 <div class="hint">دو کارت هم‌شکل را پیدا کن. در حالت دو نفره، هر جفت درست یک نوبت اضافه می‌دهد.</div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 const EM=['🐶','🐱','🦊','🐼','🐸','🦁','🐵','🐙','🦄','🐢','🐝','🦋'],LV=[[4,3],[4,4],[6,4]];
-let cards,open=[],lock=false,moves=0,found=0,t0=0,tmr,players=1,turn=0,sc=[0,0],au;
+let online=false,net=null,netDeck=null,cards,open=[],lock=false,moves=0,found=0,t0=0,tmr,players=1,turn=0,sc=[0,0],au;
 function beep(f,d=.07){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 const ft=s=>fa(Math.floor(s/60)+':'+String(s%60).padStart(2,'0'));
 function bestKey(){return 'memory-best-'+$('lv').value}
@@ -59,9 +60,9 @@ function hud(){
     :'<div class="'+(turn===0?'on':'')+'">بازیکن ۱<b>'+fa(sc[0])+'</b></div><div>جفت‌ها<b>'+fa(found)+'/'+fa(cards.length/2)+'</b></div><div class="'+(turn===1?'on':'')+'">بازیکن ۲<b>'+fa(sc[1])+'</b></div>';
 }
 function newGame(){
-  const[c,r]=LV[+$('lv').value];players=+$('md').value;
+  const[c,r]=LV[+$('lv').value];players=online?2:+$('md').value;
   const ems=EM.slice().sort(()=>Math.random()-.5).slice(0,c*r/2);
-  cards=ems.concat(ems).sort(()=>Math.random()-.5).map((e,i)=>({e,i,ok:0}));
+  cards=(online&&netDeck?netDeck:ems.concat(ems).sort(()=>Math.random()-.5)).map((e,i)=>({e,i,ok:0}));if(online&&net.isHost&&!netDeck)net.send({k:'d',d:cards.map(c=>c.e),lv:$('lv').value});
   open=[];lock=false;moves=0;found=0;t0=0;turn=0;sc=[0,0];clearInterval(tmr);$('ov').style.display='none';
   $('bd').style.gridTemplateColumns='repeat('+c+',1fr)';
   $('bd').innerHTML=cards.map((k,i)=>'<button class="cd" data-i="'+i+'" aria-label="کارت '+(i+1)+'"><div class="in"><span class="fr">؟</span><span class="bk">'+k.e+'</span></div></button>').join('');
@@ -84,12 +85,16 @@ function win(){
   if(players===1){
     const k=bestKey(),bs=JSON.parse(localStorage.getItem(k)||'null'),rec=!bs||moves<bs.m||(moves===bs.m&&t<bs.t);
     if(rec)try{localStorage.setItem(k,JSON.stringify({m:moves,t}))}catch(e){}
+    if($('lv').value==='1')SLNet.rec('memory',moves,true);
     $('ot').textContent=rec?'رکورد جدید! 🏆':'آفرین! 🎉';m='زمان: '+ft(t)+' · حرکت: '+fa(moves);
   }else{$('ot').textContent=sc[0]===sc[1]?'مساوی شد 🤝':'بازیکن '+fa(sc[0]>sc[1]?1:2)+' برنده شد 🏆';m=fa(sc[0])+' به '+fa(sc[1])}
   $('om').textContent=m;$('ov').style.display='flex';beep(900,.3);hud();
 }
-$('bd').addEventListener('click',e=>{const c=e.target.closest('.cd');if(c)flip(+c.dataset.i)});
-$('nw').onclick=newGame;$('ob').onclick=newGame;$('lv').onchange=newGame;$('md').onchange=newGame;
+$('bd').addEventListener('click',e=>{const c=e.target.closest('.cd');if(c){const i=+c.dataset.i;if(online){if(turn!==net.seat||lock||cards[i].ok||open.includes(i))return;net.send({k:'f',i})}flip(i)}});
+function restart(){if(!online){newGame();return}if(net.isHost){netDeck=null;newGame()}else net.send({k:'rq'})}
+$('nw').onclick=restart;$('ob').onclick=restart;$('lv').onchange=newGame;$('md').onchange=newGame;
+SLNet.init({game:'memory',max:2,start(n){net=n;online=true;$('md').disabled=$('lv').disabled=true;if(n.isHost){netDeck=null;newGame()}},msg(m){
+ if(m.k==='d'){$('lv').value=m.lv;netDeck=m.d;newGame()}else if(m.k==='f'){flip(m.i)}else if(m.k==='rq'&&net.isHost){netDeck=null;newGame()}},left(){lock=true;$('hud').insertAdjacentHTML('beforeend','<div>حریف خارج شد</div>')}});
 newGame();
 </script>
 </body>

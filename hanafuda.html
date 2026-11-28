@@ -99,6 +99,7 @@ button{font:inherit;cursor:pointer}
 <div id="ov"><div class="dlg" id="dlg"></div></div>
 
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 (function(){
 'use strict';
 var $=function(i){return document.getElementById(i)};
@@ -351,7 +352,7 @@ function endDialog(html){
  $('bNext').onclick=function(){closeModal();if(last)finalDialog();else nextRound(false)};
 }
 function finalDialog(){
- var p=G.s.p,c=G.s.c;
+ var p=G.s.p,c=G.s.c;if(p>c){var hw=(+localStorage.getItem('hanafuda-wins')||0)+1;try{localStorage.setItem('hanafuda-wins',hw)}catch(e){}slRec('hanafuda',hw)}
  modal('<h2>'+(p>c?'قهرمان شدی! 🏆':p<c?'این بار حریف برد':'بازی مساوی شد')+'</h2><div class="big">'+fa(p)+' — '+fa(c)+'</div><p>بعد از '+fa(G.n)+' ماه بازی.</p><div class="bt"><button class="pr" id="bAgain">بازی تازه</button></div>');
  $('bAgain').onclick=function(){closeModal();menu()};
 }

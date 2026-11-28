@@ -4,6 +4,7 @@
 #m{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:#0009;color:#fff;gap:12px;font-size:1.3rem;text-align:center}#m button{padding:12px 26px;border:0;border-radius:12px;background:#c6e03c;font-weight:700;font-size:1rem}</style></head><body>
 <a href="index.html">←</a><div id="h"></div><canvas id="c"></canvas><div id="m"><div id="mt"></div><button id="mb"></button></div>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const C=document.getElementById('c'),x=C.getContext('2d');let W,H,G;function rs(){W=C.width=innerWidth;H=C.height=innerHeight;G=H*.82}rs();onresize=rs;
 const hud=document.getElementById('h'),M=document.getElementById('m'),mt=document.getElementById('mt'),mb=document.getElementById('mb');
@@ -12,7 +13,7 @@ const cw=()=>Math.min(W/12,46),ch=()=>cw()*1.3;
 function build(){cans=[];const w=cw(),h=ch(),rows=Math.min(3+lvl,8),bx=W*.68;
  for(let r=0;r<rows;r++)for(let i=0;i<rows-r;i++)cans.push({x:bx+(i-(rows-r-1)/2)*(w+2),y:G-h/2-r*(h+1),vx:0,vy:0,a:0,va:0,hit:0,k:0,hx:0,hy:0,c:['#e53935','#fdd835','#43a047','#1e88e5'][(r+i)%4]});
  cans.forEach(c=>{c.hx=c.x;c.hy=c.y});won=0;endT=0;balls=3+Math.floor(lvl/3);resetBall();state='aim';hud.textContent=info()}
-const info=()=>t('Level ','مرحله ')+lvl+' · '+t('Balls ','توپ ')+balls+' · '+t('Score ','امتیاز ')+score;
+const info=()=>(slRec('canknock',score),0)||t('Level ','مرحله ')+lvl+' · '+t('Balls ','توپ ')+balls+' · '+t('Score ','امتیاز ')+score;
 function resetBall(){ball={x:W*.16,y:G-W*.14,vx:0,vy:0,r:cw()*.45,fly:0,t:0}}
 function pt(e){const p=e.touches?e.touches[0]:e;return{x:p.clientX,y:p.clientY}}
 function dn(e){if(state!=='aim'||M.style.display==='flex')return;drag=pt(e)}

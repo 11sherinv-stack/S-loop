@@ -3,6 +3,7 @@
 .bt{position:fixed;bottom:22px;width:88px;height:88px;border-radius:50%;border:0;background:#ffffff40;color:#fff;font-weight:800;font-size:.9rem}#a{left:18px}#b{right:18px}#m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000b;padding:20px;text-align:center;white-space:pre-line}#m button{padding:12px 26px;border:0;border-radius:12px;background:#ff4a4a;color:#fff;font-weight:800}</style></head><body>
 <a href="index.html">←</a><canvas id="c"></canvas><button class="bt" id="a"></button><button class="bt" id="b"></button><div id="m"><div id="mt"></div><button id="mb"></button></div>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const cv=document.getElementById('c'),x=cv.getContext('2d');let W,H,GY;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;GY=H*.8}rs();onresize=rs;
 const M=document.getElementById('m');let run=0,hero,cam,en,anc,webs,dist,lives,best=+localStorage.getItem('sl-wh-best')||0,sw=null,inv=0,hold=0;
@@ -17,7 +18,7 @@ const A=document.getElementById('a'),B=document.getElementById('b');A.textConten
 A.addEventListener('touchstart',e=>{e.preventDefault();jump()});A.addEventListener('touchend',release);A.addEventListener('mousedown',jump);A.addEventListener('mouseup',release);B.addEventListener('touchstart',e=>{e.preventDefault();shoot()});B.addEventListener('mousedown',shoot);
 addEventListener('keydown',e=>{if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();if(!e.repeat)jump()}if(e.code==='KeyX'||e.code==='KeyF')shoot()});addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')release()});
 function hurt(){if(inv>0)return;lives--;inv=90;hero.vy=-8;beep(120,.3);if(lives<=0)over()}
-function over(){run=0;const s=dist|0;if(s>best){best=s;localStorage.setItem('sl-wh-best',s)}document.getElementById('mt').textContent=t('Game over\nDistance '+s+' m · Best '+best+' m','باخت\nمسافت '+s+' متر · رکورد '+best);document.getElementById('mb').textContent=t('Again','دوباره');M.style.display='flex'}
+function over(){run=0;const s=dist|0;slRec('webhero',s);if(s>best){best=s;localStorage.setItem('sl-wh-best',s)}document.getElementById('mt').textContent=t('Game over\nDistance '+s+' m · Best '+best+' m','باخت\nمسافت '+s+' متر · رکورد '+best);document.getElementById('mb').textContent=t('Again','دوباره');M.style.display='flex'}
 function step(){spawn();
  if(sw){const dx=hero.x-sw.a.x,dy=hero.y-sw.a.y;const d=Math.hypot(dx,dy);hero.vy+=.5;hero.x+=hero.vx;hero.y+=hero.vy;const nx=hero.x-sw.a.x,ny=hero.y-sw.a.y,nd=Math.hypot(nx,ny);if(nd>sw.l){hero.x=sw.a.x+nx/nd*sw.l;hero.y=sw.a.y+ny/nd*sw.l;const tx=-ny/nd,ty=nx/nd,v=hero.vx*tx+hero.vy*ty;hero.vx=tx*v*1.01;hero.vy=ty*v*1.01}if(hero.x>sw.a.x+sw.l*.9)release()}
  else{hero.vy+=.7;hero.x+=hero.vx;hero.y+=hero.vy;hero.vx+=(4.5+Math.min(dist/400,3)-hero.vx)*.02;if(hero.y>GY-30){hero.y=GY-30;hero.vy=0}}

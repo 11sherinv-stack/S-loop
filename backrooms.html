@@ -5,6 +5,7 @@ a{position:fixed;top:8px;left:8px;background:#0008;color:#fff;padding:6px 12px;b
 #m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000c;text-align:center;padding:20px}#m button{padding:12px 26px;border:0;border-radius:12px;background:#d8c84a;font-weight:800;font-size:1rem}</style></head><body>
 <a href="index.html">←</a><div id="h"></div><canvas id="c"></canvas><div id="js"><div id="kn"></div></div><div id="m"><div id="mt"></div><button id="mb"></button></div>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const cv=document.getElementById('c'),x=cv.getContext('2d'),RW=220,RH=130;cv.width=RW;cv.height=RH;
 const hud=document.getElementById('h'),M=document.getElementById('m'),mt=document.getElementById('mt'),mb=document.getElementById('mb');
@@ -39,7 +40,7 @@ function upd(dt){const sp=(keys.ShiftLeft&&stam>0?3.2:1.9)*dt,turn=2.2*dt;
   if(hum)hum.gain.value=Math.min(.35,.02+.5/(d*d));if(d<.5)end(0)}
  if(map[py|0][px|0]===2)end(1);
  hud.textContent=t('Level ','مرحله ')+lvl+' · '+t('Find the green exit','خروج سبز را پیدا کن')+' · '+(ent?t('It is hunting you…','موجود دنبالته…'):'')}
-function end(win){run=0;if(hum)hum.gain.value=0;M.style.display='flex';if(win){mt.textContent=t('You noclipped out… Level '+lvl+' done.','از اتاق فرار کردی… مرحله '+lvl+' تمام شد.');lvl++;mb.textContent=t('Next level','مرحله بعد')}else{mt.textContent=t('It caught you.','گرفتتت.');mb.textContent=t('Try again','دوباره');lvl=1}}
+function end(win){run=0;if(hum)hum.gain.value=0;M.style.display='flex';if(win)slRec('backrooms',lvl);if(win){mt.textContent=t('You noclipped out… Level '+lvl+' done.','از اتاق فرار کردی… مرحله '+lvl+' تمام شد.');lvl++;mb.textContent=t('Next level','مرحله بعد')}else{mt.textContent=t('It caught you.','گرفتتت.');mb.textContent=t('Try again','دوباره');lvl=1}}
 function start(){M.style.display='none';gen();run=1;try{if(!AC){AC=new(window.AudioContext||webkitAudioContext)();const o=AC.createOscillator(),o2=AC.createOscillator();hum=AC.createGain();hum.gain.value=.03;o.frequency.value=60;o2.frequency.value=120;o.type='sawtooth';const f=AC.createGain();f.gain.value=.25;o.connect(hum);o2.connect(f);f.connect(hum);hum.connect(AC.destination);o.start();o2.start()}AC.resume()}catch(e){}}
 mb.onclick=start;mt.textContent=t('BACKROOMS — find the exit before it finds you.\nWASD / joystick to move, drag to look, Shift to sprint.','BACKROOMS — قبل از اینکه موجود پیدات کنه خروج رو پیدا کن.\nWASD یا جوی‌استیک برای حرکت، کشیدن برای چرخش، Shift برای دویدن.');mt.style.whiteSpace='pre-line';mb.textContent=t('Enter','ورود');
 addEventListener('keydown',e=>keys[e.code]=1);addEventListener('keyup',e=>keys[e.code]=0);

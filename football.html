@@ -6,6 +6,7 @@ canvas{display:block;width:100vw;height:100vh;background:#2e8b3d}a{position:fixe
 #m{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#000b;padding:20px;text-align:center;white-space:pre-line}#m button{padding:12px 26px;border:0;border-radius:12px;background:#c6e03c;font-weight:800}</style></head><body>
 <a href="index.html">←</a><canvas id="c"></canvas><div id="js"><div id="kn"></div></div><button class="bt" id="sh"></button><button class="bt" id="ps"></button><div id="m"><div id="mt"></div><button id="mb"></button></div>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const cv=document.getElementById('c'),x=cv.getContext('2d');cv.width=900;cv.height=520;const FW=900,FH=520,GY0=190,GY1=330;
 let P=[],ball,score=[0,0],time=0,half=1,run=0,ctrl=0,keys={},jx=0,jy=0,msg='',msgT=0,HT=60;
@@ -43,7 +44,7 @@ function draw(){x.fillStyle='#2e8b3d';x.fillRect(0,0,FW,FH);for(let i=0;i<9;i++)
  x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,7,0,7);x.fill();x.strokeStyle='#000';x.lineWidth=1.5;x.stroke();
  x.fillStyle='#000a';x.fillRect(FW/2-110,8,220,34);x.fillStyle='#fff';x.font='bold 20px sans-serif';x.textAlign='center';x.fillText(`🔴 ${score[0]}  -  ${score[1]} 🟡   ${Math.max(0,time|0)}s  H${half}`,FW/2,32);
  if(msgT>0){x.font='bold 54px sans-serif';x.fillText(msg,FW/2,FH/2);msgT--}x.textAlign='left'}
-let frame=0,lt=0;function loop(ts){if(run){frame++;if(ts-lt>=16){lt=ts;step();time-=1/60;if(time<=0){if(half===1){half=2;time=HT;reset();msg=t('Second half','نیمه‌ی دوم');msgT=80}else{run=0;const r=score[0]>score[1]?t('🏆 You win!','🏆 بردی!'):score[0]<score[1]?t('You lost','باختی'):t('Draw','مساوی');document.getElementById('mt').textContent=r+`\n${score[0]} - ${score[1]}`;document.getElementById('mb').textContent=t('Play again','دوباره');M.style.display='flex'}}}}draw();requestAnimationFrame(loop)}
+let frame=0,lt=0;function loop(ts){if(run){frame++;if(ts-lt>=16){lt=ts;step();time-=1/60;if(time<=0){if(half===1){half=2;time=HT;reset();msg=t('Second half','نیمه‌ی دوم');msgT=80}else{run=0;if(score[0]>score[1]){var fw=(+localStorage.getItem('football-wins')||0)+1;try{localStorage.setItem('football-wins',fw)}catch(e){}slRec('football',fw)}const r=score[0]>score[1]?t('🏆 You win!','🏆 بردی!'):score[0]<score[1]?t('You lost','باختی'):t('Draw','مساوی');document.getElementById('mt').textContent=r+`\n${score[0]} - ${score[1]}`;document.getElementById('mb').textContent=t('Play again','دوباره');M.style.display='flex'}}}}draw();requestAnimationFrame(loop)}
 function beep(f,d=.08){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.1;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
 function start(){score=[0,0];half=1;time=HT;reset();run=1;M.style.display='none'}
 addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='Space'){e.preventDefault();shoot()}if(e.code==='KeyX')pass()});addEventListener('keyup',e=>keys[e.code]=0);

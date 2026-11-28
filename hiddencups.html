@@ -9,6 +9,7 @@ button{background:#c6e03c;border:0;padding:9px 16px;border-radius:12px;font-weig
 <a class="b" href="index.html">←</a><h1>🥤 Hidden Cups</h1><div id="s"></div><div id="g"></div>
 <button id="u"></button><button id="n"></button>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const COL=['#e53935','#1e88e5','#43a047','#fdd835','#8e24aa','#fb8c00','#00acc1','#ec407a','#8d6e63'];
 let cups=[],sel=-1,lvl=1,hist=[],mv=0;const CAP=4;
@@ -27,6 +28,6 @@ function tap(i){if(sel<0){if(cups[i].length)sel=i;draw();return}
  const a=cups[sel],b=cups[i];if(!a.length||b.length>=CAP||(b.length&&topc(b)!==topc(a))){sel=cups[i].length?i:-1;draw();return}
  hist.push(JSON.stringify(cups));const c=topc(a);while(a.length&&topc(a)===c&&b.length<CAP)b.push(a.pop());mv++;sel=-1;draw()}
 document.getElementById('u').textContent=t('Undo','برگشت');document.getElementById('u').onclick=()=>{if(hist.length){cups=JSON.parse(hist.pop());mv--;sel=-1;draw()}};
-document.getElementById('n').textContent=t('Next / Shuffle','مرحله بعد / دوباره');document.getElementById('n').onclick=()=>{if(cups.filter(c=>c.length).every(c=>c.length===CAP&&c.every(v=>v===c[0])))lvl++;init()};
+document.getElementById('n').textContent=t('Next / Shuffle','مرحله بعد / دوباره');document.getElementById('n').onclick=()=>{if(cups.filter(c=>c.length).every(c=>c.length===CAP&&c.every(v=>v===c[0]))){slRec('hiddencups',lvl);lvl++}init()};
 init();
 </script></body></html>

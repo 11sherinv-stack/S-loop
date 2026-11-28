@@ -44,6 +44,7 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <div id="tbl"></div>
 <div class="hint">توپ قرمز را زیر لیوانی پیدا کن. اول لیوان‌ها توپ را نشان می‌دهند، بعد سریع جابه‌جا می‌شوند. هر مرحله، لیوان‌ها سریع‌تر و بیشتر می‌شوند.</div>
 <div class="ov" id="ov"><h2 id="ot"></h2><p id="om" style="margin:0"></p><button class="b pr" id="ob">باشه</button></div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]),tbl=$('tbl');
 let mode=1,n=3,cups=[],slots=[],ballCup=0,phase='idle',round=1,lives=3,best=0,sc=[0,0],turn=0,au,busy=false,hider=0;
@@ -68,28 +69,30 @@ const hudUpd=()=>{$('v1').textContent=fa(round);$('v2').textContent=mode===1?'�
 async function playRound(){
   busy=true;phase='show';hudUpd();
   const k=round<4?3:round<8?4:5;build(k);ballCup=Math.floor(Math.random()*k);
-  $('stt').textContent='توپ را ببین… 👀';await sleep(500);
-  lift(ballCup,true);await sleep(1100);lift(ballCup,false);await sleep(500);
+  $('stt').textContent='توپ را ببین… 👀';await sleep(500);if(online)return;
+  lift(ballCup,true);await sleep(1100);if(online)return;lift(ballCup,false);await sleep(500);if(online)return;
   $('stt').textContent='جابه‌جا می‌شوند…';
-  await shuffle(5+round*2,Math.max(180,520-round*40));
+  await shuffle(5+round*2,Math.max(180,520-round*40));if(online)return;
   phase='pick';busy=false;$('stt').textContent='توپ زیر کدام لیوان است؟ 🤔';
 }
 async function reveal(i){
   busy=true;phase='reveal';lift(i,true);await sleep(600);
   const ok=i===ballCup;
   if(!ok){lift(i,false);lift(ballCup,true)}
-  if(ok){round++;if(round-1>best){best=round-1;try{localStorage.setItem('cup-best',best)}catch(e){}}$('stt').textContent='🎉 گل! درست پیدا کردی';beep(900,.25)}
+  if(ok){round++;if(round-1>best){best=round-1;try{localStorage.setItem('cup-best',best)}catch(e){}SLNet.rec('cupgame',best);}$('stt').textContent='🎉 گل! درست پیدا کردی';beep(900,.25)}
   else{lives--;$('stt').textContent='😅 پوچ! توپ اینجا بود';beep(160,.3)}
   hudUpd();await sleep(1500);
   if(lives<=0){end();return}
   playRound();
 }
-function end(){busy=false;phase='idle';$('ot').textContent='بازی تمام شد';$('om').textContent='مرحله‌ی تو: '+fa(round)+' · رکورد: '+fa(best);$('ob').onclick=()=>{$('ov').style.display='none';newGame()};$('ob').textContent='دوباره';$('ov').style.display='flex'}
+function end(){busy=false;phase='idle';$('ot').textContent='بازی تمام شد';$('om').textContent='مرحله‌ی تو: '+fa(round)+' · رکورد: '+fa(best);$('ob').onclick=()=>{$('ov').style.display='none';newGame(true)};$('ob').textContent='دوباره';$('ov').style.display='flex'}
 // ---- 2-player: one hides, the other guesses
 async function round2(){
   busy=true;phase='hide';build(3);hudUpd();
   const P=hider===0?'بازیکن ۱':'بازیکن ۲',G=hider===0?'بازیکن ۲':'بازیکن ۱';
   $('stt').textContent=P+': یک لیوان را برای پنهان کردن توپ انتخاب کن ('+G+' نگاه نکند!)';busy=false;
+  if(online&&hider!==net.seat){phase='waitHide';busy=true;$('stt').textContent='حریف دارد توپ را پنهان می‌کند…'}
+  else if(online)$('stt').textContent='تو پنهان کن: یک لیوان را انتخاب کن (حریف نمی‌بیند)';
 }
 function hideSel(i){
   ballCup=i;phase='pass';busy=true;lift(i,true);setTimeout(()=>{lift(i,false);const G=hider===0?'بازیکن ۲':'بازیکن ۱';$('ot').textContent='دستگاه را به '+G+' بده 📱';$('om').textContent='توپ پنهان شد. حالا حدس بزن!';$('ob').textContent='آماده‌ام';$('ob').onclick=async()=>{$('ov').style.display='none';await shuffle(6,300);phase='pick';busy=false;$('stt').textContent=G+': توپ زیر کدام لیوان است؟'};$('ov').style.display='flex'},600);
@@ -98,21 +101,30 @@ async function reveal2(i){
   busy=true;phase='reveal';lift(i,true);await sleep(600);const ok=i===ballCup;if(!ok){lift(i,false);lift(ballCup,true)}
   const guesser=1-hider;if(ok){sc[guesser]++;beep(900,.2);$('stt').textContent='🎉 گل! '+(guesser===0?'بازیکن ۱':'بازیکن ۲')+' درست حدس زد'}else{sc[hider]++;beep(160,.3);$('stt').textContent='😅 پوچ! '+(hider===0?'بازیکن ۱':'بازیکن ۲')+' امتیاز گرفت'}
   hudUpd();await sleep(1700);
-  if(sc[0]>=5||sc[1]>=5){busy=false;phase='idle';$('ot').textContent='🏆 '+(sc[0]>=5?'بازیکن ۱':'بازیکن ۲')+' برنده شد';$('om').textContent=fa(sc[0])+' - '+fa(sc[1]);$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';newGame()};$('ov').style.display='flex';return}
+  if(sc[0]>=5||sc[1]>=5){busy=false;phase='idle';$('ot').textContent='🏆 '+(sc[0]>=5?'بازیکن ۱':'بازیکن ۲')+' برنده شد';$('om').textContent=fa(sc[0])+' - '+fa(sc[1]);$('ob').textContent='دوباره';$('ob').onclick=()=>{$('ov').style.display='none';newGame(true)};$('ov').style.display='flex';return}
   hider=1-hider;round2();
 }
 tbl.addEventListener('click',e=>{
   const c=e.target.closest('.cw');if(!c||busy)return;const i=+c.dataset.i;
+  if(online){if(phase==='hide'&&hider===net.seat){ballCup=i;phase='wait';busy=true;lift(i,true);setTimeout(()=>lift(i,false),600);net.send({k:'h'});$('stt').textContent='منتظر حدس حریف…'}else if(phase==='pick'&&hider!==net.seat){net.send({k:'g',i});myG=i;busy=true;$('stt').textContent='…'}return}
   if(mode===1&&phase==='pick')reveal(i);
   else if(mode===2&&phase==='hide')hideSel(i);
   else if(mode===2&&phase==='pick')reveal2(i);
 });
-function newGame(){
+function newGame(send){
+  if(online){mode=2;round=1;lives=3;sc=[0,0];hider=0;busy=false;$('ov').style.display='none';$('l1').firstChild.textContent='دور';$('l2').firstChild.textContent='امتیاز (تا ۵)';hudUpd();round2();if(send===true)net.send({k:'n'});return}
   mode=+$('md').value;round=1;lives=3;sc=[0,0];hider=0;busy=false;
   $('l1').firstChild.textContent=mode===1?'مرحله':'دور';$('l2').firstChild.textContent=mode===1?'جان':'امتیاز (تا ۵)';
   hudUpd();mode===1?playRound():round2();
 }
-$('nw').onclick=newGame;$('md').onchange=newGame;
+$('nw').onclick=()=>newGame(true);$('md').onchange=newGame;
+let net=null,online=false,myG=0;
+SLNet.init({game:'cupgame',max:2,start(n){net=n;online=true;$('md').disabled=true;newGame(false)},msg(m){
+ if(m.k==='h'){phase='pick';busy=false;$('stt').textContent='توپ زیر کدام لیوان است؟ 🤔'}
+ else if(m.k==='g'&&hider===net.seat){reveal2(m.i);net.send({k:'r',b:ballCup})}
+ else if(m.k==='r'){ballCup=m.b;reveal2(myG)}
+ else if(m.k==='n')newGame(false)},left(){$('stt').textContent='حریف خارج شد';busy=true}});
+SLNet.rec('cupgame',best);
 addEventListener('resize',()=>{if(cups.length)place()});
 newGame();
 </script>

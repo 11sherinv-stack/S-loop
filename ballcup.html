@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Ball in Cup</title>
+<style>*{margin:0;box-sizing:border-box}body{background:#6ec1e4;overflow:hidden;touch-action:none;font-family:system-ui,sans-serif}canvas{display:block;width:100vw;height:100vh}
+a{position:fixed;top:6px;left:6px;background:#0008;color:#fff;padding:5px 10px;border-radius:10px;text-decoration:none;z-index:5}#m{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#000b;color:#fff;text-align:center;padding:20px;white-space:pre-line}#m button{padding:12px 26px;border:0;border-radius:12px;background:#ff5252;color:#fff;font-weight:800}</style></head><body>
+<a href="index.html">←</a><canvas id="c"></canvas><div id="m"><div id="mt"></div><button id="mb"></button></div>
+<script>
+const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
+const cv=document.getElementById('c'),x=cv.getContext('2d');let W,H,GY;function rs(){W=cv.width=innerWidth;H=cv.height=innerHeight;GY=H*.85}rs();onresize=()=>{rs();setup()};
+const M=document.getElementById('m');let score=0,lives=3,lvl=1,ball,cup,wall,drag=null,state='aim',best=+localStorage.getItem('ballcup-best')||0,flash=0,lt=0;
+function setup(){const cw=Math.min(W*.14,64);cup={w:cw,h:cw*1.15,x:W*(.55+Math.random()*.33),y:GY,lift:0};
+ if(lvl>2)cup.lift=Math.random()*H*.18;cup.y=GY-cup.lift;wall=lvl>3?{x:W*.42+Math.random()*W*.08,h:H*(.12+Math.min(.2,lvl*.02)),w:12}:null;
+ ball={x:W*.14,y:GY-60,vx:0,vy:0,r:Math.min(12,W*.03),fly:0,t:0};state='aim';drag=null}
+const hud=()=>t('Cups ','لیوان‌ها ')+score+' · '+'❤'.repeat(Math.max(0,lives))+' · '+t('Best ','رکورد ')+best;
+function pt(e){const p=e.touches?e.touches[0]:e;return{x:p.clientX,y:p.clientY}}
+function dn(e){if(state!=='aim'||M.style.display==='flex')return;drag=pt(e)}
+function mv(e){if(drag)drag=pt(e)}
+function up(){if(!drag)return;const dx=ball.x-drag.x,dy=ball.y-drag.y;drag=null;if(Math.hypot(dx,dy)<25)return;ball.vx=Math.min(dx*.075,22);ball.vy=Math.max(dy*.075,-26);ball.fly=1;ball.t=0;state='fly'}
+['mousedown','touchstart'].forEach(k=>cv.addEventListener(k,dn));['mousemove','touchmove'].forEach(k=>cv.addEventListener(k,mv));['mouseup','touchend'].forEach(k=>cv.addEventListener(k,up));
+function seg(ax,ay,bx,by){const dx=bx-ax,dy=by-ay;let u=((ball.x-ax)*dx+(ball.y-ay)*dy)/(dx*dx+dy*dy);u=Math.max(0,Math.min(1,u));const px=ax+dx*u,py=ay+dy*u,d=Math.hypot(ball.x-px,ball.y-py);
+ if(d<ball.r&&d>0){const nx=(ball.x-px)/d,ny=(ball.y-py)/d;ball.x=px+nx*ball.r;ball.y=py+ny*ball.r;const vn=ball.vx*nx+ball.vy*ny;if(vn<0){ball.vx-=1.55*vn*nx;ball.vy-=1.55*vn*ny;ball.vx*=.9;ball.vy*=.9;beep(220,.04)}}}
+function cupSegs(){const c=cup,tw=c.w,bw=c.w*.62,l=c.x-tw/2,r=c.x+tw/2,bl=c.x-bw/2,br=c.x+bw/2;return{l,r,bl,br,top:c.y-c.h,bot:c.y}}
+function step(){if(state!=='fly')return;ball.t++;ball.vy+=.55;ball.x+=ball.vx;ball.y+=ball.vy;
+ if(ball.x<ball.r){ball.x=ball.r;ball.vx*=-.6}if(ball.x>W-ball.r){ball.x=W-ball.r;ball.vx*=-.6}
+ if(ball.y<ball.r){ball.y=ball.r;ball.vy*=-.5}
+ if(cup.lift>0){x.fillStyle='#0000'}
+ const s=cupSegs();seg(s.l,s.top,s.bl,s.bot);seg(s.r,s.top,s.br,s.bot);seg(s.bl,s.bot,s.br,s.bot);
+ if(cup.lift>0)seg(cup.x-cup.w*.45,cup.y,cup.x+cup.w*.45,cup.y);
+ if(wall){const wx=wall.x,wy=GY-wall.h;seg(wx,wy,wx,GY);seg(wx+wall.w,wy,wx+wall.w,GY);seg(wx,wy,wx+wall.w,wy)}
+ const inside=ball.x>s.bl&&ball.x<s.br&&ball.y>s.bot-ball.r*1.6&&ball.y<s.bot&&Math.abs(ball.vx)<4&&Math.abs(ball.vy)<5;
+ if(inside&&state==='fly'){state='score';score++;flash=40;beep(900,.2);if(score>best){best=score;localStorage.setItem('ballcup-best',best)}slRec('ballcup',score);setTimeout(()=>{lvl++;setup()},900);return}
+ if(ball.y>GY-ball.r){ball.y=GY-ball.r;ball.vy*=-.35;ball.vx*=.8;if(Math.abs(ball.vy)<1.2&&ball.t>30){miss()}}
+ if(ball.t>300||ball.x>W+40)miss()}
+function miss(){if(state!=='fly')return;state='miss';lives--;beep(130,.3);setTimeout(()=>{if(lives<=0){document.getElementById('mt').textContent=t('Game over\nCups: '+score+' · Best '+best,'باختی\nلیوان‌ها: '+score+' · رکورد '+best);document.getElementById('mb').textContent=t('Again','دوباره');M.style.display='flex'}else setup()},700)}
+document.getElementById('mb').onclick=()=>{score=0;lives=3;lvl=1;M.style.display='none';setup()};
+function beep(f,d=.06){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
+function draw(){x.fillStyle='#6ec1e4';x.fillRect(0,0,W,H);x.fillStyle='#fff8';[.2,.55,.8].forEach((u,i)=>{x.beginPath();x.arc(W*u,H*(.12+i*.04),26,0,7);x.fill()});
+ x.fillStyle='#8d6e63';x.fillRect(0,GY,W,H-GY);x.fillStyle='#a1887f';x.fillRect(0,GY,W,6);
+ if(wall){x.fillStyle='#546e7a';x.fillRect(wall.x,GY-wall.h,wall.w,wall.h)}
+ if(cup.lift>0){x.fillStyle='#6d4c41';x.fillRect(cup.x-cup.w*.5,cup.y,cup.w,cup.lift)}
+ const s=cupSegs();x.fillStyle=flash>0?'#4caf50':'#e53935';x.beginPath();x.moveTo(s.l,s.top);x.lineTo(s.r,s.top);x.lineTo(s.br,s.bot);x.lineTo(s.bl,s.bot);x.closePath();x.fill();x.fillStyle='#fff';x.fillRect(s.l+3,s.top+cup.h*.35,s.r-s.l-6,cup.h*.22);x.fillStyle='#b71c1c';x.fillRect(s.l,s.top,s.r-s.l,5);flash--;
+ if(drag&&state==='aim'){x.strokeStyle='#fff';x.lineWidth=3;x.beginPath();x.moveTo(ball.x,ball.y);x.lineTo(drag.x,drag.y);x.stroke();let a=ball.x,b=ball.y,u=Math.min((ball.x-drag.x)*.075,22),v=Math.max((ball.y-drag.y)*.075,-26);x.fillStyle='#fff';for(let i=0;i<40;i++){v+=.55;a+=u;b+=v;if(i%2)x.fillRect(a-2,b-2,4,4)}}
+ x.fillStyle='#fff';x.beginPath();x.arc(ball.x,ball.y,ball.r,0,7);x.fill();x.strokeStyle='#ff9800';x.lineWidth=3;x.stroke();
+ x.fillStyle='#fff';x.font='bold 18px system-ui';x.textAlign='center';x.fillText(hud(),W/2,30);if(lvl===1&&state==='aim'){x.font='15px system-ui';x.fillText(t('Drag back from the ball and release to throw it into the cup','از توپ به عقب بکش و رها کن تا در لیوان بیفتد'),W/2,H*.4)}}
+function loop(){step();draw();requestAnimationFrame(loop)}setup();loop();
+</script></body></html>

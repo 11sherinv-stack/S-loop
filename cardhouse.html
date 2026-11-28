@@ -6,6 +6,7 @@ canvas{display:block;margin:0 auto;max-width:100vw}#bar{width:min(86vw,320px);he
 button{background:#c6e03c;border:0;padding:12px 28px;border-radius:12px;font-weight:800;font-size:1rem;margin:4px}#s{min-height:24px}</style></head><body>
 <a class="b" href="index.html">←</a><h1>🃏 Card House</h1><div id="s"></div><div id="bar"><div id="z"></div><div id="p"></div></div><canvas id="c" width="360" height="440"></canvas><br><button id="go"></button><button id="rs"></button>
 <script>
+function slRec(id,s,low){try{s=+s;if(!(s>0))return;const o=JSON.parse(localStorage.getItem('sl-lb-mine')||'{}'),c=o[id];if(!c||(low?s<c.s:s>c.s)){o[id]={s};localStorage.setItem('sl-lb-mine',JSON.stringify(o))}}catch(e){}}
 const lg=localStorage.getItem('sl-lang')==='en'?'en':'fa',t=(e,f)=>lg==='en'?e:f;
 const c=document.getElementById('c'),x=c.getContext('2d'),s=document.getElementById('s'),pe=document.getElementById('p'),ze=document.getElementById('z');
 // Slots: levels from bottom; level k has (N-k) A-frames. Order: frames in level, then flats between them on top.
@@ -23,7 +24,7 @@ function draw(t0){x.clearRect(0,0,360,440);x.fillStyle='#0003';x.fillRect(10,402
 let last=0;function loop(ts){if(!over){pos+=dir*speed*(1+lvl*.08);if(pos>100||pos<0){dir*=-1;pos=Math.max(0,Math.min(100,pos))}pe.style.left=pos+'%'}
  if(wob>0)wob*=.97;draw(ts);requestAnimationFrame(loop)}
 function place(){if(over)return;const zl=parseFloat(ze.style.left),zw=parseFloat(ze.style.width);
- if(pos>=zl&&pos<=zl+zw){idx++;zone();wob=Math.min(wob+.4,2);beep(420+idx*12);if(idx>=slots.length){over=1;s.textContent=t('🏰 House complete! Next: bigger!','🏰 خانه کامل شد! مرحله بعد بزرگ‌تر!');lvl++;N=Math.min(N+1,7);return}msg()}
+ if(pos>=zl&&pos<=zl+zw){idx++;slRec('cardhouse',idx*2);zone();wob=Math.min(wob+.4,2);beep(420+idx*12);if(idx>=slots.length){over=1;s.textContent=t('🏰 House complete! Next: bigger!','🏰 خانه کامل شد! مرحله بعد بزرگ‌تر!');lvl++;N=Math.min(N+1,7);return}msg()}
  else{fails++;wob=3;beep(120,.3);if(fails>=3){over=1;s.textContent=t('💥 The house collapsed at '+(idx*2)+' cards','💥 خانه با '+(idx*2)+' کارت فروریخت');slots.length=idx;draw(0);x.fillStyle='#14502eee';x.fillRect(0,0,360,440);for(let i=0;i<30;i++)card(30+Math.random()*300,340+Math.random()*80,40,60,Math.random()*6,i%2?'#111':'#c0182b');return}msg()}}
 function beep(f,d=.1){try{const a=new(window.AudioContext||webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(a.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,a.currentTime+d);o.stop(a.currentTime+d)}catch(e){}}
 const go=document.getElementById('go'),rs=document.getElementById('rs');go.textContent=t('Place card','بگذار');rs.textContent=t('Restart','دوباره');

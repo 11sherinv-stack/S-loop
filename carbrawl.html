@@ -24,6 +24,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
 <div class="pad" id="pr2" style="display:none"><button id="b2l" aria-label="چپ ۲">◀</button><button id="b2r" aria-label="راست ۲">▶</button></div>
 <div class="pad" id="pl"><button id="bl" aria-label="چپ">◀</button><button id="br" aria-label="راست">▶</button></div>
 <div class="ov" id="ov"><h2 id="oh">🚗 Car Brawl</h2><button id="ob0" class="go">▶ ورود به بازی</button><p id="op">با ماشینت به ماشین حریف بکوب!<br>ضربه‌ی محکم به سر راننده یا فرسودن بدنه‌ی ماشین، حریف را از بازی بیرون می‌کند. اگر ماشینت وارونه ماند هم می‌بازی.<br>◀ ▶ حرکت (در هوا: چرخاندن ماشین) · اول به ۳ برد، برنده است.<br><small>رایانه — بازیکن ۱: A / D · بازیکن ۲ (حالت دو نفره): کلیدهای جهت‌دار</small></p><div class="row" id="mm"><button data-m="1" class="sel">👤 تک‌نفره</button><button data-m="2">👥 دو نفره</button></div><div class="maps" id="maps"></div><button id="ob" class="go">▶ ورود به بازی</button></div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const GV=(m=>m?Math.min(1,+m[1]/100):.8)(location.hash.match(/v(\d+)/));
@@ -41,13 +42,13 @@ const MAPS=[
  {n:'حوضچه',p:[[0,360],[300,360],[500,470],[1500,470],[1700,360],[2000,360]]}
 ];
 const ARENAS=MAPS.map(m=>m.p);
-let mode=1,mapSel=-1;
+let online=false,isGuest=false,net=null,remoteIn=0,lastGi=9,lastSend=0,fr=0,curMap=0,mode=1,mapSel=-1;
 const WR=[{lx:-30,ly:14,r:13,t:'w'},{lx:30,ly:14,r:13,t:'w'},{lx:-36,ly:0,r:9,t:'c'},{lx:-18,ly:-2,r:9,t:'c'},{lx:0,ly:-4,r:9,t:'c'},{lx:18,ly:-2,r:9,t:'c'},{lx:36,ly:0,r:9,t:'c'},{lx:-4,ly:-14,r:9,t:'c'},{lx:-2,ly:-27,r:8,t:'h'}];
 let G,cars,round=0,sc=[0,0],state='menu',tm=0,msg='',msgT=0,koT=0,parts=[],shake=0;
 const btn={l:false,r:false},btn2={l:false,r:false};
 function mk(x0,col,human,dir){return{x:x0,y:350,a:0,vx:0,vy:0,w:0,hp:100,ko:false,col,human,dir,wr:0,gr:0,upT:0,input:0,stuck:0,aiT:0,mode:'ram',why:''}}
 function newRound(){
-  const mi=mapSel>=0?mapSel:Math.floor(Math.random()*MAPS.length);G=MAPS[mi].p;
+  const mi=mapSel>=0?mapSel:Math.floor(Math.random()*MAPS.length);G=MAPS[mi].p;curMap=mi;
   cars=[mk(520,'#1e88e5',true,1),mk(1480,'#e53935',mode===2,-1)];
   cars.forEach(c=>{c.y=groundAt(c.x).y-75});
   koT=0;parts=[];state='fight';
@@ -131,12 +132,12 @@ function ai(c,o,dt){
 }
 const keys={};
 function update(dt){
-  tm+=dt;if(state!=='fight')return;
+  tm+=dt;if(online&&isGuest){msgT=Math.max(0,msgT-dt);shake=Math.max(0,shake-30*dt);return}if(state!=='fight')return;
   const sub=6,d=dt/sub;
   for(let s=0;s<sub;s++){
     const[a,b]=cars;
     a.input=a.ko?0:((btn.r||keys.d||(mode===1&&keys.ArrowRight))?1:0)-((btn.l||keys.a||(mode===1&&keys.ArrowLeft))?1:0);
-    if(mode===2)b.input=b.ko?0:((btn2.r||keys.ArrowRight)?1:0)-((btn2.l||keys.ArrowLeft)?1:0);else ai(b,a,d);
+    if(online)b.input=b.ko?0:remoteIn;else if(mode===2)b.input=b.ko?0:((btn2.r||keys.ArrowRight)?1:0)-((btn2.l||keys.ArrowLeft)?1:0);else ai(b,a,d);
     stepCar(a,d);stepCar(b,d);
     carVsCar(a,b);
   }
@@ -147,10 +148,10 @@ function update(dt){
   if(koT>0){koT+=dt;if(koT>2.6)endRound()}
 }
 function endRound(){
-  if(sc[0]>=3||sc[1]>=3){state='over';show(mode===2?(sc[0]>=3?'🏆 آبی برنده شد!':'🏆 قرمز برنده شد!'):(sc[0]>=3?'🏆 برنده شدی!':'باختی'),fa(sc[0])+' — '+fa(sc[1]),'دوباره');return}
+  if(sc[0]>=3||sc[1]>=3){state='over';if(sc[0]>=3&&(mode===1||(online&&!isGuest)))winRec();show(mode===2?(sc[0]>=3?'🏆 آبی برنده شد!':'🏆 قرمز برنده شد!'):(sc[0]>=3?'🏆 برنده شدی!':'باختی'),fa(sc[0])+' — '+fa(sc[1]),'دوباره');return}
   round++;newRound();
 }
-function show(h,p,b){$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent='▶ '+b;$('ob0').textContent='▶ '+b;$('mm').style.display='flex';$('maps').style.display='flex';$('ov').style.display='flex'}
+function show(h,p,b){if(online&&!isGuest)net.send({k:'ov',h:h,p:p,b:b});$('oh').textContent=h;$('op').innerHTML=p;$('ob').textContent='▶ '+b;$('ob0').textContent='▶ '+b;$('mm').style.display='flex';$('maps').style.display='flex';$('ov').style.display='flex'}
 function drawCar(c){
   x.save();x.translate(c.x,c.y);x.rotate(c.a);if(c.dir<0)x.scale(-1,1);if(c.ko)x.globalAlpha=.8;
   const col=c.col;
@@ -204,11 +205,24 @@ $('mm').onclick=e=>{const b=e.target.closest('button');if(!b)return;mode=+b.data
 mapUI();
 addEventListener('keydown',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=true});addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false});
 function startGame(){$('ov').style.display='none';$('mm').style.display='none';$('maps').style.display='none';round=0;sc=[0,0];newRound()}
-$('ob').onclick=startGame;$('ob0').onclick=startGame;
+$('ob').onclick=()=>{if(online&&isGuest)net.send({k:'rs'});else startGame()};$('ob0').onclick=$('ob').onclick;
+function winRec(){var n=(+localStorage.getItem('carbrawl-wins')||0)+1;try{localStorage.setItem('carbrawl-wins',n)}catch(e){}SLNet.rec('carbrawl',n)}
 function resize(){cv.width=innerWidth;cv.height=innerHeight}addEventListener('resize',resize);resize();
 if(!x.roundRect)x.roundRect=function(a,b,w,h){this.rect(a,b,w,h)};
-let last=0;function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
-G=MAPS[0].p;requestAnimationFrame(loop);
+let last=0;function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);
+ if(online&&cars){fr++;
+  if(isGuest){const gi=((btn.r||keys.d||keys.ArrowRight)?1:0)-((btn.l||keys.a||keys.ArrowLeft)?1:0);if(gi!==lastGi||t-lastSend>150){net.send({k:'i',v:gi});lastGi=gi;lastSend=t}}
+  else if(fr%2===0)net.send({k:'s',c:cars.map(c=>[c.x,c.y,c.a,c.w,c.hp,c.ko?1:0,c.wr,c.why,c.vx,c.vy]),mi:curMap,st:state,sc:sc,m:msg,mt:msgT})}
+ draw();requestAnimationFrame(loop)}
+G=MAPS[0].p;
+function hideMenus(){$('mm').style.display='none';$('maps').style.display='none'}
+SLNet.init({game:'carbrawl',max:2,start(n){net=n;online=true;isGuest=!n.isHost;mode=2;remoteIn=0;hideMenus();$('pr2').style.display='none';if(n.isHost)startGame();else{$('ov').style.display='none';cars=[mk(520,'#1e88e5',true,1),mk(1480,'#e53935',true,-1)]}},msg(m){
+ if(m.k==='i'&&!isGuest)remoteIn=m.v;
+ else if(m.k==='rs'&&!isGuest&&state==='over')startGame();
+ else if(m.k==='ov'&&isGuest){show(m.h,m.p,m.b);hideMenus()}
+ else if(m.k==='s'&&isGuest&&cars){m.c.forEach((a,i)=>{const c=cars[i];c.x=a[0];c.y=a[1];c.a=a[2];c.w=a[3];if(a[5]&&!c.ko){ko(c,a[7])}c.hp=a[4];c.ko=!!a[5];c.wr=a[6];c.why=a[7];c.vx=a[8];c.vy=a[9]});G=MAPS[m.mi].p;const was=state;state=m.st;sc=m.sc;if(m.m!==msg||m.mt>msgT){msg=m.m;msgT=m.mt}if(state==='fight')$('ov').style.display='none';if(state==='over'&&was!=='over'&&sc[1]>=3)winRec()}},left(){msg='حریف خارج شد';msgT=3}});
+SLNet.rec('carbrawl',+localStorage.getItem('carbrawl-wins')||0);
+requestAnimationFrame(loop);
 window.__cb={startGame,update,newRound,get cars(){return cars},get sc(){return sc},get state(){return state},keys,btn,btn2,stepCar,ko,set round(v){round=v},ARENAS,MAPS,set mode(v){mode=v},set mapSel(v){mapSel=v}};
 </script>
 <script>

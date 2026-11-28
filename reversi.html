@@ -52,6 +52,7 @@ a.back{color:#cfe;margin-top:6px;font-size:.9rem}
 <div id="board" role="grid"></div>
 <div id="msg" aria-live="polite"></div>
 <a class="back" href="index.html">بازگشت به S Loop</a>
+<script src="slnet.js"></script>
 <script>
 (function(){
 'use strict';
@@ -68,7 +69,7 @@ var W=[
 [-20,-40,-5,-5,-5,-5,-40,-20],
 [120,-20,20,5,5,20,-20,120]];
 var WF=[];for(var r=0;r<8;r++)for(var c=0;c<8;c++)WF.push(W[r][c]);
-var board,turn,over,human,cpu,mode,lvl,busy,lastMove,token=0;
+var online=false,net=null,board,turn,over,human,cpu,mode,lvl,busy,lastMove,token=0;
 var cells=[];
 var ac=null;
 var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
@@ -160,7 +161,7 @@ function name(p){return mode==='two'?(p===1?'سیاه':'سفید'):(p===human?'�
 function msg(t){$('msg').textContent=t}
 function newGame(){
   token++;
-  mode=$('mode').value;lvl=+$('lvl').value;human=+$('col').value;cpu=3-human;
+  if(online){mode='two';human=net.seat+1}else{mode=$('mode').value;human=+$('col').value}lvl=+$('lvl').value;cpu=3-human;
   $('lvl').disabled=$('col').disabled=(mode==='two');
   board=Array(64).fill(0);board[27]=2;board[28]=1;board[35]=1;board[36]=2;
   turn=1;over=false;busy=false;lastMove=-1;
@@ -177,7 +178,7 @@ function afterMove(){
     var a=count(board,1),b=count(board,2),t;
     if(a===b)t='مساوی شد! '+a+' – '+b;
     else{var w=a>b?1:2;t=(mode==='two'?(w===1?'سیاه':'سفید'):(w===human?'تبریک! بردی 🎉':'کامپیوتر برد'))+' ('+a+' – '+b+')'}
-    msg(t);return;
+    msg(t);if((mode==='cpu'||online)&&a!==b&&count(board,human)>count(board,3-human))SLNet.rec('reversi',count(board,human));return;
   }
   if(mode==='cpu'&&turn===cpu){busy=true;aiMove()}
   else{busy=false;if($('msg').textContent.indexOf('رد می‌شود')<0)msg(mode==='two'?'نوبت '+name(turn):'نوبت شماست')}
@@ -191,7 +192,9 @@ function play(i){
 function onCell(i){
   if(over||busy)return;
   if(mode==='cpu'&&turn!==human)return;
+  if(online&&turn!==human)return;
   if(board[i]!==0||!flipsOf(board,i,turn).length)return;
+  if(online)net.send({k:'m',i:i});
   play(i);afterMove();
 }
 function aiMove(){
@@ -205,7 +208,9 @@ function aiMove(){
   },lvl===3?60:520);
 }
 ['mode','lvl','col'].forEach(function(id){$(id).addEventListener('change',newGame)});
-$('new').onclick=newGame;
+function restart(send){newGame();if(online){msg('تو '+(human===1?'سیاه (شروع‌کننده)':'سفید')+' هستی');if(send)net.send({k:'n'})}}
+$('new').onclick=function(){restart(true)};
+SLNet.init({game:'reversi',max:2,start(n){net=n;online=true;['mode','lvl','col'].forEach(function(i){$(i).disabled=true});restart(false)},msg(m){if(m.k==='m'){if(!over&&turn!==human&&board[m.i]===0){play(m.i);afterMove()}}else if(m.k==='n')restart(false)},left(){over=true;msg('حریف خارج شد')}});
 build();newGame();
 })();
 </script>

@@ -47,15 +47,16 @@ summary{cursor:pointer;font-size:.85rem}
 </details>
 <div class="hint">نوک بطری به هر کس برسد، همان نفر «حقیقت» یا «جرئت» را انتخاب می‌کند.</div>
 <div class="ov" id="ov"><h2 id="who"></h2><div class="row" id="ch"><button class="b big" id="bT">🤔 حقیقت</button><button class="b big" id="bD">🔥 جرئت</button></div><div class="q" id="q" style="display:none"></div><div class="row" id="ac" style="display:none"><button class="b pr big" id="ok">✓ انجام شد</button><button class="b" id="sk">رد کردن 😅</button></div></div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i);
 const TR=['بزرگ‌ترین ترس تو چیست؟','آخرین دروغی که گفتی چه بود؟','خجالت‌آورترین لحظه‌ی زندگی‌ات کدام بود؟','اگر یک روز نامرئی بودی چه می‌کردی؟','چه عادت بدی داری که دوست نداری کسی بداند؟','عجیب‌ترین غذایی که خورده‌ای چیست؟','بهترین خاطره‌ی کودکی‌ات چیست؟','یک راز کوچک بگو که کسی نمی‌داند.','چه چیزی تو را خیلی زود عصبانی می‌کند؟','اگر فقط یک آهنگ را تا آخر عمر می‌توانستی گوش بدهی، کدام بود؟','آخرین باری که گریه کردی کی بود و چرا؟','بدترین هدیه‌ای که گرفته‌ای چه بود؟','چه استعداد پنهانی داری؟','اگر می‌توانستی یک چیز در خودت عوض کنی، چه بود؟','عجیب‌ترین خوابی که دیده‌ای چه بود؟','اگر یک میلیارد داشتی اول چه می‌خریدی؟','کدام فیلم یا سریال را پنهانی دوست داری؟','بدترین نمره‌ات در مدرسه چه بود؟','اگر می‌توانستی با یک آدم مشهور شام بخوری، چه کسی را انتخاب می‌کردی؟','چه چیزی در گوشی‌ات هست که از دیدنش خجالت می‌کشی؟','اگر یک ابرقدرت داشتی، چه بود؟','بزرگ‌ترین آرزویت چیست؟','کدام یک از حاضران را بیشتر از بقیه شبیه خودت می‌دانی؟','آخرین باری که از ته دل خندیدی کی بود؟'];
 const DR=['۱۰ ثانیه مثل مرغ صدا دربیار.','یک جوک بگو که همه بخندند.','۱۰ بار پشت‌سرهم بپر.','یک جمله را با لهجه‌ی دیگری بگو.','یک رقص خنده‌دار ۱۵ ثانیه‌ای انجام بده.','مثل مجری اخبار، وضع آب‌وهوا را بخوان.','یک نفر را تقلید کن تا بقیه حدس بزنند.','۳۰ ثانیه فقط با اشاره حرف بزن.','در ۱۰ ثانیه اسم ۱۰ حیوان را بگو.','با چشم‌بسته یک نقاشی بکش.','تا نوبت بعدی مثل ربات حرف بزن.','یک بیت شعر یا ترانه بخوان.','۲۰ ثانیه حرکت ورزشی انجام بده.','یک جمله بگو که همه‌ی کلمه‌هایش با «م» شروع شوند.','یک داستان ۱۰ ثانیه‌ای بساز.','با دماغت اسمت را در هوا بنویس.','مثل یک حیوان راه برو و صدایش را دربیار.','یک نفر را انتخاب کن و از او تعریف کن.','با صدای بلند از ۱ تا ۱۰ بشمار ولی هر ۳ تا یک بار بپر.','یک ادا دربیار و بقیه حدس بزنند.','مثل کودک خردسال گریه‌ی ساختگی کن.','شعر کودکانه را با آهنگ اپرا بخوان.','۱۵ ثانیه ثابت بایست و نخند.','یک چهره‌ی خنده‌دار بساز و ۱۰ ثانیه نگه دار.'];
-let pls=[],angle=0,spinning=false,cT=[],cD=[],used={t:[],d:[]},cur=-1,au;
+let online=false,net=null,pls=[],angle=0,spinning=false,cT=[],cD=[],used={t:[],d:[]},cur=-1,au;
 try{pls=JSON.parse(localStorage.getItem('td-players'))||[];cT=JSON.parse(localStorage.getItem('td-ct'))||[];cD=JSON.parse(localStorage.getItem('td-cd'))||[]}catch(e){}
 if(pls.length<2)pls=['بازیکن ۱','بازیکن ۲','بازیکن ۳','بازیکن ۴'];
 function beep(f,d=.08){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
-function save(){try{localStorage.setItem('td-players',JSON.stringify(pls));localStorage.setItem('td-ct',JSON.stringify(cT));localStorage.setItem('td-cd',JSON.stringify(cD))}catch(e){}}
+function save(){if(online)return;try{localStorage.setItem('td-players',JSON.stringify(pls));localStorage.setItem('td-ct',JSON.stringify(cT));localStorage.setItem('td-cd',JSON.stringify(cD))}catch(e){}}
 function render(hit){
   $('chips').innerHTML=pls.map((p,i)=>'<span class="chip">'+p.replace(/</g,'&lt;')+' <button data-r="'+i+'" aria-label="حذف">×</button></span>').join('');
   $('pls').innerHTML=pls.map((p,i)=>{const a=i/pls.length*2*Math.PI;return '<div class="pl'+(i===hit?' hit':'')+'" style="left:'+(50+41*Math.sin(a))+'%;top:'+(50-41*Math.cos(a))+'%">'+p.replace(/</g,'&lt;')+'</div>'}).join('');
@@ -64,29 +65,34 @@ function render(hit){
 $('add').onclick=()=>{const v=$('pn').value.trim();if(!v||pls.length>=10||spinning)return;pls.push(v);$('pn').value='';save();render()};
 $('pn').addEventListener('keydown',e=>{if(e.key==='Enter')$('add').click()});
 $('chips').addEventListener('click',e=>{const b=e.target.closest('[data-r]');if(!b||spinning||pls.length<=2)return;pls.splice(+b.dataset.r,1);save();render()});
-$('spin').onclick=()=>{
+function doSpin(add){
   if(spinning||pls.length<2)return;spinning=true;render();
-  angle+=1440+Math.random()*1080;
+  angle+=add;
   const bt=$('bt');bt.style.transition='transform 4.4s cubic-bezier(.12,.7,.12,1)';bt.style.transform='rotate('+angle+'deg)';
   let n=0;const iv=setInterval(()=>{beep(300+(n++%8)*30,.03);if(n>40)clearInterval(iv)},100);
   setTimeout(()=>{
     clearInterval(iv);spinning=false;
     const step=360/pls.length,idx=Math.round(((angle%360)+360)%360/step)%pls.length;
     cur=idx;render(idx);beep(800,.2);
-    setTimeout(()=>{$('who').textContent=pls[idx]+' — انتخاب کن:';$('ch').style.display='flex';$('q').style.display='none';$('ac').style.display='none';$('ov').style.display='flex'},700);
+    setTimeout(()=>{$('who').textContent=pls[idx]+(online&&idx!==net.seat?' — در حال انتخاب…':' — انتخاب کن:');$('ch').style.display=(online&&idx!==net.seat)?'none':'flex';$('q').style.display='none';$('ac').style.display='none';$('ov').style.display='flex'},700);
   },4500);
 };
+$('spin').onclick=()=>{if(spinning||pls.length<2)return;const add=1440+Math.random()*1080;if(online)net.send({k:'sp',a:add});doSpin(add)};
 function pick(t){
   const all=(t==='t'?TR.concat(cT):DR.concat(cD));
   let pool=all.filter((_,i)=>!used[t].includes(i));if(!pool.length){used[t]=[];pool=all.slice()}
   const q=pool[Math.floor(Math.random()*pool.length)];used[t].push(all.indexOf(q));
   $('who').textContent=pls[cur]+(t==='t'?' — حقیقت 🤔':' — جرئت 🔥');
+  if(online)net.send({k:'q',t:t,q:q});
   $('q').textContent=q;$('q').style.display='block';$('ch').style.display='none';$('ac').style.display='flex';beep(520,.12);
 }
 $('bT').onclick=()=>pick('t');$('bD').onclick=()=>pick('d');
 const close=()=>{$('ov').style.display='none';render()};
 $('ok').onclick=close;$('sk').onclick=close;
 $('cad').onclick=()=>{const v=$('cin').value.trim();if(!v)return;($('ctp').value==='t'?cT:cD).push(v);$('cin').value='';save();$('cin').placeholder='اضافه شد ✓'};
+SLNet.init({game:'truthdare',max:8,min:2,start(n){net=n;online=true;pls=n.players.map(p=>p.n);cur=-1;['add','pn','cad','cin'].forEach(i=>{const e=$(i);if(e)e.disabled=true});$('chips').style.pointerEvents='none';render()},msg(m){
+ if(m.k==='sp')doSpin(m.a);
+ else if(m.k==='q'){$('who').textContent=pls[cur]+(m.t==='t'?' — حقیقت 🤔':' — جرئت 🔥');$('q').textContent=m.q;$('q').style.display='block';$('ch').style.display='none';$('ac').style.display='flex'}},left(i){$('who').textContent=(pls[i]||'')+' خارج شد'}});
 render();
 </script>
 </body>

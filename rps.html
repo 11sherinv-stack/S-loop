@@ -50,6 +50,7 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <div class="picks" id="pk"><button data-k="0" aria-label="سنگ">✊</button><button data-k="1" aria-label="کاغذ">✋</button><button data-k="2" aria-label="قیچی">✌️</button></div>
 <div class="hint">سنگ قیچی را می‌شکند · قیچی کاغذ را می‌برد · کاغذ سنگ را می‌پوشاند. در حالت دو نفره، هر بازیکن مخفیانه انتخاب می‌کند.</div>
 <div class="ov" id="ov"><h2 id="ot"></h2><p id="om"></p><button class="b pr" id="ob">باشه</button></div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),EM=['✊','✋','✌️'],fa=s=>String(s).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
 let mode=1,lvl=1,target=3,sc=[0,0],dr=0,pick1=null,turn=1,busy=false,hist=[],au,over=false;
@@ -62,6 +63,7 @@ function ai(){
   return Math.random()<.7?(fav+1)%3:Math.floor(Math.random()*3); // counter the player's most common choice
 }
 function newGame(){
+  if(online){startOnline(true);return}
   mode=+$('md').value;lvl=+$('lv').value;target=+$('to').value;sc=[0,0];dr=0;pick1=null;turn=1;busy=false;hist=[];over=false;
   $('lv').style.display=mode===1?'':'none';$('n1').firstChild.textContent=mode===1?'تو':'بازیکن ۱';$('n2').firstChild.textContent=mode===1?'کامپیوتر':'بازیکن ۲';
   ['h1','h2'].forEach(i=>{$(i).textContent='✊';$(i).className='hand'});$('ov').style.display='none';render();ask();
@@ -70,6 +72,7 @@ function render(){$('s1').textContent=fa(sc[0]);$('s2').textContent=fa(sc[1]);$(
 function ask(){$('stt').textContent=mode===1?'انتخاب کن!':'بازیکن '+fa(turn)+' — انتخاب کن (مخفیانه)'}
 function choose(k){
   if(busy||over)return;beep(500,.05);
+  if(online){if(myPick!==null)return;myPick=k;net.send({k:'p',v:k});$('stt').textContent='منتظر حریف…';busy=true;render();tryR();return}
   if(mode===1){hist.push(k);reveal(k,ai());return}
   if(turn===1){pick1=k;turn=2;busy=true;render();
     $('ot').textContent='دستگاه را به بازیکن ۲ بده 📱';$('om').textContent='انتخاب بازیکن ۱ مخفی ماند';$('ob').textContent='آماده‌ام';$('ob').onclick=()=>{$('ov').style.display='none';busy=false;render();ask()};$('ov').style.display='flex';return}
@@ -83,17 +86,22 @@ function reveal(a,b){
     let msg;
     if(a===b){dr++;msg='مساوی 🤝';beep(400,.12)}
     else if(beats(a,b)){sc[0]++;h1.classList.add('win');h2.classList.add('lose');msg=(mode===1?'تو بردی':'بازیکن ۱ برد')+' 🎉';beep(800,.15)}
-    else{sc[1]++;h2.classList.add('win');h1.classList.add('lose');msg=(mode===1?'کامپیوتر برد':'بازیکن ۲ برد')+' 😅';beep(200,.15)}
+    else{sc[1]++;h2.classList.add('win');h1.classList.add('lose');msg=(mode===1?(online?oppName+' برد':'کامپیوتر برد'):'بازیکن ۲ برد')+' 😅';beep(200,.15)}
     $('stt').textContent=msg;render();
     if(sc[0]>=target||sc[1]>=target){
-      over=true;render();const w=sc[0]>=target?0:1;
-      setTimeout(()=>{$('ot').textContent=(mode===1?(w===0?'🏆 تو برنده‌ی بازی شدی!':'کامپیوتر برنده‌ی بازی شد'):'🏆 بازیکن '+fa(w+1)+' برنده‌ی بازی شد!');$('om').textContent=fa(sc[0])+' - '+fa(sc[1]);$('ob').textContent='بازی جدید';$('ob').onclick=newGame;$('ov').style.display='flex';beep(w===0?950:180,.4)},900);
+      over=true;render();const w=sc[0]>=target?0:1;if(w===0&&(mode===1||online)){let n=(+localStorage.getItem('rps-wins')||0)+1;try{localStorage.setItem('rps-wins',n)}catch(e){}SLNet.rec('rps',n)}
+      setTimeout(()=>{$('ot').textContent=(mode===1?(w===0?'🏆 تو برنده‌ی بازی شدی!':(online?oppName+' برنده‌ی بازی شد':'کامپیوتر برنده‌ی بازی شد')):'🏆 بازیکن '+fa(w+1)+' برنده‌ی بازی شد!');$('om').textContent=fa(sc[0])+' - '+fa(sc[1]);$('ob').textContent='بازی جدید';$('ob').onclick=newGame;$('ov').style.display='flex';beep(w===0?950:180,.4)},900);
     }else setTimeout(()=>{busy=false;render();ask()},1100);
   },1100);
 }
 $('pk').addEventListener('click',e=>{const b=e.target.closest('button');if(b)choose(+b.dataset.k)});
 $('nw').onclick=newGame;['md','lv','to'].forEach(i=>$(i).onchange=newGame);
 addEventListener('keydown',e=>{const m={r:0,p:1,s:2,'1':0,'2':1,'3':2};if(e.key in m)choose(m[e.key])});
+let net=null,online=false,myPick=null,opPick=null,oppName='حریف';
+function tryR(){if(myPick!==null&&opPick!==null){const a=myPick,b=opPick;myPick=opPick=null;hist.push(a);reveal(a,b)}}
+function startOnline(send){mode=1;target=+$('to').value;sc=[0,0];dr=0;pick1=null;turn=1;busy=false;hist=[];over=false;myPick=null;opPick=null;$('lv').style.display='none';$('n1').firstChild.textContent='تو';$('n2').firstChild.textContent=oppName;['h1','h2'].forEach(i=>{$(i).textContent='✊';$(i).className='hand'});$('ov').style.display='none';render();$('stt').textContent='انتخاب کن!';if(send)net.send({k:'n',to:target})}
+SLNet.init({game:'rps',max:2,start(n){net=n;online=true;oppName=n.players[1-n.seat].n;['md','lv'].forEach(i=>$(i).disabled=true);startOnline(false)},msg(m){if(m.k==='p'){opPick=m.v;tryR()}else if(m.k==='n'){target=m.to;$('to').value=m.to;startOnline(false)}},left(){$('stt').textContent='حریف خارج شد';over=true;render()}});
+SLNet.rec('rps',+localStorage.getItem('rps-wins')||0);
 newGame();
 </script>
 </body>

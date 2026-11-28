@@ -41,6 +41,7 @@ select option{color:#111}button{cursor:pointer}
 <div id="info"></div>
 <div id="area"><div class="card" id="c0"></div><div class="card" id="c1"></div></div>
 <div id="end"><div class="dl"><h2 id="et"></h2><p id="ep"></p><button id="eb">بازی تازه</button></div></div>
+<script src="slnet.js"></script>
 <script>
 (function(){
 'use strict';
@@ -55,10 +56,10 @@ var N=5,CARDS=[],ROUNDS=15;
   for(var a=0;a<N;a++){var v=[N];for(var y=0;y<N;y++)v.push(P(a,y));L.push(v)}
   var inf=[];for(var i=0;i<=N;i++)inf.push(i);L.push(inf);CARDS=L;
 })();
-var deck,pile,cur,sc,round,common,locked,cpuT,lvl,over;
+var online=false,net=null,netDeal=null,won={},deck,pile,cur,sc,round,common,locked,cpuT,lvl,over;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t}return a}
 function commonOf(a,b){for(var i=0;i<a.length;i++)if(b.indexOf(a[i])>-1)return a[i]}
-function start(){lvl=+$('lvl').value;deck=shuffle(CARDS.slice());pile=deck.pop();cur=deck.pop();sc=[0,0];round=0;over=false;$('end').classList.remove('on');next(true)}
+function start(){lvl=+$('lvl').value;if(online&&netDeal){deck=netDeal.deck.slice();pile=netDeal.pile;cur=netDeal.cur}else{deck=shuffle(CARDS.slice());pile=deck.pop();cur=deck.pop();if(online){netDeal={deck:deck.slice(),pile:pile,cur:cur};net.send({k:'d',d:netDeal})}}sc=[0,0];round=0;over=false;won={};$('end').classList.remove('on');next(true)}
 function size(){var a=$('area'),h=a.clientHeight,w=a.clientWidth;return Math.floor(Math.max(150,Math.min(w-16,(h-16)/2)))}
 function drawCard(el,card,anim){
   var S=size(),syms=shuffle(card.slice()),pos=[],R=.31*S;
@@ -79,14 +80,15 @@ function next(first){
   if(round>=ROUNDS){finish();return}
   round++;common=commonOf(pile,cur);locked=false;
   drawCard($('c0'),pile,!first);drawCard($('c1'),cur,true);
-  $('rd').textContent='دور '+round+'/'+ROUNDS;$('a').textContent=sc[0];$('b').textContent=sc[1];
+  $('rd').textContent='دور '+round+'/'+ROUNDS;$('a').textContent=online?sc[net.seat]:sc[0];$('b').textContent=online?sc[1-net.seat]:sc[1];
   $('info').textContent='نمادِ مشترکِ دو کارت را پیدا کن و لمس کن!';
   clearTimeout(cpuT);
-  var base=[0,5200,3300,2000][lvl];cpuT=setTimeout(function(){if(locked||over)return;cpuWin()},base*(.75+Math.random()*.5));
+  var base=[0,5200,3300,2000][lvl];if(!online)cpuT=setTimeout(function(){if(locked||over)return;cpuWin()},base*(.75+Math.random()*.5));
 }
 function pick(s,d,el){
   if(locked||over)return;
   if(s===common){
+    if(online){locked=true;if(net.isHost)decide(net.seat,round);else net.send({k:'c',r:round});return}
     locked=true;clearTimeout(cpuT);sc[0]++;snd(880,.12);setTimeout(function(){snd(1175,.2)},90);
     document.querySelectorAll('.sy[data-s="'+s+'"]').forEach(function(x){x.classList.add('ok')});
     $('a').textContent=sc[0];$('info').textContent='آفرین! ✔️';
@@ -106,13 +108,21 @@ function advance(){
   setTimeout(function(){if(over)return;pile=cur;cur=deck.pop();if(!cur){finish();return}next(false)},950);
 }
 function finish(){
-  over=true;clearTimeout(cpuT);var a=sc[0],b=sc[1];
-  $('et').textContent=a>b?'بردی! 🎉':a<b?'کامپیوتر برد':'مساوی شد';
-  $('ep').textContent='نتیجه: شما '+a+' — کامپیوتر '+b;
+  over=true;clearTimeout(cpuT);var a=online?sc[net.seat]:sc[0],b=online?sc[1-net.seat]:sc[1];SLNet.rec('dobble',a);
+  $('et').textContent=a>b?'بردی! 🎉':a<b?(online?'حریف برد':'کامپیوتر برد'):'مساوی شد';
+  $('ep').textContent='نتیجه: شما '+a+' — '+(online?'حریف':'کامپیوتر')+' '+b;
   $('end').classList.add('on');snd(a>=b?880:200,.4);
 }
-$('rst').onclick=start;$('lvl').onchange=start;$('eb').onclick=start;
+function restart(){if(!online){start();return}if(net.isHost){netDeal=null;start()}else net.send({k:'rq'})}
+$('rst').onclick=restart;$('lvl').onchange=restart;$('eb').onclick=restart;
 addEventListener('resize',function(){if(!over){drawCard($('c0'),pile,false);drawCard($('c1'),cur,false)}});
+function decide(w,r){if(r!==round||won[r])return;won[r]=1;net.send({k:'w',r:r,w:w});applyWin(w)}
+function applyWin(w){locked=true;sc[w]++;var me=w===net.seat;snd(me?880:260,.2,me?'sine':'triangle',.18);
+  document.querySelectorAll('.sy[data-s="'+common+'"]').forEach(function(x){x.classList.add('ok');if(!me)x.parentNode.style.boxShadow='0 0 0 4px #ff8a65'});
+  $('a').textContent=sc[net.seat];$('b').textContent=sc[1-net.seat];$('info').textContent=me?'آفرین! ✔️':'حریف زودتر پیدا کرد!';advance()}
+SLNet.init({game:'dobble',max:2,start(n){net=n;online=true;$('lvl').disabled=true;if(n.isHost){netDeal=null;start()}},msg(m){
+ if(m.k==='d'){netDeal=m.d;start()}else if(m.k==='c'&&net.isHost)decide(1-net.seat,m.r);else if(m.k==='w'&&m.r===round&&!won[m.r]){won[m.r]=1;applyWin(m.w)}else if(m.k==='rq'&&net.isHost){netDeal=null;start()}},left(){over=true;clearTimeout(cpuT);$('info').textContent='حریف خارج شد'}});
+SLNet.rec('dobble',0);
 start();
 })();
 </script>

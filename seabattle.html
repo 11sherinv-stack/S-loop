@@ -48,9 +48,10 @@ select:focus-visible,button:focus-visible{outline:3px solid var(--ink);outline-o
 <div class="bd sm" id="pb"></div>
 <div class="ov" id="ov"><h2 id="ot"></h2><button class="b pr" id="ob">بازی جدید</button></div>
 <div class="hint">اگر کشتی دشمن را بزنی دوباره شلیک می‌کنی. کشتی‌ها: ۵، ۴، ۳، ۳ و ۲ خانه‌ای. قبل از شروع می‌توانی چیدمان را عوض کنی.</div>
+<script src="slnet.js"></script>
 <script>
 const $=i=>document.getElementById(i),LENS=[5,4,3,3,2],rnd=a=>a[Math.floor(Math.random()*a.length)];
-let P,E,ps,es,phase='setup',pturn=true,level='hard',au;
+let online=false,net=null,ready=false,oppReady=false,P,E,ps,es,phase='setup',pturn=true,level='hard',au;
 function beep(f,d=.06){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type='triangle';o.frequency.value=f;g.gain.value=.05*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 function place(){
   const g=Array(100).fill(-1),ships=[];
@@ -64,6 +65,7 @@ function place(){
   return{g,ships};
 }
 function newGame(){
+  ready=oppReady=false;
   P=place();E=place();ps=Array(100).fill(0);es=Array(100).fill(0);phase='setup';pturn=true;level=$('lv').value;
   $('ov').style.display='none';$('st').disabled=false;$('sf').disabled=false;
   $('stt').textContent='کشتی‌هایت را ببین و «شروع نبرد» را بزن';render();
@@ -73,7 +75,7 @@ function render(){
   $('eb').innerHTML=Array.from({length:100},(_,i)=>{
     let cl='c',t='';
     if(ps[i]===1){cl+=' m';t='•'}
-    else if(ps[i]===2){const s=E.ships[E.g[i]];if(sunk(s)){cl+=' sk';t='✖'}else{cl+=' h';t='💥'}}
+    else if(ps[i]===3){cl+=' sk';t='✖'}else if(ps[i]===2){if(!online&&sunk(E.ships[E.g[i]])){cl+=' sk';t='✖'}else{cl+=' h';t='💥'}}
     return '<button class="'+cl+'" data-i="'+i+'"'+(ps[i]||phase!=='play'?' disabled':'')+' aria-label="خانه '+(i+1)+'">'+t+'</button>';
   }).join('');
   $('pb').innerHTML=Array.from({length:100},(_,i)=>{
@@ -85,6 +87,7 @@ function render(){
 }
 function fire(i){
   if(phase!=='play'||!pturn||ps[i])return;
+  if(online){pturn=false;net.send({k:'s',i});$('stt').textContent='…';return}
   if(E.g[i]>=0){
     ps[i]=2;const s=E.ships[E.g[i]];s.hits++;beep(200,.15);
     if(sunk(s))$('stt').textContent='💥 یک کشتی دشمن غرق شد!';else $('stt').textContent='🎯 زدی! دوباره شلیک کن';
@@ -123,15 +126,27 @@ function ai(){
   }else{es[i]=1;pturn=true;$('stt').textContent='دشمن خطا زد — نوبت توست';render()}
 }
 function end(win){
+  if(win){var w=(+localStorage.getItem('seabattle-wins')||0)+1;try{localStorage.setItem('seabattle-wins',w)}catch(e){}SLNet.rec('seabattle',w)}
+  if(online)setTimeout(newGame,4500);
   phase='over';render();beep(win?900:150,.4);
   $('ot').textContent=win?'🏆 همه‌ی کشتی‌های دشمن را غرق کردی!':'💀 ناوگانت نابود شد';
   $('ov').style.display='flex';
 }
 $('eb').addEventListener('click',e=>{const b=e.target.closest('.c');if(b)fire(+b.dataset.i)});
-$('st').onclick=()=>{if(phase!=='setup')return;phase='play';$('st').disabled=true;$('sf').disabled=true;$('stt').textContent='نوبت توست — شلیک کن!';render()};
+$('st').onclick=()=>{if(phase!=='setup')return;if(online){if(ready)return;ready=true;net.send({k:'rd'});$('st').disabled=true;$('sf').disabled=true;if(oppReady)goOn();else $('stt').textContent='منتظر آماده شدن حریف…';return}phase='play';$('st').disabled=true;$('sf').disabled=true;$('stt').textContent='نوبت توست — شلیک کن!';render()};
 $('sf').onclick=()=>{if(phase!=='setup')return;P=place();render()};
 $('lv').onchange=()=>{level=$('lv').value};
 $('ob').onclick=newGame;
+function goOn(){phase='play';pturn=net.isHost;$('stt').textContent=pturn?'نوبت توست — شلیک کن!':'نوبت حریف…';render()}
+SLNet.init({game:'seabattle',max:2,start(n){net=n;online=true;$('lv').disabled=true;newGame()},msg(m){
+ if(m.k==='rd'){oppReady=true;if(ready)goOn()}
+ else if(m.k==='s'&&phase==='play'){const i=m.i;let hit=P.g[i]>=0,cells=null,ov=false;
+  if(hit){es[i]=2;const s=P.ships[P.g[i]];s.hits++;beep(160,.2);if(sunk(s))cells=s.cells;ov=P.ships.every(sunk);$('stt').textContent=cells?'☠️ یکی از کشتی‌هایت غرق شد':'⚠️ حریف کشتی‌ات را زد!'}
+  else{es[i]=1;pturn=true;$('stt').textContent='حریف خطا زد — نوبت توست'}
+  net.send({k:'r',i,hit,cells,ov});render();if(ov)end(false)}
+ else if(m.k==='r'){ps[m.i]=m.hit?2:1;if(m.hit){beep(200,.15);if(m.cells)m.cells.forEach(c=>ps[c]=3);$('stt').textContent=m.cells?'💥 یک کشتی غرق شد!':'🎯 زدی! دوباره شلیک کن';if(m.ov){render();end(true);return}pturn=true}else{beep(500,.05);pturn=false;$('stt').textContent='آب! نوبت حریف…'}render()}},
+ left(){$('stt').textContent='حریف خارج شد';phase='over'}});
+SLNet.rec('seabattle',+localStorage.getItem('seabattle-wins')||0);
 newGame();
 </script>
 </body>

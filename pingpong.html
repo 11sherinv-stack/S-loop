@@ -27,13 +27,14 @@ a.back{display:none}
 </div>
 <div id="stage"><canvas id="c"></canvas></div>
 <div class="hint" id="hint">انگشتت را روی صفحه بکش تا راکت حرکت کند · در رایانه موس یا کلیدهای ← → (و A / D برای نفر دوم)</div>
+<script src="slnet.js"></script>
 <script>
 (function(){
 'use strict';
 var W=400,H=600,PW=88,PH=14,R=9,WIN=7;
 var cv=document.getElementById('c'),ctx=cv.getContext('2d');
 var GV=(function(){var m=location.hash.match(/v(\d+)/);return m?Math.min(1,+m[1]/100):0.8})();
-var mode=1,lvl=2,state='ready',sc=[0,0]; // sc[0]=پایین، sc[1]=بالا
+var online=false,net=null,hostSide=true,fr=0,mode=1,lvl=2,state='ready',sc=[0,0]; // sc[0]=پایین، sc[1]=بالا
 var bot={x:W/2,t:W/2},top={x:W/2,t:W/2};
 var ball={x:W/2,y:H/2,vx:0,vy:0,sp:340},trail=[],hits=0,serveT=0,serveDir=1,msg='',flash=0;
 var ai={err:0,tx:W/2};
@@ -62,11 +63,11 @@ function restart(){sc=[0,0];bot.x=bot.t=W/2;top.x=top.t=W/2;msg='';resetBall(Mat
 
 /* ورودی */
 function pos(e){var r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}}
-function who(p){return mode===1?'b':(p.y<H/2?'t':'b')}
+function who(p){if(online)return hostSide?'b':'t';return mode===1?'b':(p.y<H/2?'t':'b')}
 cv.addEventListener('pointerdown',function(e){
   e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(x){}
   A();var p=pos(e);
-  if(state==='ready'||state==='over'){if(state==='over')restart();state='serve';serveT=.8;return}
+  if(state==='ready'||state==='over'){if(online&&!hostSide){net.send({k:'rs'});return}if(state==='over')restart();state='serve';serveT=.8;return}
   var w=who(p);ptr[e.pointerId]=w;(w==='b'?bot:top).t=p.x;
 });
 cv.addEventListener('pointermove',function(e){
@@ -90,7 +91,8 @@ function predictX(){ // محل رسیدن توپ به لبه‌ی بالا
 function step(dt){
   // کیبورد
   var ks=520*dt;
-  if(mode===1){if(keys.arrowleft||keys.a)bot.t-=ks;if(keys.arrowright||keys.d)bot.t+=ks}
+  if(online){var mp=hostSide?bot:top;if(keys.arrowleft||keys.a)mp.t-=ks;if(keys.arrowright||keys.d)mp.t+=ks}
+  else if(mode===1){if(keys.arrowleft||keys.a)bot.t-=ks;if(keys.arrowright||keys.d)bot.t+=ks}
   else{if(keys.arrowleft)bot.t-=ks;if(keys.arrowright)bot.t+=ks;if(keys.a)top.t-=ks;if(keys.d)top.t+=ks}
   bot.t=Math.max(PW/2,Math.min(W-PW/2,bot.t));top.t=Math.max(PW/2,Math.min(W-PW/2,top.t));
   // حرکت راکت‌ها
@@ -135,7 +137,8 @@ function hit(p,dir,y){
   if(p===top&&mode===1){ai.err=(Math.random()*2-1)*top._err}
 }
 function point(i){ // i=0 → پایین امتیاز گرفت
-  sc[i]++;beep(i===0?660:200,.25,'triangle',.25);
+  sc[i]++;if(i===0&&sc[0]>=WIN&&(mode===1||online&&hostSide)){var w=(+localStorage.getItem('pingpong-wins')||0)+1;try{localStorage.setItem('pingpong-wins',w)}catch(e){}SLNet.rec('pingpong',w)}
+  if(online&&!hostSide&&i===1&&sc[1]>=WIN){var w2=(+localStorage.getItem('pingpong-wins')||0)+1;try{localStorage.setItem('pingpong-wins',w2)}catch(e){}SLNet.rec('pingpong',w2)}beep(i===0?660:200,.25,'triangle',.25);
   if(sc[i]>=WIN){state='over';msg=mode===1?(i===0?'بردی! 🎉':'کامپیوتر برد'):(i===0?'بازیکن پایین برد! 🎉':'بازیکن بالا برد! 🎉');return}
   resetBall(i===0?-1:1);
 }
@@ -179,13 +182,20 @@ var last=0,acc=0;
 function loop(ts){
   if(!last)last=ts;var dt=Math.min(.05,(ts-last)/1000);last=ts;
   if(flash>0)flash-=dt;
-  acc+=dt;while(acc>=1/120){step(1/120);acc-=1/120}
+  acc+=dt;
+  if(online&&!hostSide){var d2=top.t-top.x,m2=2200*dt;top.x+=Math.max(-m2,Math.min(m2,d2));top.t=Math.max(PW/2,Math.min(W-PW/2,top.t));acc=0;if(++fr%2===0)net.send({k:'t',x:top.t})}
+  else{while(acc>=1/120){step(1/120);acc-=1/120}if(online&&++fr%2===0)net.send({k:'s',b:[ball.x|0,ball.y|0],p:bot.x|0,s:sc,st:state,m:msg,sv:serveT,sd:serveDir,h:flash>0?1:0})}
   draw();requestAnimationFrame(loop);
 }
 document.getElementById('mode').onchange=function(){mode=+this.value;document.getElementById('lvl').disabled=mode===2;restart()};
 document.getElementById('lvl').onchange=function(){lvl=+this.value;restart()};
 document.getElementById('rst').onclick=function(){restart()};
 addEventListener('resize',fit);
+SLNet.init({game:'pingpong',max:2,start(n){net=n;online=true;hostSide=n.isHost;mode=2;document.getElementById('mode').disabled=document.getElementById('lvl').disabled=true;restart();if(hostSide){state='serve';serveT=1.5}else state='serve';document.getElementById('hint').textContent=hostSide?'تو راکت پایین هستی 🟡 — انگشتت را بکش':'تو راکت بالا هستی 🟠 — انگشتت را بکش'},msg(m){
+ if(m.k==='t'&&hostSide){top.t=Math.max(PW/2,Math.min(W-PW/2,m.x))}
+ else if(m.k==='s'&&!hostSide){var hit=ball.vy;ball.x=m.b[0];ball.y=m.b[1];bot.x=m.p;if(m.s[0]!==sc[0]||m.s[1]!==sc[1])beep(m.s[1]>sc[1]?660:200,.2,'triangle',.2);sc=m.s;state=m.st;msg=m.m;serveT=m.sv;serveDir=m.sd;if(m.h&&!flash){flash=.12;beep(450,.05,'square',.15)}trail.push({x:ball.x,y:ball.y});if(trail.length>14)trail.shift()}
+ else if(m.k==='rs'&&hostSide&&state==='over'){restart();state='serve';serveT=1}},left(){state='over';msg='حریف خارج شد'}});
+SLNet.rec('pingpong',+localStorage.getItem('pingpong-wins')||0);
 fit();restart();state='ready';requestAnimationFrame(loop);
 })();
 </script>

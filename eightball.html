@@ -41,11 +41,12 @@ canvas{display:block;height:min(calc(100svh - 215px),600px);aspect-ratio:360/600
 <div id="stt"></div><div id="tray"></div>
 <div class="wrap"><canvas id="c" width="360" height="600"></canvas><div class="ov" id="ov"><h2 id="ot"></h2><button class="b pr" id="ob">بازی جدید</button></div></div>
 <div class="hint">انگشتت را روی صفحه بگذار، به عقب بکش و رها کن (کشیدن بیشتر = ضربه‌ی محکم‌تر). خط سفید مسیر ضربه را نشان می‌دهد. اول یک توپ را در جیب بیندازی، گروهت (تکی یا راه‌راه) مشخص می‌شود. آخر سر توپ ۸ را بزن.</div>
+<script src="slnet.js"></script>
 <script>
 const W=360,H=600,TX0=22,TY0=22,TX1=338,TY1=578,R=10,PRAD=19,DEC=170,$=i=>document.getElementById(i),cv=$('c'),x=cv.getContext('2d');
 const POCK=[[TX0,TY0],[TX1,TY0],[TX0,300],[TX1,300],[TX0,TY1],[TX1,TY1]];
 const COL=[null,'#f4c20d','#1e5bd8','#d62828','#6a2c91','#f57c00','#1fa34a','#7a1f1f','#111','#f4c20d','#1e5bd8','#d62828','#6a2c91','#f57c00','#1fa34a','#7a1f1f'];
-let B=[],st='idle',turn=0,groups=[null,null],mode=1,lvl=1,aim=null,firstC=null,potted=[],ownBefore=0,shots=0,last=0,au,placing=false,potAll=[],fx=[];
+let online=false,net=null,netB=null,iShot=false,fined=false,B=[],st='idle',turn=0,groups=[null,null],mode=1,lvl=1,aim=null,firstC=null,potted=[],ownBefore=0,shots=0,last=0,au,placing=false,potAll=[],fx=[];
 function beep(f,d=.04,ty='triangle'){try{au=au||new(window.AudioContext||window.webkitAudioContext)();const o=au.createOscillator(),g=au.createGain();o.type=ty;o.frequency.value=f;g.gain.value=.04*((location.hash.match(/v(\d+)/)||[0,100])[1]/100);o.connect(g);g.connect(au.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,au.currentTime+d);o.stop(au.currentTime+d)}catch(e){}}
 const typeOf=n=>n===8?'eight':n<8?'solid':'stripe',alive=()=>B.filter(b=>b.in),cue=()=>B[0];
 function rack(){
@@ -61,8 +62,8 @@ function rack(){
   });
 }
 function newGame(){
-  mode=+$('md').value;lvl=+$('lv').value;groups=[null,null];turn=0;shots=0;potAll=[];fx=[];rack();$('ov').style.display='none';
-  $('lv').style.display=mode===1?'':'none';$('p0').firstChild.textContent=mode===1?'تو':'بازیکن ۱';$('p1').firstChild.textContent=mode===1?'کامپیوتر':'بازیکن ۲';
+  if(online){mode=2;lvl=1}else{mode=+$('md').value;lvl=+$('lv').value}groups=[null,null];turn=0;shots=0;potAll=[];fx=[];iShot=false;fined=false;if(online){if(net.isHost){rack();net.send({k:'rk',B:B})}else B=netB}else rack();$('ov').style.display='none';
+  $('lv').style.display=mode===1?'':'none';$('p0').firstChild.textContent=online?net.players[0].n:(mode===1?'تو':'بازیکن ۱');$('p1').firstChild.textContent=online?net.players[1].n:(mode===1?'کامپیوتر':'بازیکن ۲');
   beginTurn();
 }
 const gname=g=>g==='solid'?'تکی (۱–۷)':g==='stripe'?'راه‌راه (۹–۱۵)':g==='eight'?'توپ ۸':'—';
@@ -71,7 +72,7 @@ function hud(){
   $('p0').classList.toggle('on',turn===0);$('p1').classList.toggle('on',turn===1);
   $('tray').innerHTML=potAll.map(n=>'<i style="background:'+(n>8?'#fff;color:#222;box-shadow:inset 0 0 0 3px '+COL[n]:COL[n])+'">'+n+'</i>').join('');
 }
-const human=()=>mode===2||turn===0;
+const human=()=>online?turn===net.seat:(mode===2||turn===0);
 function beginTurn(){
   hud();ownBefore=groups[turn]?alive().filter(b=>typeOf(b.n)===groups[turn]).length:99;
   firstC=null;potted=[];
@@ -140,6 +141,7 @@ function settle(){
 }
 function placeCueInHand(){const c=cue();c.in=false}
 function finish(winner,why){
+  if((mode===1&&winner===0)||(online&&winner===net.seat)){var w_=(+localStorage.getItem('eightball-wins')||0)+1;try{localStorage.setItem('eightball-wins',w_)}catch(e){}SLNet.rec('eightball',w_)}
   st='over';const w=mode===1?(winner===0?'🏆 تو بردی!':'😅 کامپیوتر برد'):'🏆 '+(winner===0?'بازیکن ۱':'بازیکن ۲')+' برنده شد';
   $('ot').innerHTML=w+(why?'<br><small>'+why+'</small>':'');$('ov').style.display='flex';beep(winner===0?900:160,.4);hud();
 }
@@ -174,13 +176,13 @@ function beginTurn2(){$('stt').textContent='نوبت '+(mode===1?'کامپیوت
 const pos=e=>{const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H}};
 cv.addEventListener('pointerdown',e=>{
   e.preventDefault();if(!human())return;const p=pos(e);
-  if(st==='place'){if(placeCue(p.x,p.y)){st='aim';$('stt').textContent='نوبت '+(mode===1?'تو':(turn===0?'بازیکن ۱':'بازیکن ۲'))+' — بکش و رها کن';beep(400,.05)}return}
+  if(st==='place'){if(placeCue(p.x,p.y)){if(online)net.send({k:'pl',x:p.x,y:p.y});st='aim';$('stt').textContent='نوبت '+(mode===1?'تو':(turn===0?'بازیکن ۱':'بازیکن ۲'))+' — بکش و رها کن';beep(400,.05)}return}
   if(st==='aim'){cv.setPointerCapture(e.pointerId);aim={sx:p.x,sy:p.y,cx:p.x,cy:p.y}}
 });
 cv.addEventListener('pointermove',e=>{if(aim){const p=pos(e);aim.cx=p.x;aim.cy=p.y}});
 function release(){
   if(!aim)return;const vx=aim.sx-aim.cx,vy=aim.sy-aim.cy,len=Math.hypot(vx,vy);aim=null;
-  if(len<14||st!=='aim')return;shoot(Math.atan2(vy,vx),Math.min(1,len/170)*900+60);
+  if(len<14||st!=='aim')return;{const a_=Math.atan2(vy,vx),p_=Math.min(1,len/170)*900+60;if(online){iShot=true;net.send({k:'sh',a:a_,p:p_})}shoot(a_,p_)}
 }
 ['pointerup','pointercancel'].forEach(ev=>cv.addEventListener(ev,release));
 // ---- draw
@@ -217,11 +219,20 @@ function draw(){
 }
 function loop(t){
   const dt=Math.min(.033,(t-last)/1000||0);last=t;
-  if(st==='move'){step(dt);if(!alive().some(b=>b.vx||b.vy)){st='settle';setTimeout(settle,250)}}
+  if(st==='move'){step(dt);if(!alive().some(b=>b.vx||b.vy)){st='settle';if(online){if(iShot){iShot=false;net.send({k:'fn',B:B,pt:potted,fc:firstC,pa:potAll});setTimeout(settle,250)}else if(fined){}else window._waitFin=true}else setTimeout(settle,250)}}
   draw();requestAnimationFrame(loop);
 }
-$('nw').onclick=newGame;$('ob').onclick=newGame;['md','lv'].forEach(i=>$(i).onchange=newGame);
-newGame();requestAnimationFrame(loop);
+function restart(){if(!online){newGame();return}if(net.isHost)newGame();else net.send({k:'rq'})}
+$('nw').onclick=restart;$('ob').onclick=restart;['md','lv'].forEach(i=>$(i).onchange=newGame);
+function applyFin(m){B=m.B;potted=m.pt;firstC=m.fc;potAll=m.pa;st='settle';fined=true;window._waitFin=false;B.forEach(b=>{b.vx=b.vy=0});hud();setTimeout(settle,250)}
+SLNet.init({game:'eightball',max:2,start(n){net=n;online=true;$('md').disabled=$('lv').disabled=true;if(n.isHost)newGame()},msg(m){
+ if(m.k==='rk'){netB=m.B;newGame()}
+ else if(m.k==='rq'&&net.isHost)newGame()
+ else if(m.k==='pl'){placeCue(m.x,m.y);st='aim';$('stt').textContent='نوبت حریف'}
+ else if(m.k==='sh'&&st==='aim'){fined=false;shoot(m.a,m.p)}
+ else if(m.k==='fn'){if(st==='move'||st==='settle'){applyFin(m)}}},left(){st='over';$('stt').textContent='حریف خارج شد'}});
+SLNet.rec('eightball',+localStorage.getItem('eightball-wins')||0);
+if(!online)newGame();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
